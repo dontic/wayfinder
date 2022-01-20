@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from data_processor import handle_data
+from data_processor import data_processor
 import json
 
 app = Flask(__name__)
@@ -26,8 +26,9 @@ def add_message(token=None):
 
     # Verify identity of the uploader
     if access:
-        handle_data(user, content)
-        return jsonify({"result": "ok"})
+        data_processor(user, content)
+        # return jsonify({"result": "ok"})
+        return("Nice")
     else:
         return(None)
 
