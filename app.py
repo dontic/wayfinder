@@ -27,8 +27,7 @@ def add_message(token=None):
     # Verify identity of the uploader
     if access:
         data_processor(user, content)
-        # return jsonify({"result": "ok"})
-        return("Nice")
+        return jsonify({"result": "ok"})
     else:
         return(None)
 
