@@ -46,8 +46,9 @@ def checkins(df, user_id):
         last_checkin = df_checkins.iloc[-1].to_dict()
 
         # Write json
-        checkin_filepath = get_user_dir(user_id) / user_id+'_checkin.json'
-        with open(checkin_filepath,'w') as file:
+        file = user_id+'_checkin.json'
+        filepath = get_user_dir(user_id) / file
+        with open(filepath,'w') as file:
             # Write json file
             json.dump(last_checkin, file, indent = 4)
     
@@ -65,8 +66,9 @@ def visits(df, user_id):
     if df_visits.empty:
         pass
     else:
-        csv_path = get_user_dir(user_id) / user_id+'_visits.csv'
-        df_visits.to_csv(csv_path, mode='a', header=False, index=False)
+        file = user_id+'_visits.csv'
+        filepath = get_user_dir(user_id) / file
+        df_visits.to_csv(filepath, mode='a', header=False, index=False)
     return True
 
 
@@ -122,8 +124,8 @@ def min(df, user_id, accuracy=10, desired_distance=50, stationary=True):
             last_coords = {'LAT':row['LAT'],'LONG':row['LONG']}
     
     file = user_id+'_min.csv'
-    csv_path = get_user_dir(user_id) / file
-    df_min.to_csv(csv_path, mode='a', header=False, index=False)
+    filepath = get_user_dir(user_id) / file
+    df_min.to_csv(filepath, mode='a', header=False, index=False)
 
     return True
 

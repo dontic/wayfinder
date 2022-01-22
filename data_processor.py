@@ -118,10 +118,10 @@ def data_processor(user_id, content):
     df = get_df(user_id, content)  # Gets df from json content
 
     # Gather other GPS data
-    gps_utils.main_csv(df, user_id)
-    gps_utils.min(df, user_id)
     gps_utils.checkins(df, user_id)
     gps_utils.visits(df, user_id)
+    gps_utils.min(df, user_id)
+    gps_utils.main_csv(df, user_id)
 
     return True
 
