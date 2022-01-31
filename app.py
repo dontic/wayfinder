@@ -4,6 +4,11 @@ import json
 
 app = Flask(__name__)
 
+@app.route('/', methods=['GET','POST'])
+def login():
+    # Main flask interface
+    pass
+
 @app.route('/api/', methods=['GET', 'POST'])
 def add_message(token=None):
     # Gather json content
