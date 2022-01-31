@@ -1,5 +1,6 @@
 # Code specifig
 storage/
+database/
 *.ipynb
 
 # Byte-compiled / optimized / DLL files
