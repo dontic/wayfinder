@@ -4,8 +4,9 @@ from sqlite3 import Error
 
 
 def create_connection(db_file):
-    """ create a database connection to the SQLite database
-        specified by db_file
+    """
+    create a database connection to the SQLite database
+    specified by db_file
     :param db_file: database file
     :return: Connection object or None
     """
@@ -20,7 +21,8 @@ def create_connection(db_file):
 
 
 def create_table(conn, create_table_sql):
-    """ create a table from the create_table_sql statement
+    """
+    create a table from the create_table_sql statement
     :param conn: Connection object
     :param create_table_sql: a CREATE TABLE statement
     :return:
@@ -33,6 +35,7 @@ def create_table(conn, create_table_sql):
 
 
 def main(user_id):
+    # Path for the user's database
     database_path = Path.cwd() / 'database' / user_id
 
     sql_create_raw_table = """ CREATE TABLE IF NOT EXISTS raw (
@@ -63,23 +66,38 @@ def main(user_id):
         );
     """
 
-    sql_create_min_table = """CREATE TABLE IF NOT EXISTS min (
+    sql_create_path_table = """ CREATE TABLE IF NOT EXISTS path (
         LONG FLOAT,
         LAT FLOAT,
-        ALT FLOAT,
+        ALT INT,
         speed INT,
-        timestamp,
-        vertical_accuracy,
-        horizontal_accuracy,
-        motion
+        timestamp DATETIME,
+        horizontal_accuracy INT,
+        vertical_accuracy INT,
+        device TEXT,
+        motion TEXT
         );
     """
 
-    sql_create_visits_table = """CREATE TABLE IF NOT EXISTS min (
+    sql_create_path_min_table = """CREATE TABLE IF NOT EXISTS path_min (
+        LONG FLOAT,
+        LAT FLOAT,
+        ALT INT,
+        speed INT,
+        timestamp DATETIME,
+        horizontal_accuracy INT,
+        vertical_accuracy INT,
+        device TEXT,
+        motion TEXT
         );
     """
 
-    sql_create_checkin_table = """CREATE TABLE IF NOT EXISTS min (
+    sql_create_visits_table = """CREATE TABLE IF NOT EXISTS visits (
+        LONG FLOAT,
+        LAT FLOAT,
+        arrival DATETIME,
+        departure DATETIME,
+        device TEXT
         );
     """
 
@@ -88,13 +106,13 @@ def main(user_id):
 
     # create tables
     if conn is not None:
-        # create projects table
-        create_table(conn, sql_create_projects_table)
-
-        # create tasks table
-        create_table(conn, sql_create_tasks_table)
+        # If database does not exist, create tables
+        create_table(conn, sql_create_raw_table)
+        create_table(conn, sql_create_path_table)
+        create_table(conn, sql_create_path_min_table)
+        create_table(conn, sql_create_visits_table)
     else:
-        print("Error! cannot create the database connection.")
+        print("Error! Cannot create the database connection.")
     
     return conn
 
