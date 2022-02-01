@@ -253,4 +253,9 @@ def data_processor(user_id, content):
 
 
 if __name__ == "__main__":
-    pass
+    lat1 = 40.7128
+    long1 = 74.0060
+    lat2 = 51.5072
+    long2 = 0.1276
+    distance = haversine(lat1,long1,lat2,long2)
+    print("Distance = %s meters" % round(distance,2))
