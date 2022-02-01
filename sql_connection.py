@@ -97,6 +97,7 @@ def main(user_id):
         LAT FLOAT,
         arrival DATETIME,
         departure DATETIME,
+        duration FLOAT,
         device TEXT
         );
     """
