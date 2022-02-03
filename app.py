@@ -7,6 +7,7 @@ app = Flask(__name__)
 @app.route('/', methods=['GET','POST'])
 def login():
     # Main flask map interface
+    # In developement
     pass
 
 @app.route('/api/', methods=['GET', 'POST'])

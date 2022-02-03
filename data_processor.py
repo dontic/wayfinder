@@ -1,9 +1,9 @@
 import pandas as pd
+pd.options.mode.chained_assignment = None  # default = 'warn'
 import numpy as np
 from pathlib import Path
 import json
 import sql_connection
-import sql_dump
 
 
 def flatten_json(nested_json, exclude=['']):
@@ -45,7 +45,7 @@ def get_df(user_id, content):
 
     # Ensure all columns are present
     df = pd.DataFrame(columns=['type','geometry_type','geometry_coordinates_0','geometry_coordinates_1','properties_speed','properties_battery_state','properties_timestamp','properties_battery_level','properties_vertical_accuracy','properties_pauses','properties_horizontal_accuracy','properties_wifi','properties_deferred','properties_significant_change','properties_locations_in_payload','properties_activity','properties_device_id','properties_altitude','properties_desired_accuracy','properties_motion_0','properties_action','properties_motion_1','properties_arrival_date','properties_departure_date'])
-    df = df.append(df_content)
+    df = pd.concat([df, df_content])
     df = df.drop_duplicates()
 
     df['properties_timestamp'] = pd.to_datetime(df['properties_timestamp'])
@@ -112,18 +112,20 @@ def path_sql_dump(df, conn):
     # Columns
     cols = ["geometry_coordinates_0",
     "geometry_coordinates_1",
+    "properties_altitude",
     "properties_speed",
     "properties_timestamp",
     "properties_vertical_accuracy",
     "properties_horizontal_accuracy",
-    "properties_altitude",
+    "properties_device_id",
     "properties_motion_0"]
 
     df = df[cols]
 
     df.columns = ['LONG','LAT','ALT','speed','timestamp','horizontal_accuracy','vertical_accuracy','device','motion']
-    df["speed"] = df["speed"]*3.6  # Speed to KMH
-    df = df[df["h_acc"] < 50]  # Getting rid of low accuracy points
+    df = df[df['motion'].notna()]
+    df["speed"] = 3.6 * df["speed"]  # Speed to KMH
+    df = df[df["horizontal_accuracy"] < 50]  # Getting rid of low accuracy points
     
     df.to_sql(name='path', con=conn, if_exists='append', index=False)
     
@@ -169,12 +171,12 @@ def path_min_sql_dump(df_path, conn, accuracy=10, desired_distance=50, remove_st
             distance = haversine(lat1,long1,lat2,long2)  # Distance in meters between two points
 
             if distance > desired_distance:
-                df_min = df_min.append(row)
+                df_min = pd.concat([df_min, row])
                 last_coords = {'LAT':row['LAT'],'LONG':row['LONG']}
             else:
                 pass
         else:
-            df_min = df_min.append(row)
+            df_min = pd.concat([df_min, row])
             last_coords = {'LAT':row['LAT'],'LONG':row['LONG']}
     
     df.to_sql(name='path_min', con=conn, if_exists='append', index=False)
@@ -214,6 +216,7 @@ def checkins(df, user_id):
         # New check-ins found
         checkin_cols = ['geometry_coordinates_0', 'geometry_coordinates_1', 'properties_arrival_date','properties_device_id']
         df_checkins = df_checkins[checkin_cols].reset_index(drop=True)
+        df_checkins['properties_arrival_date'] = df_checkins['properties_arrival_date'].dt.strftime('%Y-%m-%dT%H:%M:%S%z')
         last_checkin = df_checkins.iloc[-1].to_dict()
 
         # Write json
@@ -232,7 +235,7 @@ def data_processor(user_id, content):
     df = get_df(user_id, content)  # Gets df from json content
 
     # Create SQL connection
-    conn = sql_connection.main(user_id)  # Creates a new sql connection
+    conn = sql_connection.main(user_id)  # Creates a .db and tables if they don't exist
 
     # Dump received raw data to the 'raw' SQL table
     raw_sql_dump(df, conn)

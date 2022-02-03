@@ -36,7 +36,8 @@ def create_table(conn, create_table_sql):
 
 def main(user_id):
     # Path for the user's database
-    database_path = Path.cwd() / 'database' / user_id
+    database_name = user_id + '.db'
+    database_path = Path.cwd() / 'database' / database_name
 
     sql_create_raw_table = """ CREATE TABLE IF NOT EXISTS raw (
         type TEXT,
@@ -97,8 +98,8 @@ def main(user_id):
         LAT FLOAT,
         arrival DATETIME,
         departure DATETIME,
-        duration FLOAT,
-        device TEXT
+        device TEXT,
+        duration FLOAT
         );
     """
 
