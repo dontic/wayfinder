@@ -4,6 +4,12 @@ import json
 
 app = Flask(__name__)
 
+@app.route('/', methods=['GET','POST'])
+def login():
+    # Main flask map interface
+    # In developement
+    pass
+
 @app.route('/api/', methods=['GET', 'POST'])
 def add_message(token=None):
     # Gather json content
@@ -12,7 +18,7 @@ def add_message(token=None):
     except:
         print("Format data not valid.")
 
-    # Get authorisation
+    # Verify identity of the uploader
     with open("users.json", "r") as f:
         auth = json.load(f)
     user = request.args.get("user")
@@ -24,7 +30,7 @@ def add_message(token=None):
     else:
         access=False
 
-    # Verify identity of the uploader
+    # Main script
     if access:
         data_processor(user, content)
         return jsonify({"result": "ok"})
