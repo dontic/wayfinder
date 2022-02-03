@@ -3,9 +3,9 @@
 > :warning: Under early developement
 
 ## What is wayfinder?
-Wayfinder is a server application that reads, process, stores and displays data gathered by the overland-ioss app.
+Wayfinder is a Flask server application that reads, process, stores and displays data gathered by the overland-ios app.
 
-Wayfinder is built in Python with it's main libraries being Pandas for data processing and Plotly for the display maps.
+Wayfinder is built in Python with it's main libraries being Flask for the App (API and data display) and Pandas for data processing.
 
 ## Usage
 
@@ -73,6 +73,8 @@ A really good supervisor guide [here](https://www.digitalocean.com/community/tut
 
 The server app is set-up with basic authentication, so that only the users you allow can upload data to the server.
 
+> :warning: The password specified in these steps is not safe in any way, think of it more as a token. DO NOT use a password from another service here!
+
 This is done in 2 steps:
 
 **3.1 Set user credentials in users.json**
@@ -104,7 +106,5 @@ http://yourPublicIP:port/api/?user=<your_user>&pwd=<your_password>
 ```
 
 Replace ```<your_user>``` and ```<your_password>``` with the user and password you have previously set in users.json
-
-> :warning: The password specified here is not safe in any way, think of it more as a token. DO NOT use a password from another service here!
 
 > :information_source: Check the [Overland Repo]() for detailed information on how to set up the Overland App in your phone
