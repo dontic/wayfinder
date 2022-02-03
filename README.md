@@ -13,7 +13,7 @@ For example purposes it's going to be assumed that the server is going to be set
 
 You will also need to have ```python3``` installed.
 
-> :info: [Click here]() for a tutorial on how to set up Raspbian on your Raspberry Pi.
+> :information_source: [Click here]() for a tutorial on how to set up Raspbian on your Raspberry Pi.
 
 ### 1. Clone the repository
 
@@ -31,6 +31,14 @@ The folder ```wayfinder``` will be created in that directory with all the necess
 ```bash
 cd wayfinder
 ```
+
+You will also need to create the `database` directory. This is where the users' databases will be stored.
+
+```bash
+mkdir database
+```
+
+It's good practice to periodically back-up this `database` directory somewhere safe. Otherwise, if something goes wrong, you risk loosing all the data stored there.
 
 ### 2. Initialize the app
 
@@ -59,13 +67,7 @@ This will initiallize the app in your server on port 5012 by default. You can mo
 
 There are also other methods, like `cron`.
 
-##### 2.2.1 Setting up supervisor
-
-Install supervisor
-
-```bash
-sudo apt-get install supervisor
-```
+A really good supervisor guide [here](https://www.digitalocean.com/community/tutorials/how-to-install-and-manage-supervisor-on-ubuntu-and-debian-vps).
 
 ### 3. Set the credentials
 
@@ -103,6 +105,6 @@ http://yourPublicIP:port/api/?user=<your_user>&pwd=<your_password>
 
 Replace ```<your_user>``` and ```<your_password>``` with the user and password you have previously set in users.json
 
-> :info: Check the [Overland Repo]() for detailed information on how to set up the Overland App in your phone
+> :warning: The password specified here is not safe in any way, think of it more as a token. DO NOT use a password from another service here!
 
-
+> :information_source: Check the [Overland Repo]() for detailed information on how to set up the Overland App in your phone
