@@ -1,3 +1,4 @@
+from sys import getdefaultencoding
 import pandas as pd
 pd.options.mode.chained_assignment = None  # default = 'warn'
 import numpy as np
@@ -191,12 +192,11 @@ def visits(df, conn):
     visits_cols = ['geometry_coordinates_0', 'geometry_coordinates_1', 'properties_arrival_date', 'properties_departure_date','properties_device_id']
     df_visits = df_visits[visits_cols].reset_index(drop=True)
     df_visits.columns = ['LONG','LAT','arrival','departure','device']
-    
-    df_visits['duration'] = (df_visits.departure - df_visits.arrival) / pd.Timedelta(hours=1)
 
     if df_visits.empty:
         pass
     else:
+        df_visits['duration'] = (df_visits.departure - df_visits.arrival) / pd.Timedelta(hours=1)
         df_visits.to_sql(name='visits', con=conn, if_exists='append', index=False)
 
     return True
@@ -256,9 +256,11 @@ def data_processor(user_id, content):
 
 
 if __name__ == "__main__":
-    lat1 = 40.7128
-    long1 = 74.0060
-    lat2 = 51.5072
-    long2 = 0.1276
-    distance = haversine(lat1,long1,lat2,long2)
-    print("Distance = %s meters" % round(distance,2))
+    # Test
+    user_id = ''
+    filename = user_id + '_last.json'
+
+    with open(filename, "r") as f:
+        content = json.load(f)
+    
+    df = get_df(user_id, content)
