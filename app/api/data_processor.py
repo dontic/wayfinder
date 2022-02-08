@@ -4,7 +4,7 @@ pd.options.mode.chained_assignment = None  # default = 'warn'
 import numpy as np
 from pathlib import Path
 import json
-import sql_connection
+from app.api import sql_connection
 
 
 def flatten_json(nested_json, exclude=['']):
@@ -231,25 +231,33 @@ def checkins(df, user_id):
 
 def data_processor(user_id, content):
     # Main processor for the received data
+    print("Backing up received JSON data...")
     backup_received_json(user_id, content)  # Saves a copy of the last received content
+    print("Generating dataframe from received JSON data...")
     df = get_df(user_id, content)  # Gets df from json content
 
     # Create SQL connection
+    print("Creting SQL connection with %s's database..." % user_id)
     conn = sql_connection.main(user_id)  # Creates a .db and tables if they don't exist
 
     # Dump received raw data to the 'raw' SQL table
+    print("Processing raw data...")
     raw_sql_dump(df, conn)
 
     # Process and dump path data to the 'path' SQL table
+    print("Processing path data...")
     df_path = path_sql_dump(df, conn)
 
     # Process and dump path minimized data to the 'path_min' SQL table
+    print("Processing minimized path data...")
     path_min_sql_dump(df_path, conn, accuracy=10, desired_distance=50, remove_stationary=True)
 
     # Dump new visits to the 'visits' SQL table
+    print("Processing visits...")
     visits(df, conn)
 
     # Save the user's last checkin in json form
+    print("Processing last checkin...")
     checkins(df, user_id)
 
     return True
