@@ -1,10 +1,7 @@
-from flask import Blueprint, request, jsonify, flash
-import json
+from flask import Blueprint, request, jsonify
 from app.api.data_processor import data_processor
 from app.auth.models import User
-from app.extensions import db
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, login_required, logout_user
+from werkzeug.security import check_password_hash
 
 api = Blueprint('api', __name__, url_prefix='/api')
 
