@@ -36,7 +36,7 @@ def signup_post():
     email = request.form.get('email')
     username = request.form.get('username')
     password = request.form.get('password')
-    apikey = request.form.get('API Key')
+    apikey = request.form.get('apikey')
 
     user_email = User.query.filter_by(email=email).first()
     if user_email:
