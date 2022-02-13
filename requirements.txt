@@ -1,2 +1,6 @@
 flask
+flask_login
 pandas
+plotly
+wtforms
+flask_wtf
