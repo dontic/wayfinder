@@ -1,3 +1,4 @@
+from pickle import NONE
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 import app.site.pathmap as path
@@ -26,16 +27,30 @@ def pathmap():
 
     return render_template("site/pathmap.html", graphJSON=graphJSON)
 
-@site.route('/visitsmap', methods=['GET', 'POST'])
+@site.route('/visitsmap')
 @login_required
 def visitsmap():
     date_i = None
     date_f = None
-    fig = visits.getPlot(current_user, date_i, date_f)
-
+    ignore_home = None
+    
+    fig = visits.getPlot(current_user, date_i, date_f, ignore_home)
     graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
+    return render_template("site/visitsmap.html", graphJSON=graphJSON, ignore_home_value=None)
 
-    return render_template("site/visitsmap.html", graphJSON=graphJSON)
+@site.route('/callback/<endpoint>')
+@login_required
+def cb(endpoint):
+    if endpoint == 'visits_map':
+        ignore_home = request.args.get('ignore_home')
+        date_i = request.args.get('from_date')
+        date_f = request.args.get('to_date')
+        print(ignore_home, date_i, date_f)
+        fig = visits.getPlot(current_user, date_i, date_f, ignore_home)
+        graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
+        return graphJSON
+    else:
+        print('ERROR')
 
 @site.route('/settings', methods=['GET', 'POST'])
 @login_required
