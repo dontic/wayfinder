@@ -1,0 +1,35 @@
+{% extends "site/base.html" %}
+
+{% block head %}
+{{ super() }}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="block">
+    <div class="columns">
+        <div class="column">
+            From Date
+            <input type="datetime-local" data-display-mode="dialog" data-close-on-select="false">
+        </div>
+        <div class="column">
+            To Date
+            <input type="datetime-local" data-display-mode="inline" data-is-range="true" data-close-on-select="false">
+        </div>
+        <div class="column is-one-fifth">
+            <button class="button is-link">Submit</button>
+        </div>
+      </div>
+</div>
+
+<div class="block">
+    <div id="chart" class="chart"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+    var graphs = {{graphJSON | safe}};
+    Plotly.plot('chart',graphs,{});        
+</script>
+{% endblock scripts %}
