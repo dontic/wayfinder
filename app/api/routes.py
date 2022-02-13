@@ -1,6 +1,10 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, flash
 import json
 from app.api.data_processor import data_processor
+from app.auth.models import User
+from app.extensions import db
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import login_user, login_required, logout_user
 
 api = Blueprint('api', __name__, url_prefix='/api')
 
@@ -13,19 +17,18 @@ def add_message(token=None):
         print("Got JSON content.")
     except:
         print("Received data not valid.")
+        return(None)
 
     # Verify identity of the uploader
     print("Verifying user...")
-    with open("users.json", "r") as f:
-        auth = json.load(f)
-    user = request.args.get("user")
-    pwd = request.args.get("pwd")
-    
-    if auth[user] == pwd:
-        print("Identity verified.\nProcessing data for user: %s" % user)
-        access = True
+    username = request.args.get("username")
+    apikey = request.args.get("apikey")
+    user = User.query.filter_by(username=username).first()
+    # Check user credentials
+    if not user or not check_password_hash(user.apikey, apikey):
+        access = False
     else:
-        access=False
+        access = True
 
     # Main script
     if access:
