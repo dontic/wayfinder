@@ -1,23 +1,41 @@
-# Import flask and template operators
 from flask import Flask, render_template
+from config import Config
+from flask_login import LoginManager
+from app.extensions import db
+from flask_login import LoginManager
 
-# Define the WSGI application object
-app = Flask(__name__)
+def create_app():
+    # Define the WSGI application object
+    app = Flask(__name__)
 
-# Configurations
-app.config.from_object('config')
+    # Configurations
+    app.config.from_object(Config)
 
-# Sample HTTP error handling
-@app.errorhandler(404)
-def not_found(error):
-    return render_template('404.html'), 404
+    # Authentication stuff
+    db.init_app(app)
+    login_manager = LoginManager()
+    login_manager.login_view = 'auth.login'
+    login_manager.init_app(app)
 
-# Import a module / component using its blueprint handler variable (mod_auth)
-from app.api.routes import api
-from app.site.routes import site
+    from app.auth.models import User
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
 
-# Register blueprint(s)
-app.register_blueprint(api)
-app.register_blueprint(site)
-# app.register_blueprint(xyz_module)
-# ..
+
+    # Sample HTTP error handling
+    @app.errorhandler(404)
+    def not_found(error):
+        return render_template('404.html'), 404
+
+    # Import modules using their blueprint handler variable
+    from app.api.routes import api
+    from app.site.routes import site
+    from app.auth.routes import auth
+
+    # Register blueprints
+    app.register_blueprint(api)
+    app.register_blueprint(site)
+    app.register_blueprint(auth)
+
+    return app

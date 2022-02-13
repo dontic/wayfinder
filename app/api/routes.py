@@ -4,7 +4,7 @@ from app.api.data_processor import data_processor
 
 api = Blueprint('api', __name__, url_prefix='/api')
 
-@api.route('/', methods=['GET', 'POST'])
+@api.route('/overland/', methods=['GET', 'POST'])
 def add_message(token=None):
     # Get json content
     print("Initializing API connection...")
