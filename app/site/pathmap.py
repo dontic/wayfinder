@@ -18,10 +18,11 @@ def getPlot(current_user, date_i, date_f):
     db_path = pathlib.Path.cwd() / 'database' / db_name
     conn = create_connection(db_path)
     
-    query = '''
+    query = ('''
     SELECT *
     FROM path
-    '''
+    WHERE timestamp BETWEEN "%s" AND "%s"
+    ''' % (str(date_i), str(date_f)))
     df = pd.read_sql(query, conn)
 
     # Plot

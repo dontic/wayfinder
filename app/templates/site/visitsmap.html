@@ -47,10 +47,9 @@
 
 {% block scripts %}
 {{ super() }}
-
-<script>callback();</script>
-<script type="text/javascript">
-    var graphs = {{graphJSON | safe}};
-    Plotly.plot('chart',graphs,{});        
+<script>
+    document.getElementById('from_date').value = "{{ date_i }}".slice(0,16);
+    document.getElementById('to_date').value = "{{ date_f }}".slice(0,16);
 </script>
+<script>callback();</script>
 {% endblock scripts %}

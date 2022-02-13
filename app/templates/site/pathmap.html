@@ -3,6 +3,19 @@
 {% block head %}
 {{ super() }}
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript">
+    async function callback() {
+        let from_date = document.getElementById('from_date').value;
+        let to_date = document.getElementById('to_date').value;
+        let response = await fetch("/callback/path_map?from_date=" + from_date + "&to_date=" + to_date);
+        if (response.ok) {
+            let chartJson = await response.json();
+            Plotly.newPlot('chart', chartJson, {});
+        } else {
+            alert("HTTP-Error: " + response.status + " on visits_map");
+        }
+    }
+</script>
 {% endblock %}
 
 {% block content %}
@@ -10,14 +23,14 @@
     <div class="columns">
         <div class="column">
             From Date
-            <input type="datetime-local" data-display-mode="dialog" data-close-on-select="false">
+            <input id="from_date" type="datetime-local" data-display-mode="dialog" data-close-on-select="false">
         </div>
         <div class="column">
             To Date
-            <input type="datetime-local" data-display-mode="inline" data-is-range="true" data-close-on-select="false">
+            <input id="to_date" type="datetime-local" data-display-mode="inline" data-is-range="true" data-close-on-select="false">
         </div>
         <div class="column is-one-fifth">
-            <button class="button is-link">Submit</button>
+            <button class="button is-link" onclick="callback()">Submit</button>
         </div>
       </div>
 </div>
@@ -28,8 +41,10 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript">
-    var graphs = {{graphJSON | safe}};
-    Plotly.plot('chart',graphs,{});        
+{{ super() }}
+<script>
+    document.getElementById('from_date').value = "{{ date_i }}".slice(0,16);
+    document.getElementById('to_date').value = "{{ date_f }}".slice(0,16);
 </script>
+<script>callback();</script>
 {% endblock scripts %}

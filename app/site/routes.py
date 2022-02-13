@@ -1,3 +1,4 @@
+from datetime import datetime
 from pickle import NONE
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
@@ -8,6 +9,7 @@ import json
 from app.auth.models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db
+from datetime import datetime, timedelta
 
 site = Blueprint('site', __name__)
 
@@ -19,24 +21,24 @@ def overview():
 @site.route('/mainmap', methods=['GET', 'POST'])
 @login_required
 def pathmap():
-    date_i = None
-    date_f = None
+    date_i = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M")
+    date_f = datetime.now().strftime("%Y-%m-%dT%H:%M")
     fig = path.getPlot(current_user, date_i, date_f)
 
     graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
 
-    return render_template("site/pathmap.html", graphJSON=graphJSON)
+    return render_template("site/pathmap.html", graphJSON=graphJSON, date_i=date_i, date_f=date_f)
 
 @site.route('/visitsmap')
 @login_required
 def visitsmap():
-    date_i = None
-    date_f = None
-    ignore_home = None
+    date_i = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M")
+    date_f = datetime.now().strftime("%Y-%m-%dT%H:%M")
+    ignore_home = 'false'
     
     fig = visits.getPlot(current_user, date_i, date_f, ignore_home)
     graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
-    return render_template("site/visitsmap.html", graphJSON=graphJSON, ignore_home_value=None)
+    return render_template("site/visitsmap.html", graphJSON=graphJSON, ignore_home_value=None, date_i=date_i, date_f=date_f)
 
 @site.route('/callback/<endpoint>')
 @login_required
@@ -45,12 +47,15 @@ def cb(endpoint):
         ignore_home = request.args.get('ignore_home')
         date_i = request.args.get('from_date')
         date_f = request.args.get('to_date')
-        print(ignore_home, date_i, date_f)
         fig = visits.getPlot(current_user, date_i, date_f, ignore_home)
         graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
         return graphJSON
-    else:
-        print('ERROR')
+    elif endpoint == 'path_map':
+        date_i = request.args.get('from_date')
+        date_f = request.args.get('to_date')
+        fig = path.getPlot(current_user, date_i, date_f)
+        graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
+        return graphJSON
 
 @site.route('/settings', methods=['GET', 'POST'])
 @login_required
