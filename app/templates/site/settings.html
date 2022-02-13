@@ -1,0 +1,136 @@
+{% extends "site/base.html" %}
+
+{% block content %}
+<div class="column is-10 is-offset-1">
+    <h1>Modify details</h1>
+    <div class="box">
+        {% if section == 'details' %}
+        {% if message %}
+        {% if error %}
+            <div class="notification is-danger">
+                {{ message }}
+            </div>
+        {% else %}
+            <div class="notification is-success">
+                {{ message }}
+            </div>
+        {% endif %}
+        {% endif %}
+        {% endif %}
+        <form method="POST" action="">
+            <div class="field">
+                <div class="control">
+                    <label>Name</label>
+                    <input class="input is-large" type="text" name="name" placeholder="Name" autofocus="" value="{{ current_user.name }}">
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="control">
+                    <label>email</label>
+                    <input class="input is-large" type="email" name="email" placeholder="Email" autofocus="" value="{{ current_user.email }}">
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="control">
+                    <label>Username</label>
+                    <input class="input is-large" type="text" name="username" placeholder="Username" autofocus="" value="{{ current_user.username }}">
+                </div>
+            </div>
+            <button name="button" value="details" class="button is-block is-info is-large is-fullwidth">Update details</button>
+        </form>
+    </div>
+    <h1>Modify password</h1>
+    <div class="box">
+        {% if section == 'password' %}
+        {% if message %}
+        {% if error %}
+            <div class="notification is-danger">
+                {{ message }}
+            </div>
+        {% else %}
+            <div class="notification is-success">
+                {{ message }}
+            </div>
+        {% endif %}
+        {% endif %}
+        {% endif %}
+        <form method="POST" action="">
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="password" name="password" placeholder="Old password">
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="password" name="newPassword" placeholder="New password">
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="password" name="rNewPassword" placeholder="Repeat new password">
+                </div>
+            </div>
+            <button name="button" value="password" class="button is-block is-info is-large is-fullwidth">Change password</button>
+        </form>
+    </div>
+    <h1>Change API Key</h1>
+    <div class="box">
+        {% if section == 'api' %}
+        {% if message %}
+        {% if error %}
+            <div class="notification is-danger">
+                {{ message }}
+            </div>
+        {% else %}
+            <div class="notification is-success">
+                {{ message }}
+            </div>
+        {% endif %}
+        {% endif %}
+        {% endif %}
+        <form method="POST" action="">
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="text" name="napikey" placeholder="New API key">
+                </div>
+            </div>
+            <button name="button" value="api" class="button is-block is-info is-large is-fullwidth">Change API key</button>
+        </form>
+    </div>
+    <h1>Set home coordinates</h1>
+    <div class="box">
+        {% if section == 'home' %}
+        {% if message %}
+        {% if error %}
+            <div class="notification is-danger">
+                {{ message }}
+            </div>
+        {% else %}
+            <div class="notification is-success">
+                {{ message }}
+            </div>
+        {% endif %}
+        {% endif %}
+        {% endif %}
+        <form method="POST" action="">
+            <div class="field">
+                <div class="control">
+                    <label>Home Latitude</label>
+                    <input class="input is-large" type="text" name="homeLAT" placeholder="Home Latitude" value="{{ current_user.homeLAT }}">
+                </div>
+            </div>
+            <div class="field">
+                <div class="control">
+                    <label>Home Longitude</label>
+                    <input class="input is-large" type="text" name="homeLONG" placeholder="Home Longitude" value="{{ current_user.homeLONG }}">
+                </div>
+            </div>
+            <button name="button" value="home" class="button is-block is-info is-large is-fullwidth">Set home coordinates</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
