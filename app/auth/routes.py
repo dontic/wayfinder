@@ -18,11 +18,10 @@ def login_post():
 
     user = User.query.filter_by(username=username).first()
 
-    # check if the user actually exists
-    # take the user-supplied password, hash it, and compare it to the hashed password in the database
+    # Check user credentials
     if not user or not check_password_hash(user.password, password):
         flash('Please check your login details and try again.')
-        return redirect(url_for('auth.login')) # if the user doesn't exist or password is wrong, reload the page
+        return redirect(url_for('auth.login'))
 
     login_user(user, remember=remember)
     return redirect(url_for('site.overview'))
@@ -33,6 +32,7 @@ def signup():
 
 @auth.route('/signup', methods=['POST'])
 def signup_post():
+    name = request.form.get('name')
     email = request.form.get('email')
     username = request.form.get('username')
     password = request.form.get('password')
@@ -49,11 +49,15 @@ def signup_post():
         return redirect(url_for('auth.signup'))
 
     # Add new user to the sqlite database
-    new_user = User(email=email, username=username, password=generate_password_hash(password, method='sha256'), apikey=apikey)
+    new_user = User(name=name, email=email, username=username, password=generate_password_hash(password, method='sha256'), apikey=generate_password_hash(apikey, method='sha256'))
     db.session.add(new_user)
     db.session.commit()
 
-    return redirect(url_for('auth.login'))
+    # Sign in the user automatically
+    user = User.query.filter_by(username=username).first()
+    login_user(user, remember=False)
+
+    return redirect(url_for('site.overview'))
 
 @auth.route('/logout')
 @login_required
