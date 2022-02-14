@@ -4,11 +4,11 @@ class Config(object):
     DEVELOPEMENT = True
 
     # Statement for enabling new signups
-    ENABLE_SIGNUPS = False
+    ENABLE_SIGNUPS = True
 
     # Define the application directory
-    import os
-    BASE_DIR = os.path.abspath(os.path.dirname(__file__))  
+    from pathlib import Path
+    BASE_DIR = Path.cwd()
 
     # Application threads. A common general assumption is
     # using 2 per available processor cores - to handle
@@ -24,7 +24,7 @@ class Config(object):
     CSRF_SESSION_KEY = "secret"
 
     # Secret key for signing cookies
-    SECRET_KEY = "secret"
+    SECRET_KEY = "super_secret"
 
     # Users database URI
     SQLALCHEMY_DATABASE_URI = 'sqlite:///users.db'
