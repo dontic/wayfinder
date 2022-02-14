@@ -2,9 +2,8 @@ from flask import redirect, url_for, flash
 from flask_login import login_user
 from app.auth.models import User
 from app.extensions import db
-from pathlib import Path
 from app.api.sql_connection import create_connection, create_table
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
 
 
 def create_user_location_database(user):

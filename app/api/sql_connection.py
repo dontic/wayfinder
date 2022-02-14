@@ -33,5 +33,6 @@ def create_connection(user):
 
 if __name__ == '__main__':
     from app.auth.models import User
+    from werkzeug.security import generate_password_hash
     user = User(name='Name', email='example@email.com', username='username', password=generate_password_hash('password', method='sha256'), apikey=generate_password_hash('apikey', method='sha256'))
     create_connection(user)
