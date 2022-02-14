@@ -33,14 +33,14 @@ def flatten_json(nested_json, exclude=['']):
     return out
 
 
-def backup_received_json(user_id, content):
-    file = user_id+'_last.json'
+def backup_received_json(user, content):
+    file = user.username + '_last.json'
     filepath = Path.cwd()/'database'/file
     with open(filepath,'w') as file:
         json.dump(content, file, indent = 4)
 
 
-def get_df(user_id, content):
+def get_df(content):
     # Get dataframe from json
     df_content = pd.DataFrame([flatten_json(x) for x in content['locations']])
 
@@ -52,33 +52,6 @@ def get_df(user_id, content):
     df['properties_timestamp'] = pd.to_datetime(df['properties_timestamp'])
     df['properties_arrival_date'] = pd.to_datetime(df['properties_arrival_date'])
     df['properties_departure_date'] = pd.to_datetime(df['properties_departure_date'])
-
-    '''
-    Checks for duplicate points
-    If a user stays in the same spot for hours, multiple points might be gathered
-    Only interested in first (arrival) and last one (departure)
-    
-
-    df_clean = pd.DataFrame(columns=df.columns)  # Empty dataframe to append desired values
-    last=[]
-    for index, row in df.iterrows():
-        if index > 0:
-            current = [row['geometry_coordinates_0'],row['geometry_coordinates_1'],row['properties_motion_0']]
-            if current != last:  # If the row is different
-                df_clean = df_clean.append(last_row)
-                df_clean = df_clean.append(row)
-                last = [row['geometry_coordinates_0'],row['geometry_coordinates_1'],row['properties_motion_0']]
-                last_row = row
-
-            else:
-                pass
-        else:
-            df_clean = df_clean.append(row)
-            last = [row['geometry_coordinates_0'],row['geometry_coordinates_1'],row['properties_motion_0']]
-            last_row = row
-    
-    df = df_clean
-    '''
 
     return df
 
@@ -202,7 +175,7 @@ def visits(df, conn):
     return True
 
 
-def checkins(df, user_id):
+def checkins(df, user):
     '''
     Gets the last check-in location of the user and stores it in last_checkin.json
     '''
@@ -220,7 +193,7 @@ def checkins(df, user_id):
         last_checkin = df_checkins.iloc[-1].to_dict()
 
         # Write json
-        file = user_id+'_checkin.json'
+        file = user.username+'_checkin.json'
         filepath = Path.cwd()/'database'/file
         with open(filepath,'w') as file:
             # Write json file
@@ -229,16 +202,16 @@ def checkins(df, user_id):
     return True
 
 
-def data_processor(user_id, content):
+def data_processor(user, content):
     # Main processor for the received data
     print("Backing up received JSON data...")
-    backup_received_json(user_id, content)  # Saves a copy of the last received content
+    backup_received_json(user, content)  # Saves a copy of the last received content
     print("Generating dataframe from received JSON data...")
-    df = get_df(user_id, content)  # Gets df from json content
+    df = get_df(content)  # Gets df from json content
 
     # Create SQL connection
-    print("Creting SQL connection with %s's database..." % user_id)
-    conn = sql_connection.main(user_id)  # Creates a .db and tables if they don't exist
+    print("Creting SQL connection with %s's database..." % user.name)
+    conn = sql_connection.main(user)  # Creates a .db and tables if they don't exist
 
     # Dump received raw data to the 'raw' SQL table
     print("Processing raw data...")
@@ -258,17 +231,19 @@ def data_processor(user_id, content):
 
     # Save the user's last checkin in json form
     print("Processing last checkin...")
-    checkins(df, user_id)
+    checkins(df, user)
 
     return True
 
 
 if __name__ == "__main__":
     # Test
-    user_id = ''
-    filename = user_id + '_last.json'
-
+    from werkzeug.security import generate_password_hash, check_password_hash
+    from app.auth.models import User
+    user = User(name='Name', email='example@email.com', username='username', password=generate_password_hash('password', method='sha256'), apikey=generate_password_hash('apikey', method='sha256'))
+    
+    filename = user.username + '_last.json'
     with open(filename, "r") as f:
         content = json.load(f)
     
-    df = get_df(user_id, content)
+    df = get_df(user, content)
