@@ -1,7 +1,6 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from app.auth.models import User
-from app.extensions import db
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 from flask_login import login_user, login_required, logout_user
 from app.auth.signup import process_user
 
@@ -29,6 +28,10 @@ def login():
 
 @auth.route('/signup', methods=['GET','POST'])
 def signup():
+    if not current_app.config['ENABLE_SIGNUPS']:
+        flash('No signups are allowed at this time. Please log in with an existing account.')
+        return redirect(url_for('auth.login'))
+
     if request.method == 'POST':
         return process_user(request)
 
