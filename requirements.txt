@@ -1,2 +1,5 @@
 flask
+flask_login
+flask_sqlalchemy
 pandas
+plotly

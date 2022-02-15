@@ -1,0 +1,64 @@
+{% extends "site/base.html" %}
+
+{% block head %}
+{{ super() }}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript">
+    async function callback() {
+        let from_date = document.getElementById('from_date').value;
+        let to_date = document.getElementById('to_date').value;
+        let ignore_home = document.getElementById('ignore_home').checked;
+        let response = await fetch("/callback/visits_map?from_date=" + from_date + "&to_date=" + to_date + "&ignore_home=" + ignore_home);
+        if (response.ok) {
+            let chartJson = await response.json();
+            Plotly.newPlot('chart', chartJson, {});
+        } else {
+            alert("HTTP-Error: " + response.status + " on visits_map");
+        }
+    }
+</script>
+<script type="text/javascript">
+    function from_date_changed(from_date) {
+        document.getElementById('to_date').min = from_date;
+    }
+</script>
+<script type="text/javascript">
+    function to_date_changed(to_date) {
+        document.getElementById('from_date').max = to_date;
+        if (to_date<document.getElementById('from_date').value) {
+            document.getElementById('from_date').value = to_date
+        }
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="block">
+    <div class="columns">
+        <div class="column">
+            From Date
+            <input id="from_date" type="datetime-local" value="{{ date_i }}" min="{{ date_min }}" max="{{ date_max }}" onchange="from_date_changed(this.value)">
+        </div>
+        <div class="column">
+            To Date
+            <input id="to_date" type="datetime-local" value="{{ date_f }}" min="{{ date_min }}" max="{{ date_max }}" onchange="to_date_changed(this.value)">
+        </div>
+        <div class="column is-one-fifth">
+            Ignore home
+            <input id="ignore_home" type="checkbox" {{ ignore_home_checked }}>
+        </div>
+        <div class="column is-one-fifth">
+            <button class="button is-link" onclick="callback()">Submit</button>
+        </div>
+    </div>
+</div>
+
+<div class="block">
+    <div id="chart" class="chart"></div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+{{ super() }}
+<script>callback();</script>
+{% endblock scripts %}

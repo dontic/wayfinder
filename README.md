@@ -3,7 +3,7 @@
 > :warning: Under early developement
 
 ## What is wayfinder?
-Wayfinder is a Flask server application that reads, process, stores and displays data gathered by the overland-ios app.
+Wayfinder is a Flask application that reads, process, stores and displays data gathered by the overland-ios app.
 
 Wayfinder is built in Python with it's main libraries being Flask for the App (API and data display) and Pandas for data processing.
 
@@ -15,7 +15,7 @@ You will also need to have ```python3``` installed.
 
 > :information_source: [Click here]() for a tutorial on how to set up Raspbian on your Raspberry Pi.
 
-### 1. Clone the repository
+### 1 Clone the repository
 
 In this example de installation directory is going to be the home directory of the user.
 
@@ -32,13 +32,51 @@ The folder ```wayfinder``` will be created in that directory with all the necess
 cd wayfinder
 ```
 
-You will also need to create the `database` directory. This is where the users' databases will be stored.
+#### 1.1 Create virtual environment
+
+Ensure that python3 is installed in your system.
+
+While in the wayfinder directory run:
+
+```bash
+python3 -m venv venv
+```
+
+Activate the virtual environment:
+
+```bash
+source venv/bin/activate
+```
+
+Install all the necessary requirements:
+
+```bash
+pip install -r requirements.txt
+```
+
+#### 1.2 Create user database
+
+You will need to create a users.db database to store the users' credentials for the app.
+
+The app is set up to create this automatically by running the following commands in a terminal:
+
+```bash
+from app import create_app
+from app.extensions import db
+from app.auth.models import *
+
+db.create_all(app=create_app())
+```
+
+#### 1.3 Create location database directory
+
+You will also need to create the `database` directory. This is where the location databases will be stored.
 
 ```bash
 mkdir database
 ```
 
-It's good practice to periodically back-up this `database` directory somewhere safe. Otherwise, if something goes wrong, you risk loosing all the data stored there.
+It's good practice to periodically back-up this `database` directory somewhere safe. Otherwise, if something goes wrong, you risk loosing all the data.
 
 ### 2. Initialize the app
 
@@ -46,18 +84,13 @@ There are several ways you can do this:
 
 #### 2.1 The easiest way
 
-Just run the app directly on your server.
-
-Install the dependencies first:
-```bash
-pip install -r requirements.txt
-```
+Just run the app directly on your server:
 
 ```bash
-python3 app.py
+python3 run.py
 ```
 
-This will initiallize the app in your server on port 5012 by default. You can modify this port in `app.py`
+This will initiallize the app in your server on port 5012 by default. You can modify this port in `run.py`
 
 >:warning: Note that if the server goes down or something crashes, you will need to manually restart the app each time.
 
@@ -69,42 +102,40 @@ There are also other methods, like `cron`.
 
 A really good supervisor guide [here](https://www.digitalocean.com/community/tutorials/how-to-install-and-manage-supervisor-on-ubuntu-and-debian-vps).
 
-### 3. Set the credentials
+### 3 Sign up process
 
-The server app is set-up with basic authentication, so that only the users you allow can upload data to the server.
+Just open any browser and go to the app address:
 
-> :warning: The password specified in these steps is not safe in any way, think of it more as a token. DO NOT use a password from another service here!
+```
+yourServerAdress:5012
+```
 
-This is done in 2 steps:
+You will see a Log In and Sign Up tabs at the top.
 
-**3.1 Set user credentials in users.json**
+You can use the Sign Up tab to create your user and API Key.
 
-Go to the repo in your server and edit the ```users.json``` file with your desired user and passwords combinations.
+You can modify your user details in the `settings` tab once you are logged in.
+
+#### 3.1 Enabling and disabling signups
+
+Go to the repo in your server and edit the ```config.py```:
 
 ```bash
 cd /home/user/wayfinder
+nano config.py
+# Modify
+# ENABLE_SIGNUPS = True
+# to ENABLE_SIGNUPS = False
 ```
 
-```bash
-nano users.json
-```
-You will then see these contents:
-```bash
-{
-    "user": "password",
-    "other_user": "other_pw"
-}
-```
-Edit the json file as needed and save it by pressing ```ctrl+x``` and then ```enter```.
-
-**3.2 Overland App setup**
+### 4 Overland App setup
 
 In the Overland App on your phone, go to settings and setup the Receiver Endpoint to point to your server's API:
 
 ```
-http://yourPublicIP:port/api/?user=<your_user>&pwd=<your_password>
+http://yourPublicIP:port/api/?username=<your_username>&apikey=<your_api_key>
 ```
 
-Replace ```<your_user>``` and ```<your_password>``` with the user and password you have previously set in users.json
+Replace ```<your_username>``` and ```<your_api_key>``` with the user and API Key you have signed up with.
 
-> :information_source: Check the [Overland Repo]() for detailed information on how to set up the Overland App in your phone
+> :information_source: Check the [Overland Repo]() for detailed information on how to set up the Overland App in your phone.
