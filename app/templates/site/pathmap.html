@@ -16,6 +16,19 @@
         }
     }
 </script>
+<script type="text/javascript">
+    function from_date_changed(from_date) {
+        document.getElementById('to_date').min = from_date;
+    }
+</script>
+<script type="text/javascript">
+    function to_date_changed(to_date) {
+        document.getElementById('from_date').max = to_date;
+        if (to_date<document.getElementById('from_date').value) {
+            document.getElementById('from_date').value = to_date
+        }
+    }
+</script>
 {% endblock %}
 
 {% block content %}
@@ -23,11 +36,11 @@
     <div class="columns">
         <div class="column">
             From Date
-            <input id="from_date" type="datetime-local" data-display-mode="dialog" data-close-on-select="false">
+            <input id="from_date" type="datetime-local" value="{{ date_i }}" min="{{ date_min }}" max="{{ date_max }}" onchange="from_date_changed(this.value)">
         </div>
         <div class="column">
             To Date
-            <input id="to_date" type="datetime-local" data-display-mode="inline" data-is-range="true" data-close-on-select="false">
+            <input id="to_date" type="datetime-local" value="{{ date_f }}" min="{{ date_min }}" max="{{ date_max }}" onchange="to_date_changed(this.value)">
         </div>
         <div class="column is-one-fifth">
             <button class="button is-link" onclick="callback()">Submit</button>
@@ -42,9 +55,5 @@
 
 {% block scripts %}
 {{ super() }}
-<script>
-    document.getElementById('from_date').value = "{{ date_i }}".slice(0,16);
-    document.getElementById('to_date').value = "{{ date_f }}".slice(0,16);
-</script>
 <script>callback();</script>
 {% endblock scripts %}

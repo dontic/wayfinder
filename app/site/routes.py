@@ -1,6 +1,5 @@
 from datetime import datetime
-from pickle import NONE
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app
 from flask_login import login_required, current_user
 import app.site.pathmap as path
 import app.site.visitsmap as visits
@@ -21,24 +20,30 @@ def overview():
 @site.route('/mainmap', methods=['GET', 'POST'])
 @login_required
 def pathmap():
-    date_i = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M")
+    date_i = (datetime.now() - timedelta(days=current_app.config['DAYS_PERIOD'])).strftime("%Y-%m-%dT%H:%M")
     date_f = datetime.now().strftime("%Y-%m-%dT%H:%M")
+    date_min = datetime(2000,1,1,0,0,0).strftime("%Y-%m-%dT%H:%M")
+    date_max = datetime.now().strftime("%Y-%m-%dT%H:%M")
     fig = path.getPlot(current_user, date_i, date_f)
 
     graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
 
-    return render_template("site/pathmap.html", graphJSON=graphJSON, date_i=date_i, date_f=date_f)
+    return render_template("site/pathmap.html", graphJSON=graphJSON, date_i=date_i, date_f=date_f, date_min=date_min, date_max=date_max)
 
 @site.route('/visitsmap')
 @login_required
 def visitsmap():
-    date_i = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M")
+    date_i = (datetime.now() - timedelta(days=current_app.config['DAYS_PERIOD'])).strftime("%Y-%m-%dT%H:%M")
     date_f = datetime.now().strftime("%Y-%m-%dT%H:%M")
-    ignore_home = 'false'
+    date_min = datetime(2000,1,1,0,0,0).strftime("%Y-%m-%dT%H:%M")
+    date_max = datetime.now().strftime("%Y-%m-%dT%H:%M")
+
+    ignore_home = current_app.config['IGNORE_HOME']
+    ignore_home_checked = 'checked' if ignore_home == True else ''
     
     fig = visits.getPlot(current_user, date_i, date_f, ignore_home)
     graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
-    return render_template("site/visitsmap.html", graphJSON=graphJSON, ignore_home_value=None, date_i=date_i, date_f=date_f)
+    return render_template("site/visitsmap.html", graphJSON=graphJSON, ignore_home_checked=ignore_home_checked, date_i=date_i, date_f=date_f, date_min=date_min, date_max=date_max)
 
 @site.route('/callback/<endpoint>')
 @login_required

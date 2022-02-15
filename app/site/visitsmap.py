@@ -28,7 +28,6 @@ def getPlot(current_user, date_i, date_f, ignore_home=False):
     FROM visits
     WHERE arrival BETWEEN "%s" AND "%s"
     ''' % (str(date_i), str(date_f)))
-    print(query)
     df = pd.read_sql(query, conn)
 
     if ignore_home == 'true':
