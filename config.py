@@ -1,10 +1,12 @@
 class Config(object):
-    # Statement for enabling the development environment
-    DEBUG = True
-    DEVELOPEMENT = True
-
     # Statement for enabling new signups
     ENABLE_SIGNUPS = True
+
+    # Ignore home location in visits map by default
+    IGNORE_HOME = True
+
+    # Default time span for map plots in days (days back to now)
+    DAYS_PERIOD = 7
 
     # Define the application directory
     from pathlib import Path
@@ -29,3 +31,7 @@ class Config(object):
     # Users database URI
     SQLALCHEMY_DATABASE_URI = 'sqlite:///users.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # Statement for enabling the development environment
+    DEBUG = True
+    DEVELOPEMENT = True
