@@ -6,7 +6,7 @@ from flask_login import LoginManager
 
 def create_app():
     # Define the WSGI application object
-    app = Flask(__name__)
+    app = Flask(__name__, static_url_path="", static_folder="static")
 
     # Configurations
     app.config.from_object(Config)
