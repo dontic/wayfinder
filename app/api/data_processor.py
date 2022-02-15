@@ -211,7 +211,7 @@ def data_processor(user, content):
 
     # Create SQL connection
     print("Creting SQL connection with %s's database..." % user.name)
-    conn = sql_connection.main(user)  # Creates a .db and tables if they don't exist
+    conn = sql_connection.create_connection(user)  # Creates a .db and tables if they don't exist
 
     # Dump received raw data to the 'raw' SQL table
     print("Processing raw data...")
