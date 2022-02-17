@@ -1,8 +1,6 @@
-from datetime import datetime
-from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app
+from flask import Blueprint, render_template, request, current_app
 from flask_login import login_required, current_user
-import app.site.pathmap as path
-import app.site.visitsmap as visits
+import app.site.map_utils as map_utils
 from plotly.utils import PlotlyJSONEncoder
 import json
 from app.auth.models import User
@@ -24,7 +22,7 @@ def pathmap():
     date_f = datetime.now().strftime("%Y-%m-%dT%H:%M")
     date_min = datetime(2000,1,1,0,0,0).strftime("%Y-%m-%dT%H:%M")
     date_max = datetime.now().strftime("%Y-%m-%dT%H:%M")
-    fig = path.getPlot(current_user, date_i, date_f)
+    fig = map_utils.getPathPlot(current_user, date_i, date_f)
 
     graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
 
@@ -41,7 +39,7 @@ def visitsmap():
     ignore_home = current_app.config['IGNORE_HOME']
     ignore_home_checked = 'checked' if ignore_home == True else ''
     
-    fig = visits.getPlot(current_user, date_i, date_f, ignore_home)
+    fig = map_utils.getVisitsPlot(current_user, date_i, date_f, ignore_home)
     graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
     return render_template("site/visitsmap.html", graphJSON=graphJSON, ignore_home_checked=ignore_home_checked, date_i=date_i, date_f=date_f, date_min=date_min, date_max=date_max)
 
@@ -52,13 +50,13 @@ def cb(endpoint):
         ignore_home = request.args.get('ignore_home')
         date_i = request.args.get('from_date')
         date_f = request.args.get('to_date')
-        fig = visits.getPlot(current_user, date_i, date_f, ignore_home)
+        fig = map_utils.getVisitsPlot(current_user, date_i, date_f, ignore_home)
         graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
         return graphJSON
     elif endpoint == 'path_map':
         date_i = request.args.get('from_date')
         date_f = request.args.get('to_date')
-        fig = path.getPlot(current_user, date_i, date_f)
+        fig = map_utils.getPathPlot(current_user, date_i, date_f)
         graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
         return graphJSON
 
