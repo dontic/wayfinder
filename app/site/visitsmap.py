@@ -1,16 +1,7 @@
-import sqlite3 as sql
-import pathlib
-from sqlite3 import Error
 import pandas as pd
 import plotly.express as px
-
-def create_connection(db_file):
-    conn = None
-    try:
-        conn = sql.connect(db_file)
-    except Error as e:
-        print(e)
-    return conn
+from app.site.date_utils import date_format_utc
+from app.api.sql_connection import create_connection
 
 def deleteHomePoints(df, current_user, radius=200):
     homeLAT = current_user.homeLAT
@@ -19,15 +10,16 @@ def deleteHomePoints(df, current_user, radius=200):
     return df
 
 def getPlot(current_user, date_i, date_f, ignore_home=False):
-    db_name = current_user.username + '.db'
-    db_path = pathlib.Path.cwd() / 'database' / db_name
-    conn = create_connection(db_path)
+    conn = create_connection(current_user)
+    date_i = date_format_utc(date_i)
+    date_f = date_format_utc(date_f)
 
     query = ('''
     SELECT *
     FROM visits
     WHERE arrival BETWEEN "%s" AND "%s"
     ''' % (str(date_i), str(date_f)))
+
     df = pd.read_sql(query, conn)
 
     if ignore_home == 'true':

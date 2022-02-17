@@ -1,22 +1,12 @@
-import sqlite3 as sql
-import pathlib
-from sqlite3 import Error
 import pandas as pd
 import plotly.express as px
-
-def create_connection(db_file):
-    conn = None
-    try:
-        conn = sql.connect(db_file)
-    except Error as e:
-        print(e)
-    return conn
+from app.api.sql_connection import create_connection
+from app.site.date_utils import date_format_utc
 
 def getPlot(current_user, date_i, date_f):
-    db_name = current_user.username + '.db'
-    print(db_name)
-    db_path = pathlib.Path.cwd() / 'database' / db_name
-    conn = create_connection(db_path)
+    conn = create_connection(current_user)
+    date_i = date_format_utc(date_i)
+    date_f = date_format_utc(date_f)
     
     query = ('''
     SELECT *
