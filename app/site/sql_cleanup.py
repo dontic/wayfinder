@@ -44,7 +44,7 @@ def delete_duplicates(username):
     shutil.move(new_db, old_db)
 
     # Remove if more than N_BACKUPS:
-    backups = databasedir.glob('%s_backup_*.db' % username)
+    backups = sorted(databasedir.glob('%s_backup_*.db' % username))
     if len(backups) > current_app.config['N_BACKUPS']:
         ntoremove = len(backups) - current_app.config['N_BACKUPS']
         filestoremove = backups[:ntoremove]
