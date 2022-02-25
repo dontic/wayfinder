@@ -57,7 +57,7 @@ def delete_duplicates(username):
     con_old.close()
     con_new.close()
 
-    return deldups, old_size/1000000, new_size/1000000
+    return deldups, round(old_size/1000000, 2), round(new_size/1000000, 2)
 
 
 if __name__ == '__main__':
