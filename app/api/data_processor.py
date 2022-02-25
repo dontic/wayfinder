@@ -222,8 +222,9 @@ def data_processor(user, content):
     df_path = path_sql_dump(df, conn)
 
     # Process and dump path minimized data to the 'path_min' SQL table
-    print("Processing minimized path data...")
-    path_min_sql_dump(df_path, conn, accuracy=10, desired_distance=50, remove_stationary=True)
+    # Not used, gives some errors and does not reduce size by much
+    # print("Processing minimized path data...")
+    # path_min_sql_dump(df_path, conn, accuracy=10, desired_distance=50, remove_stationary=True)
 
     # Dump new visits to the 'visits' SQL table
     print("Processing visits...")
