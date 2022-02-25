@@ -8,6 +8,9 @@ class Config(object):
     # Default time span for map plots in days (days back to now)
     DAYS_PERIOD = 7
 
+    # Number of database backup versions after cleanup
+    N_BACKUPS = 2
+
     # Define the application directory
     from pathlib import Path
     BASE_DIR = Path.cwd()

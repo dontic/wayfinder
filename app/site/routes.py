@@ -123,7 +123,7 @@ def settings():
             return render_template("site/settings.html", message=message, error=False, section='home')
         elif request.form['button'] == 'cleanup':
             deldups, oldsize, newsize = delete_duplicates(current_user.username)
-            message = 'Deleted %s duplicates and reduced the file size from %s to %s' % (deldups, oldsize, newsize)
+            message = 'Deleted %s duplicates and reduced the file size from %s MB to %s MB' % (deldups, oldsize, newsize)
             return render_template("site/settings.html", message=message, error=False, section='cleanup')
 
     return render_template("site/settings.html")

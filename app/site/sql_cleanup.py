@@ -1,4 +1,3 @@
-from hashlib import new
 from flask import current_app
 import pandas as pd
 import sqlite3
@@ -8,10 +7,11 @@ from datetime import datetime as dt
 def delete_duplicates(username):
 
     pwd = current_app.config['BASE_DIR']
+    databasedir = pwd / 'database'
 
-    old_db = pwd / 'database' / ('%s.db' % username)
-    backup_db = pwd / 'database' / ('%s_backup_%s.db' % (username, dt.strftime(dt.now(),'%Y%m%d_%H%M%S')))
-    new_db = pwd / 'database' / ('%s_new.db' % username)
+    old_db = databasedir / ('%s.db' % username)
+    backup_db = databasedir / ('%s_backup_%s.db' % (username, dt.strftime(dt.now(),'%Y%m%d_%H%M%S')))
+    new_db = databasedir / ('%s_new.db' % username)
 
     con_old = sqlite3.connect(old_db)
     con_new = sqlite3.connect(new_db)
@@ -43,12 +43,21 @@ def delete_duplicates(username):
 
     shutil.move(new_db, old_db)
 
+    # Remove if more than N_BACKUPS:
+    backups = databasedir.glob('%s_backup_*.db' % username)
+    if len(backups) > current_app.config['N_BACKUPS']:
+        ntoremove = len(backups) - current_app.config['N_BACKUPS']
+        filestoremove = backups[:ntoremove]
+        for f in filestoremove:
+            f.unlink()
+        pass
+
     print('Done.')
 
     con_old.close()
     con_new.close()
 
-    return deldups, old_size, new_size
+    return deldups, old_size/1000000, new_size/1000000
 
 
 if __name__ == '__main__':
