@@ -132,5 +132,24 @@
             <button name="button" value="home" class="button is-block is-info is-large is-fullwidth">Set home coordinates</button>
         </form>
     </div>
+    <h1>Clean-up database</h1>
+    <div class="box">
+        {% if section == 'cleanup' %}
+        {% if message %}
+        {% if error %}
+            <div class="notification is-danger">
+                {{ message }}
+            </div>
+        {% else %}
+            <div class="notification is-success">
+                {{ message }}
+            </div>
+        {% endif %}
+        {% endif %}
+        {% endif %}
+        <form method="POST" action="">
+            <button name="button" value="cleanup" class="button is-block is-info is-large is-fullwidth">Clean-up database</button>
+        </form>
+    </div>
 </div>
 {% endblock %}

@@ -7,6 +7,7 @@ from app.auth.models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db
 from datetime import datetime, timedelta
+from app.site.sql_cleanup import delete_duplicates
 
 site = Blueprint('site', __name__)
 
@@ -120,6 +121,10 @@ def settings():
             db.session.commit()
             message = 'API key updated!'
             return render_template("site/settings.html", message=message, error=False, section='home')
+        elif request.form['button'] == 'cleanup':
+            deldups, oldsize, newsize = delete_duplicates(current_user.username)
+            message = 'Deleted %s duplicates and reduced the file size from %s to %s' % (deldups, oldsize, newsize)
+            return render_template("site/settings.html", message=message, error=False, section='cleanup')
 
     return render_template("site/settings.html")
 
