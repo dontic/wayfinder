@@ -3,6 +3,7 @@
 {% block head %}
 {{ super() }}
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>window.addEventListener('resize', function() { Plotly.Plots.resize('chart'); });</script>
 <script type="text/javascript">
     async function callback() {
         let from_date = document.getElementById('from_date').value;
@@ -10,7 +11,7 @@
         let response = await fetch("/callback/path_map?from_date=" + from_date + "&to_date=" + to_date);
         if (response.ok) {
             let chartJson = await response.json();
-            Plotly.newPlot('chart', chartJson, {});
+            Plotly.newPlot('chart', chartJson, {responsive: true});
         } else {
             alert("HTTP-Error: " + response.status + " on visits_map");
         }
@@ -32,7 +33,10 @@
 {% endblock %}
 
 {% block content %}
-<div class="block">
+<div class="block fullscreen-plot">
+    <div id="chart" class="chart full-height"></div>
+</div>
+<div class="block user-inputs">
     <div class="columns">
         <div class="column">
             From Date
@@ -46,10 +50,6 @@
             <button class="button is-link" onclick="callback()">Submit</button>
         </div>
       </div>
-</div>
-
-<div class="block">
-    <div id="chart" class="chart"></div>
 </div>
 {% endblock %}
 
