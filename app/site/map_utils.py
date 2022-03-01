@@ -23,8 +23,7 @@ def getPathPlot(current_user, date_i, date_f):
     hover_data=["speed","timestamp"],
     #color=df["speed_range"],
     #color_discrete_sequence=["White","Green","Yellow","Red","Pink"],
-    zoom=8,
-    height=500)
+    zoom=8)
 
     fig.update_layout(mapbox_style="open-street-map")
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
