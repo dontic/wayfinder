@@ -61,10 +61,10 @@ def getVisitsPlot(current_user, date_i, date_f, ignore_home=False):
     lon='LONG',
     z='duration',
     zoom=1,
-    height=500,
     hover_data=["arrival","departure"])
     fig.update_layout(mapbox_style="open-street-map")
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+    fig.update_layout(coloraxis_showscale=False)
 
     return fig
 
