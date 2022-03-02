@@ -38,20 +38,31 @@
 <div class="block fullscreen-plot">
     <div id="chart" class="chart full-height"></div>
 </div>
-<div class="block is-relative">
-    <div class="columns">
-        <div class="column">
+<div class="dropdown is-up bottom-left">
+    <div class="dropdown-trigger">
+        <button class="button" aria-haspopup="true" aria-controls="dropdown-menu7">
+        <span>Date selector</span>
+        <span class="icon is-small">
+            <i class="fas fa-angle-up" aria-hidden="true"></i>
+        </span>
+        </button>
+    </div>
+    <div class="dropdown-menu" id="dropdown-menu7" role="menu">
+        <div class="dropdown-content">
+        <div class="dropdown-item">
             From Date
             <input id="from_date" type="datetime-local" value="{{ date_i }}" min="{{ date_min }}" max="{{ date_max }}" onchange="from_date_changed(this.value)">
         </div>
-        <div class="column">
+        <div class="dropdown-item">
             To Date
             <input id="to_date" type="datetime-local" value="{{ date_f }}" min="{{ date_min }}" max="{{ date_max }}" onchange="to_date_changed(this.value)">
         </div>
-        <div class="column is-one-fifth">
+        <div class="dropdown-item">
             <button class="button is-link" onclick="callback()">Submit</button>
         </div>
-      </div>
+    
+        </div>
+    </div>
 </div>
 {% endblock %}
 

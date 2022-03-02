@@ -30,7 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add a click event on each of them
     $dropdowns.forEach( el => {
-      el.addEventListener('click', () => {
+
+      const trigger = el.firstElementChild;
+      trigger.addEventListener('click', () => {
 
         // Toggle the "is-active" class on "dropdown"
         el.classList.toggle('is-active');
