@@ -7,10 +7,30 @@
     z-index: 0; /* Set z-index to 0 as it will be on a layer below the contact form */
   }
 
-  .user-inputs {
-    position: relative;
-  }
+.is-relative {
+  position: relative;
+}
 
 .full-height {
     height: 100%;
+}
+
+.transparent-navbar {
+  z-index: 1;
+  background-image: none;
+  background-color: transparent;
+}
+
+.bottom-left {
+  position:fixed;
+  bottom:0;
+  left:0;
+  margin-bottom: 1px;
+  margin-left : 1px;
+}
+
+.top-left {
+  position:fixed;
+  top:0;
+  left:0;
 }

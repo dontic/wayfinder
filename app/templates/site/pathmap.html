@@ -1,5 +1,7 @@
 {% extends "site/base.html" %}
 
+{% set active_page = 'map' %}
+
 {% block head %}
 {{ super() }}
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -36,7 +38,7 @@
 <div class="block fullscreen-plot">
     <div id="chart" class="chart full-height"></div>
 </div>
-<div class="block user-inputs">
+<div class="block is-relative">
     <div class="columns">
         <div class="column">
             From Date

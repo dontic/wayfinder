@@ -8,55 +8,56 @@
     <title>Wayfinder</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css" />
     <link rel="stylesheet" href="css/main.css" />
+    <script src="js/bulma.js"></script>
     {% block head %}
     {% endblock %}
 </head>
 
 <body>
     <section class="is-fullheight">
-        <div class="hero-head">
-            <nav class="navbar">
-                <div class="container">
-                    <div id="navbarMenuHeroA" class="navbar-menu">
-                        <div class="navbar-end">
-                            {% if not current_user.is_authenticated %}
-                            <a href="{{ url_for('auth.login') }}" class="navbar-item">
-                                Login
-                            </a>
-                            <a href="{{ url_for('auth.signup') }}" class="navbar-item">
-                                Sign Up
-                            </a>
-                            {% endif %}
-                            {% if current_user.is_authenticated %}
-                            <a href="{{ url_for('site.overview') }}" class="navbar-item">
-                                Overview
-                            </a>
-                            <a href="{{ url_for('site.pathmap') }}" class="navbar-item">
-                                Travel history
-                            </a>
-                            <a href="{{ url_for('site.visitsmap') }}" class="navbar-item">
-                                Visits
-                            </a>
-                            <a href="{{ url_for('site.settings') }}" class="navbar-item">
-                                Settings
-                            </a>
-                            <a href="{{ url_for('auth.logout') }}" class="navbar-item">
-                                Log Out
-                            </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </nav>
-        </div>
-
-        <div class="">
-            <div class="has-text-centered">
-               {% block content %}
-               {% endblock %}
+        <nav class="navbar {{'transparent-navbar' if active_page == 'map' }}">
+            <div class="navbar-brand">
+                <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenu">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
             </div>
-        </div>
+            <div id="navbarMenu" class="navbar-menu">
+                <div class="navbar-end">
+                    {% if not current_user.is_authenticated %}
+                    <a href="{{ url_for('auth.login') }}" class="navbar-item">
+                        Login
+                    </a>
+                    <a href="{{ url_for('auth.signup') }}" class="navbar-item">
+                        Sign Up
+                    </a>
+                    {% endif %}
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('site.overview') }}" class="navbar-item">
+                        Overview
+                    </a>
+                    <a href="{{ url_for('site.pathmap') }}" class="navbar-item">
+                        Travel history
+                    </a>
+                    <a href="{{ url_for('site.visitsmap') }}" class="navbar-item">
+                        Visits
+                    </a>
+                    <a href="{{ url_for('site.settings') }}" class="navbar-item">
+                        Settings
+                    </a>
+                    <a href="{{ url_for('auth.logout') }}" class="navbar-item">
+                        Log Out
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
     </section>
+    <div class="has-text-centered">
+        {% block content %}
+        {% endblock %}
+    </div>
 </body>
 
 {% block scripts %}
