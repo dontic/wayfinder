@@ -117,8 +117,8 @@ def path_sql_dump(df, conn, df_visits, last_checkin):
     else:
         # Remove points that were recorded during a visit
         for index,row in df_visits.iterrows():
-            arrival = row['arrival'] + pd.Timedelta(minutes=5)
-            departure = row['departure'] - pd.Timedelta(minutes=5)
+            arrival = row['arrival'] + pd.Timedelta(minutes=10)
+            departure = row['departure'] - pd.Timedelta(minutes=10)
             df = df[~((df["timestamp"] > arrival) & (df["timestamp"] < departure))]
         
         # If a checkin was recorded, delete any points after it as they will belong in a visit
