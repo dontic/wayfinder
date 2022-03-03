@@ -9,7 +9,8 @@
     async function callback() {
         let from_date = document.getElementById('from_date').value;
         let to_date = document.getElementById('to_date').value;
-        let response = await fetch("/callback/path_map?from_date=" + from_date + "&to_date=" + to_date);
+        let show_visits = document.getElementById('show_visits').checked;
+        let response = await fetch("/callback/path_map?from_date=" + from_date + "&to_date=" + to_date + "&show_visits=" + show_visits);
         if (response.ok) {
             let chartJson = await response.json();
             Plotly.setPlotConfig({responsive: true, displayModeBar: false})
@@ -56,6 +57,10 @@
         <div class="dropdown-item">
             To Date
             <input id="to_date" type="datetime-local" value="{{ date_f }}" min="{{ date_min }}" max="{{ date_max }}" onchange="to_date_changed(this.value)">
+        </div>
+        <div class="dropdown-item">
+            Show stops
+            <input id="show_visits" type="checkbox" checked>
         </div>
         <div class="dropdown-item">
             <button class="button is-link" onclick="callback()">Submit</button>

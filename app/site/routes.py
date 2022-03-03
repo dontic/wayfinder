@@ -19,7 +19,7 @@ def overview():
 @site.route('/mainmap', methods=['GET', 'POST'])
 @login_required
 def pathmap():
-    date_i = (datetime.now() - timedelta(days=current_app.config['DAYS_PERIOD'])).strftime("%Y-%m-%dT%H:%M")
+    date_i = (datetime.now() - timedelta(days=current_app.config['DAYS_PERIOD_PATH'])).strftime("%Y-%m-%dT%H:%M")
     date_f = datetime.now().strftime("%Y-%m-%dT%H:%M")
     date_min = datetime(2000,1,1,0,0,0).strftime("%Y-%m-%dT%H:%M")
     date_max = datetime.now().strftime("%Y-%m-%dT%H:%M")
@@ -32,7 +32,7 @@ def pathmap():
 @site.route('/visitsmap')
 @login_required
 def visitsmap():
-    date_i = (datetime.now() - timedelta(days=current_app.config['DAYS_PERIOD'])).strftime("%Y-%m-%dT%H:%M")
+    date_i = (datetime.now() - timedelta(days=current_app.config['DAYS_PERIOD_VISITS'])).strftime("%Y-%m-%dT%H:%M")
     date_f = datetime.now().strftime("%Y-%m-%dT%H:%M")
     date_min = datetime(2000,1,1,0,0,0).strftime("%Y-%m-%dT%H:%M")
     date_max = datetime.now().strftime("%Y-%m-%dT%H:%M")
@@ -57,7 +57,8 @@ def cb(endpoint):
     elif endpoint == 'path_map':
         date_i = request.args.get('from_date')
         date_f = request.args.get('to_date')
-        fig = map_utils.getPathPlot(current_user, date_i, date_f)
+        showVisits = request.args.get('show_visits')
+        fig = map_utils.getPathPlot(current_user, date_i, date_f, showVisits)
         graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
         return graphJSON
 

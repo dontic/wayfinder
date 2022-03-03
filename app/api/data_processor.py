@@ -1,10 +1,11 @@
-from sys import getdefaultencoding
 import pandas as pd
 pd.options.mode.chained_assignment = None  # default = 'warn'
 import numpy as np
 from pathlib import Path
 import json
 from app.api import sql_connection
+from flask import current_app
+from datetime import datetime
 
 
 def flatten_json(nested_json, exclude=['']):
@@ -82,7 +83,7 @@ def raw_sql_dump(df, conn):
     return True
 
 
-def path_sql_dump(df, conn):
+def path_sql_dump(df, conn, df_visits, last_checkin):
     # Columns
     cols = ["geometry_coordinates_0",
     "geometry_coordinates_1",
@@ -97,65 +98,22 @@ def path_sql_dump(df, conn):
     df = df[cols]
 
     df.columns = ['LONG','LAT','ALT','speed','timestamp','horizontal_accuracy','vertical_accuracy','device','motion']
+
+    # Remove stationary points or without motion data
+    df = df[~df['motion'].isin(['stationary'])]
     df = df[df['motion'].notna()]
-    df["speed"] = 3.6 * df["speed"]  # Speed to KMH
-    df = df[df["horizontal_accuracy"] < 50]  # Getting rid of low accuracy points
-    
+
+    # Speed to KMH
+    df["speed"] = 3.6 * df["speed"]
+
+    # Getting rid of low accuracy points
+    maxacc = 10
+    #maxacc = current_app.config['MAX_ACCURACY_PATH']
+    df = df[df["horizontal_accuracy"] <= maxacc]
+
     df.to_sql(name='path', con=conn, if_exists='append', index=False)
     
     return df
-
-
-def path_min_sql_dump(df_path, conn, accuracy=10, desired_distance=50, remove_stationary=True):
-    '''
-    Generates a much smaller dataframe with fewer GPS points.
-    This is intended for faster plotting.
-
-    accuracy =          Accuracy of the GPS point measurement
-    desired_distance =  Minimum distance between each GPS point
-    stationary =        False if it wants to delete stationary points
-
-    Useful to process data later in a web app
-    '''
-    df = df_path
-    # Get rid of stationary points
-    if remove_stationary:
-        df = df[~df['motion'].isin(['stationary'])]
-
-    # Get rid of points without motion data
-    df = df[df['motion'].notna()]
-
-    # Get rid of inaccurate points (default accuracy < 10m)
-    df = df[df['horizontal_accuracy'] < accuracy]
-
-    # Reset index
-    df = df.reset_index(drop=True)
-
-    # Remove points that are too close together
-    df_min = pd.DataFrame(columns=df.columns)  # Empty dataframe to append desired values
-    last_coords=[]
-
-    for index, row in df.iterrows():
-        # Skip index 0
-        if index > 0:
-            lat1 = last_coords['LAT']
-            long1 = last_coords['LONG']
-            lat2 = row['LAT']
-            long2 = row['LONG']
-            distance = haversine(lat1,long1,lat2,long2)  # Distance in meters between two points
-
-            if distance > desired_distance:
-                df_min = pd.concat([df_min, row])
-                last_coords = {'LAT':row['LAT'],'LONG':row['LONG']}
-            else:
-                pass
-        else:
-            df_min = pd.concat([df_min, row])
-            last_coords = {'LAT':row['LAT'],'LONG':row['LONG']}
-    
-    df.to_sql(name='path_min', con=conn, if_exists='append', index=False)
-
-    return True
 
 
 def visits(df, conn):
@@ -172,7 +130,7 @@ def visits(df, conn):
         df_visits['duration'] = (df_visits.departure - df_visits.arrival) / pd.Timedelta(hours=1)
         df_visits.to_sql(name='visits', con=conn, if_exists='append', index=False)
 
-    return True
+    return df_visits
 
 
 def checkins(df, user):
@@ -184,6 +142,7 @@ def checkins(df, user):
 
     if df_checkins.empty:
         # No other check-ins since last check-in
+        last_checkin = None
         pass
     else:
         # New check-ins found
@@ -199,7 +158,7 @@ def checkins(df, user):
             # Write json file
             json.dump(last_checkin, file, indent = 4)
     
-    return True
+    return last_checkin
 
 
 def data_processor(user, content):
@@ -217,22 +176,22 @@ def data_processor(user, content):
     print("Processing raw data...")
     raw_sql_dump(df, conn)
 
+    # Dump new visits to the 'visits' SQL table
+    print("Processing visits...")
+    df_visits = visits(df, conn)
+
+    # Save the user's last checkin in json form
+    print("Processing last checkin...")
+    last_checkin = checkins(df, user)
+
     # Process and dump path data to the 'path' SQL table
     print("Processing path data...")
-    df_path = path_sql_dump(df, conn)
+    path_sql_dump(df, conn, df_visits, last_checkin)
 
     # Process and dump path minimized data to the 'path_min' SQL table
     # Not used, gives some errors and does not reduce size by much
     # print("Processing minimized path data...")
     # path_min_sql_dump(df_path, conn, accuracy=10, desired_distance=50, remove_stationary=True)
-
-    # Dump new visits to the 'visits' SQL table
-    print("Processing visits...")
-    visits(df, conn)
-
-    # Save the user's last checkin in json form
-    print("Processing last checkin...")
-    checkins(df, user)
 
     return True
 
