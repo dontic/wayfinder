@@ -107,6 +107,7 @@ def path_sql_dump(df, conn, df_visits, last_checkin):
     df["speed"] = 3.6 * df["speed"]
 
     # Getting rid of low accuracy points
+    # maxacc = 10
     maxacc = current_app.config['MAX_ACCURACY_PATH']
     df = df[df["horizontal_accuracy"] <= maxacc]
 
@@ -115,13 +116,15 @@ def path_sql_dump(df, conn, df_visits, last_checkin):
         pass
     else:
         # Remove points that were recorded during a visit
-        for index,row in df_visits:
-            df = df[~((df["timestamp"] > row['arrival']) & (df["timestamp"] < row['departure']))]
+        for index,row in df_visits.iterrows():
+            arrival = row['arrival'] + pd.Timedelta(minutes=5)
+            departure = row['departure'] - pd.Timedelta(minutes=5)
+            df = df[~((df["timestamp"] > arrival) & (df["timestamp"] < departure))]
         
         # If a checkin was recorded, delete any points after it as they will belong in a visit
         if last_checkin is not None:
             arrival = datetime.strptime(last_checkin['properties_arrival_date'], '%Y-%m-%dT%H:%M:%S%z')
-            df = df[df["timestamp"] > arrival]
+            df = df[~(df["timestamp"] > arrival)]
     
         df.to_sql(name='path', con=conn, if_exists='append', index=False)
     
@@ -198,7 +201,7 @@ def data_processor(user, content):
 
     # Process and dump path data to the 'path' SQL table
     print("Processing path data...")
-    df_path = path_sql_dump(df, conn, df_visits, last_checkin)
+    path_sql_dump(df, conn, df_visits, last_checkin)
 
     # Process and dump path minimized data to the 'path_min' SQL table
     # Not used, gives some errors and does not reduce size by much
