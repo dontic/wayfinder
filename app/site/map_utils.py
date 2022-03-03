@@ -1,10 +1,11 @@
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from app.api.sql_connection import create_connection
 from app.site.date_utils import date_format_utc
 
 
-def getPathPlot(current_user, date_i, date_f):
+def getPathPlot(current_user, date_i, date_f, showVisits=True):
     conn = create_connection(current_user)
     date_i = date_format_utc(date_i)
     date_f = date_format_utc(date_f)
@@ -16,6 +17,13 @@ def getPathPlot(current_user, date_i, date_f):
     ''' % (str(date_i), str(date_f)))
     df = pd.read_sql(query, conn)
 
+    visits_query = ('''
+    SELECT *
+    FROM visits
+    WHERE (arrival BETWEEN "%s" AND "%s") OR (departure BETWEEN "%s" AND "%s")
+    ''' % (str(date_i), str(date_f), str(date_i), str(date_f)))
+    df_visits = pd.read_sql(visits_query, conn)
+
     # Plot
     fig = px.line_mapbox(df,
     lat="LAT",
@@ -25,8 +33,25 @@ def getPathPlot(current_user, date_i, date_f):
     #color_discrete_sequence=["White","Green","Yellow","Red","Pink"],
     zoom=8)
 
+    # Add visits waypoints
+    print(showVisits)
+    if not df_visits.empty and showVisits == 'true':
+        fig.add_trace(go.Scattermapbox(
+            lat=df_visits["LAT"],
+            lon=df_visits["LONG"],
+            mode='markers',
+            marker=go.scattermapbox.Marker(
+                size=25,
+                color='RoyalBlue',
+                opacity=0.7
+            ),
+            hoverinfo='none'
+        ))
+
     fig.update_layout(mapbox_style="open-street-map")
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+    fig.update_layout(coloraxis_showscale=False)
+    fig.update_layout(showlegend=False)
 
     return fig
 
@@ -46,8 +71,8 @@ def getVisitsPlot(current_user, date_i, date_f, ignore_home=False):
     query = ('''
     SELECT *
     FROM visits
-    WHERE arrival BETWEEN "%s" AND "%s"
-    ''' % (str(date_i), str(date_f)))
+    WHERE (arrival BETWEEN "%s" AND "%s") OR (departure BETWEEN "%s" AND "%s")
+    ''' % (str(date_i), str(date_f), str(date_i), str(date_f)))
 
     df = pd.read_sql(query, conn)
 
