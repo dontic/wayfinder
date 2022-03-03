@@ -77,7 +77,7 @@ def create_user_location_database(user):
     # If database does not exist, create tables
     create_table(conn, sql_create_raw_table)
     create_table(conn, sql_create_path_table)
-    create_table(conn, sql_create_path_min_table)
+    # create_table(conn, sql_create_path_min_table)
     create_table(conn, sql_create_visits_table)
 
     return True
