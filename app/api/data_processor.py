@@ -107,26 +107,11 @@ def path_sql_dump(df, conn, df_visits, last_checkin):
     df["speed"] = 3.6 * df["speed"]
 
     # Getting rid of low accuracy points
-    # maxacc = 10
-    maxacc = current_app.config['MAX_ACCURACY_PATH']
+    maxacc = 10
+    #maxacc = current_app.config['MAX_ACCURACY_PATH']
     df = df[df["horizontal_accuracy"] <= maxacc]
 
-    if df_visits.empty and last_checkin is None:
-        # If no visits and no checkin have been recorded, all points have been recorded during a visit
-        pass
-    else:
-        # Remove points that were recorded during a visit
-        for index,row in df_visits.iterrows():
-            arrival = row['arrival'] + pd.Timedelta(minutes=10)
-            departure = row['departure'] - pd.Timedelta(minutes=10)
-            df = df[~((df["timestamp"] > arrival) & (df["timestamp"] < departure))]
-        
-        # If a checkin was recorded, delete any points after it as they will belong in a visit
-        if last_checkin is not None:
-            arrival = datetime.strptime(last_checkin['properties_arrival_date'], '%Y-%m-%dT%H:%M:%S%z')
-            df = df[~(df["timestamp"] > arrival)]
-    
-        df.to_sql(name='path', con=conn, if_exists='append', index=False)
+    df.to_sql(name='path', con=conn, if_exists='append', index=False)
     
     return df
 

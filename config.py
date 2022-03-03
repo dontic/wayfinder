@@ -18,6 +18,12 @@ class Config(object):
     # This will delete any points that have accuracy > MAX_ACCURACY_PATH
     MAX_ACCURACY_PATH = 10
 
+    # Reduce points
+    REMOVE_IDLE = True
+
+    # Plot trips as colors
+    PLOT_TRIP_COLOR = True
+
 
     ###### VISITS MAP ######
     # Ignore home location in visits map by default
