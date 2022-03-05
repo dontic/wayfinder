@@ -16,7 +16,7 @@ site = Blueprint('site', __name__)
 def overview():
     return render_template("site/overview.html", name=current_user.name)
 
-@site.route('/mainmap', methods=['GET', 'POST'])
+@site.route('/pathmap', methods=['GET', 'POST'])
 @login_required
 def pathmap():
     date_i = (datetime.now() - timedelta(days=current_app.config['DAYS_PERIOD_PATH'])).strftime("%Y-%m-%dT%H:%M")
