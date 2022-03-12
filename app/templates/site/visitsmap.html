@@ -35,6 +35,57 @@
         }
     }
 </script>
+<script type="text/javascript">
+    async function quickPeriod() {
+        var seleccion = document.getElementById('quickPeriods').selectedIndex;
+        switch (seleccion) {
+            case 1:
+                // Today
+                var fromDate = new Date().toISOString().split('T')[0] + 'T00:00';
+                var toDate = new Date().toISOString().split('T')[0] + 'T23:59';
+                document.getElementById('from_date').value = fromDate;
+                document.getElementById('to_date').value = toDate;
+                break;
+            case 2:
+                // Yesterday
+                var fromDate = new Date(new Date().setDate(new Date().getDate()-1)).toISOString().split('T')[0] + 'T00:00';
+                var toDate = new Date(new Date().setDate(new Date().getDate()-1)).toISOString().split('T')[0] + 'T23:59';
+                document.getElementById('from_date').value = fromDate;
+                document.getElementById('to_date').value = toDate;
+                break;
+            case 3:
+                // This week
+                d = new Date();
+                var day = d.getDay(),
+                    diff = d.getDate() - day + (day == 0 ? -6:1); // adjust when day is sunday
+                var fromDate = new Date(d.setDate(diff)).toISOString().split('T')[0] + 'T00:00';
+                var toDate = new Date().toISOString().split('T')[0] + 'T23:59';
+                document.getElementById('from_date').value = fromDate;
+                document.getElementById('to_date').value = toDate;
+                break;
+            case 4:
+                // This month
+                var d = new Date();
+                var fromDate = new Date(Date.UTC(d.getFullYear(), d.getMonth(), 1)).toISOString().split('T')[0] + 'T00:00';
+                var toDate = new Date().toISOString().split('T')[0] + 'T23:59';
+                document.getElementById('from_date').value = fromDate;
+                document.getElementById('to_date').value = toDate;
+                break;
+            case 5:
+                // This year
+                var d = new Date();
+                var fromDate = new Date(Date.UTC(d.getFullYear(), 0, 1)).toISOString().split('T')[0] + 'T00:00';
+                var toDate = new Date().toISOString().split('T')[0] + 'T23:59';
+                document.getElementById('from_date').value = fromDate;
+                document.getElementById('to_date').value = toDate;
+                break;
+            default:
+                // code block
+                console.log('Meh')
+
+        }
+    }
+</script>
 {% endblock %}
 
 {% block content %}
@@ -59,6 +110,18 @@
         <div class="dropdown-item">
             To Date
             <input id="to_date" type="datetime-local" value="{{ date_f }}" min="{{ date_min }}" max="{{ date_max }}" onchange="to_date_changed(this.value)">
+        </div>
+        <div class="dropdown-item">
+            <div class="select">
+                <select id="quickPeriods" onChange="quickPeriod()">
+                    <option>Quick periods...</option>
+                    <option>Today</option>
+                    <option>Yesterday</option>
+                    <option>This week</option>
+                    <option>This Month</option>
+                    <option>YTD</option>
+                </select>
+            </div>
         </div>
         <div class="dropdown-item">
             Ignore home
