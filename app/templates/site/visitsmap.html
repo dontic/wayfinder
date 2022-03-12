@@ -60,7 +60,8 @@
         </div>
         <div class="dropdown-item">
             Ignore home
-            <input id="ignore_home" type="checkbox" {{ ignore_home_checked }}>
+            <input id="ignore_home" type="checkbox" {% if current_user.homeLAT == None or current_user.homeLONG == None %}disabled{% endif %}{% if current_user.defaultIgnoreHome %}checked{% endif %}>
+            {% if current_user.homeLAT == None or current_user.homeLONG == None %}<p class="help is-danger">Please define the home coordinates in settings to ignore home.</p>{% endif %}
         </div>
         <div class="dropdown-item">
             <button class="button is-link" onclick="callback()">Submit</button>

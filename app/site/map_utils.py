@@ -5,9 +5,10 @@ from app.api.sql_connection import create_connection
 from app.site.date_utils import date_format_utc
 from datetime import datetime
 from flask import current_app
+from flask_login import current_user
 
 
-def getPathPlot(current_user, date_i, date_f, showVisits=True):
+def getPathPlot(current_user, date_i, date_f, showVisits, removeIdle, tripsColor):
     conn = create_connection(current_user)
     date_i = date_format_utc(date_i)
     date_f = date_format_utc(date_f)
@@ -27,7 +28,7 @@ def getPathPlot(current_user, date_i, date_f, showVisits=True):
     df_visits = pd.read_sql(visits_query, conn)
 
     df['trip'] = 0
-    if current_app.config['REMOVE_IDLE'] or current_app.config['PLOT_TRIP_COLOR']:
+    if removeIdle or tripsColor:
         # Remove redundant points and apply color between stops
         i = 0
         df['timestamp_datetime'] = pd.to_datetime(df['timestamp'])
@@ -39,14 +40,14 @@ def getPathPlot(current_user, date_i, date_f, showVisits=True):
             departure = row['departure_datetime']
             midTime = arrival + (departure - arrival)/2
 
-            if current_app.config['REMOVE_IDLE']:
+            if removeIdle:
                 # Delete redundant points
                 minuteOffset = 10
                 arrivalDel = arrival + pd.Timedelta(minutes=minuteOffset)
                 departureDel = departure - pd.Timedelta(minutes=minuteOffset)
                 df = df[~((df["timestamp_datetime"] >= arrivalDel) & (df["timestamp_datetime"] <= departureDel))]
             
-            if current_app.config['PLOT_TRIP_COLOR']:
+            if tripsColor:
                 # Color trips
                 if index == 0:
                     df.loc[df["timestamp_datetime"] < midTime, 'trip'] = i
@@ -76,7 +77,7 @@ def getPathPlot(current_user, date_i, date_f, showVisits=True):
     zoom=8)
 
     # Add visits waypoints
-    if not df_visits.empty and showVisits == 'true':
+    if not df_visits.empty and showVisits:
         fig.add_trace(go.Scattermapbox(
             lat=df_visits["LAT"],
             lon=df_visits["LONG"],
@@ -98,13 +99,17 @@ def getPathPlot(current_user, date_i, date_f, showVisits=True):
 
 
 def deleteHomePoints(df, current_user, radius=200):
-    homeLAT = current_user.homeLAT
-    homeLON = current_user.homeLONG
-    df = df[((abs(df['LAT'] - homeLAT) * 111139) > radius) & ((abs(df['LONG'] - homeLON) * 111139) > radius)]
-    return df
+    try:
+        homeLAT = current_user.homeLAT
+        homeLON = current_user.homeLONG
+        df = df[((abs(df['LAT'] - homeLAT) * 111139) > radius) & ((abs(df['LONG'] - homeLON) * 111139) > radius)]
+        missingHome= False
+    except:
+        missingHome = True
+    return df, missingHome
 
 
-def getVisitsPlot(current_user, date_i, date_f, ignore_home=False):
+def getVisitsPlot(current_user, date_i, date_f, ignore_home):
     conn = create_connection(current_user)
     date_i = date_format_utc(date_i)
     date_f = date_format_utc(date_f)
@@ -117,8 +122,10 @@ def getVisitsPlot(current_user, date_i, date_f, ignore_home=False):
 
     df = pd.read_sql(query, conn)
 
-    if ignore_home == 'true':
-        df = deleteHomePoints(df, current_user)
+    if ignore_home:
+        df, missingHome = deleteHomePoints(df, current_user)
+    else:
+        missingHome = False
 
     # Plot
     fig = px.density_mapbox(df, 
@@ -131,7 +138,7 @@ def getVisitsPlot(current_user, date_i, date_f, ignore_home=False):
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     fig.update_layout(coloraxis_showscale=False)
 
-    return fig
+    return fig, missingHome
 
 
 if __name__ == '__main__':

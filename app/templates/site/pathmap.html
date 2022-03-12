@@ -10,7 +10,9 @@
         let from_date = document.getElementById('from_date').value;
         let to_date = document.getElementById('to_date').value;
         let show_visits = document.getElementById('show_visits').checked;
-        let response = await fetch("/callback/path_map?from_date=" + from_date + "&to_date=" + to_date + "&show_visits=" + show_visits);
+        let remove_idle = document.getElementById('remove_idle').checked;
+        let trips_color = document.getElementById('trips_color').checked;
+        let response = await fetch("/callback/path_map?from_date=" + from_date + "&to_date=" + to_date + "&show_visits=" + show_visits + "&remove_idle=" + remove_idle + "&trips_color=" + trips_color);
         if (response.ok) {
             let chartJson = await response.json();
             Plotly.setPlotConfig({responsive: true, displayModeBar: false})
@@ -60,7 +62,15 @@
         </div>
         <div class="dropdown-item">
             Show stops
-            <input id="show_visits" type="checkbox" checked>
+            <input id="show_visits" type="checkbox" {% if current_user.defaultShowVisits %}checked{% endif %}>
+        </div>
+        <div class="dropdown-item">
+            Remove idle points
+            <input id="remove_idle" type="checkbox" {% if current_user.defaultRemoveIdle %}checked{% endif %}>
+        </div>
+        <div class="dropdown-item">
+            Trips by color
+            <input id="trips_color" type="checkbox" {% if current_user.defaultTripColor %}checked{% endif %}>
         </div>
         <div class="dropdown-item">
             <button class="button is-link" onclick="callback()">Submit</button>

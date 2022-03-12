@@ -1,7 +1,96 @@
 {% extends "site/base.html" %}
 
 {% block content %}
+<div class="columns">
 <div class="column is-10 is-offset-1">
+    <h1>Main settings</h1>
+    <div class="box">
+        {% if section == 'mainsettings' %}
+        {% if message %}
+        {% if error %}
+            <div class="notification is-danger">
+                {{ message }}
+            </div>
+        {% else %}
+            <div class="notification is-success">
+                {{ message }}
+            </div>
+        {% endif %}
+        {% endif %}
+        {% endif %}
+        <form method="POST" action="">
+        <div class="columns">
+            <div class="column">
+                <h2>Path map settings</h2>
+                <div class="box">
+                    <div class="field">
+                        <div class="control">
+                            <label>Default period</label>
+                            <input class="input is-normal" type="number" name="defaultPeriodPath" min="1" max="{{ current_app.config['MAX_QUERY_DAYS_PATH'] }}" value="{{ current_user.defaultPeriodPath }}">
+                        </div>
+                        <p class="help" align="left">The max period is {{ current_app.config['MAX_QUERY_DAYS_PATH'] }} days.</p>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <label>Max accuracy (meters)</label>
+                            <input class="input is-normal" type="number" name="maxAccuracyPath" min="0" value="{{ current_user.maxAccuracyPath }}">
+                        </div>
+                        <p class="help" align="left">This will define the points to discard based on accuracy when receiving new data.</p>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input type="checkbox" name="defaultShowVisits" {% if current_user.defaultShowVisits %}checked{% endif %}>
+                                Show stops by default
+                            </label>
+                        </div>
+                        <p class="help" align="left">This will plot in different colors the path between different visits.</p>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input type="checkbox" name="defaultRemoveIdle" {% if current_user.defaultRemoveIdle %}checked{% endif %}>
+                                Remove idle points by default
+                            </label>
+                        </div>
+                        <p class="help" align="left">Enabling this option will attempt to reduce the points in the map by deleting the ones recorded during a visit.</p>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input type="checkbox" name="defaultTripColor" {% if current_user.defaultTripColor %}checked{% endif %}>
+                                Show trip colors by default
+                            </label>
+                        </div>
+                        <p class="help" align="left">This will plot in different colors the path between different visits. Plots will take longer.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="column">
+                <h2>Visits map settings</h2>
+                <div class="box">
+                    <div class="field">
+                        <div class="control">
+                            <label>Default period</label>
+                            <input class="input is-normal" type="number" name="defaultPeriodVisits" min="1" max="{{ current_app.config['MAX_QUERY_DAYS_VISITS'] }}" value="{{ current_user.defaultPeriodVisits }}">
+                        </div>
+                        <p class="help" align="left">The max period is {{ current_app.config['MAX_QUERY_DAYS_VISITS'] }} days.</p>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input type="checkbox" name="defaultIgnoreHome" {% if current_user.homeLAT == None or current_user.homeLONG == None %}disabled{% endif %}{% if current_user.defaultIgnoreHome %}checked{% endif %}>
+                                Ignore home by default.
+                            </label>
+                        </div>
+                        {% if current_user.homeLAT == None or current_user.homeLONG == None %}<p class="help is-danger" align="left">Please define the home coordinates bellow to ignore home.</p>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button name="button" value="mainsettings" class="button is-block is-info is-normal is-fullwidth">Update settings</button>
+        </form>
+    </div>
     <h1>Modify details</h1>
     <div class="box">
         {% if section == 'details' %}
@@ -21,24 +110,24 @@
             <div class="field">
                 <div class="control">
                     <label>Name</label>
-                    <input class="input is-large" type="text" name="name" placeholder="Name" autofocus="" value="{{ current_user.name }}">
+                    <input class="input is-normal" type="text" name="name" placeholder="Name" autofocus="" value="{{ current_user.name }}">
                 </div>
             </div>
 
             <div class="field">
                 <div class="control">
                     <label>email</label>
-                    <input class="input is-large" type="email" name="email" placeholder="Email" autofocus="" value="{{ current_user.email }}">
+                    <input class="input is-normal" type="email" name="email" placeholder="Email" autofocus="" value="{{ current_user.email }}">
                 </div>
             </div>
 
             <div class="field">
                 <div class="control">
                     <label>Username</label>
-                    <input class="input is-large" type="text" name="username" placeholder="Username" autofocus="" value="{{ current_user.username }}">
+                    <input class="input is-normal" type="text" name="username" placeholder="Username" autofocus="" value="{{ current_user.username }}">
                 </div>
             </div>
-            <button name="button" value="details" class="button is-block is-info is-large is-fullwidth">Update details</button>
+            <button name="button" value="details" class="button is-block is-info is-normal is-fullwidth">Update details</button>
         </form>
     </div>
     <h1>Modify password</h1>
@@ -59,22 +148,22 @@
         <form method="POST" action="">
             <div class="field">
                 <div class="control">
-                    <input class="input is-large" type="password" name="password" placeholder="Old password">
+                    <input class="input is-normal" type="password" name="password" placeholder="Old password">
                 </div>
             </div>
 
             <div class="field">
                 <div class="control">
-                    <input class="input is-large" type="password" name="newPassword" placeholder="New password">
+                    <input class="input is-normal" type="password" name="newPassword" placeholder="New password">
                 </div>
             </div>
 
             <div class="field">
                 <div class="control">
-                    <input class="input is-large" type="password" name="rNewPassword" placeholder="Repeat new password">
+                    <input class="input is-normal" type="password" name="rNewPassword" placeholder="Repeat new password">
                 </div>
             </div>
-            <button name="button" value="password" class="button is-block is-info is-large is-fullwidth">Change password</button>
+            <button name="button" value="password" class="button is-block is-info is-normal is-fullwidth">Change password</button>
         </form>
     </div>
     <h1>Change API Key</h1>
@@ -95,10 +184,10 @@
         <form method="POST" action="">
             <div class="field">
                 <div class="control">
-                    <input class="input is-large" type="text" name="apikey" placeholder="New API key">
+                    <input class="input is-normal" type="text" name="apikey" placeholder="New API key">
                 </div>
             </div>
-            <button name="button" value="api" class="button is-block is-info is-large is-fullwidth">Change API key</button>
+            <button name="button" value="api" class="button is-block is-info is-normal is-fullwidth">Change API key</button>
         </form>
     </div>
     <h1>Set home coordinates</h1>
@@ -120,16 +209,16 @@
             <div class="field">
                 <div class="control">
                     <label>Home Latitude</label>
-                    <input class="input is-large" type="text" name="homeLAT" placeholder="Home Latitude" value="{{ current_user.homeLAT }}">
+                    <input class="input is-normal" type="text" name="homeLAT" placeholder="Home Latitude" value="{{ current_user.homeLAT }}">
                 </div>
             </div>
             <div class="field">
                 <div class="control">
                     <label>Home Longitude</label>
-                    <input class="input is-large" type="text" name="homeLONG" placeholder="Home Longitude" value="{{ current_user.homeLONG }}">
+                    <input class="input is-normal" type="text" name="homeLONG" placeholder="Home Longitude" value="{{ current_user.homeLONG }}">
                 </div>
             </div>
-            <button name="button" value="home" class="button is-block is-info is-large is-fullwidth">Set home coordinates</button>
+            <button name="button" value="home" class="button is-block is-info is-normal is-fullwidth">Set home coordinates</button>
         </form>
     </div>
     <h1>Clean-up database</h1>
@@ -148,8 +237,9 @@
         {% endif %}
         {% endif %}
         <form method="POST" action="">
-            <button name="button" value="cleanup" class="button is-block is-info is-large is-fullwidth">Clean-up database</button>
+            <button name="button" value="cleanup" class="button is-block is-info is-normal is-fullwidth">Clean-up database</button>
         </form>
     </div>
+</div>
 </div>
 {% endblock %}

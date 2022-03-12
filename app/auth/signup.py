@@ -101,7 +101,7 @@ def process_user(request):
         return redirect(url_for('auth.signup'))
 
     # Add new user to the sqlite database
-    new_user = User(name=name, email=email, username=username, password=generate_password_hash(password, method='sha256'), apikey=generate_password_hash(apikey, method='sha256'))
+    new_user = User(name=name, email=email, username=username, password=generate_password_hash(password, method='sha256'), apikey=generate_password_hash(apikey, method='sha256'), defaultPeriodPath=1, defaultPeriodVisits=7, maxAccuracyPath=10, defaultRemoveIdle=False, defaultTripColor=False, defaultIgnoreHome=False, defaultShowVisits=False)
     db.session.add(new_user)
     db.session.commit()
 
