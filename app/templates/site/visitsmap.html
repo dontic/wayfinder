@@ -7,6 +7,7 @@
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script type="text/javascript">
     async function callback() {
+        document.getElementById('submitButton').classList.add('is-loading');
         let from_date = document.getElementById('from_date').value;
         let to_date = document.getElementById('to_date').value;
         let ignore_home = document.getElementById('ignore_home').checked;
@@ -15,6 +16,7 @@
             let chartJson = await response.json();
             Plotly.setPlotConfig({responsive: true, displayModeBar: false})
             Plotly.newPlot('chart', chartJson, {responsive: true, displayModeBar: false});
+            document.getElementById('submitButton').classList.remove('is-loading');
         } else {
             alert("HTTP-Error: " + response.status + " on visits_map");
         }
@@ -64,7 +66,7 @@
             {% if current_user.homeLAT == None or current_user.homeLONG == None %}<p class="help is-danger">Please define the home coordinates in settings to ignore home.</p>{% endif %}
         </div>
         <div class="dropdown-item">
-            <button class="button is-link" onclick="callback()">Submit</button>
+            <button class="button is-link" id="submitButton" onclick="callback()">Submit</button>
         </div>
     
         </div>
