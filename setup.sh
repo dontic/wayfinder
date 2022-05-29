@@ -5,7 +5,7 @@
 # Script needs root permissions
 
 # Install required packages
-apt install supervisor python-pip python-virtualenv
+apt install supervisor python3-pip python3-virtualenv
 
 # Create venv
 echo "Createing virtual environment..."
