@@ -14,7 +14,7 @@ python3 -m venv venv
 
 # Activate venv
 echo "Activating virtual environment..."
-source venv/bin/activate
+. venv/bin/activate
 
 # Install package requirements
 echo "Installing required packages..."
