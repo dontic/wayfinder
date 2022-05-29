@@ -37,10 +37,10 @@ echo "Creating supervisor conf file..."
 cat > /etc/supervisor/conf.d/wayfinder.conf << EOF
 
 [program:wayfinder]
-directory = /home/$USER/wayfinder
-command = /home/$USER/wayfinder/venv/bin/gunicorn -b 0.0.0.0:5012 --timeout 300 run:app
-stdout_logfile = /home/$USER/wayfinder/logs/gunicorn.stdout.log
-stderr_logfile = /home/$USER/wayfinder/logs/gunicorn.stderr.log
+directory = /home/${SUDO_USER:-${USER}}/wayfinder
+command = /home/${SUDO_USER:-${USER}}/wayfinder/venv/bin/gunicorn -b 0.0.0.0:5012 --timeout 300 run:app
+stdout_logfile = /home/${SUDO_USER:-${USER}}/wayfinder/logs/gunicorn.stdout.log
+stderr_logfile = /home/${SUDO_USER:-${USER}}/wayfinder/logs/gunicorn.stderr.log
 logfile_backups=2
 environment=LANG=en_US.UTF-8,LC_ALL=en_US.UTF-8 ; Set UTF-8 as default encoding
 autostart=true
@@ -50,6 +50,7 @@ stopwaitsecs=600
 EOF
 
 # Reload supervisor
-echo "Reloading supervisor..."
+echo "Reloading supervisor confs..."
 supervisorctl reread
+echo "Restarting superisor..."
 service supervisor restart
