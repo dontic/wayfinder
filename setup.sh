@@ -5,6 +5,7 @@
 # Script needs root permissions
 
 # Install required packages
+echo "Installing required packages..."
 apt install supervisor python3-pip python3-virtualenv
 
 # Create venv
@@ -23,16 +24,16 @@ pip install -r ./requirements.txt
 echo "Installing gunicorn..."
 pip install gunicorn
 
-# Create user database
-
 # Deactivate env
 echo "Deactivating virtual environment..."
 deactivate
 
 # Create gunicornlog directories
+echo "Creating log directory..."
 mkdir logs
 
 # Set up supervisor conf
+echo "Creating supervisor conf file..."
 cat > /etc/supervisor/conf.d/wayfinder.conf << EOF
 
 [program:wayfinder]
@@ -49,5 +50,6 @@ stopwaitsecs=600
 EOF
 
 # Reload supervisor
+echo "Reloading supervisor..."
 supervisorctl reread
 service supervisor restart
