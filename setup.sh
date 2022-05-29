@@ -6,7 +6,7 @@
 
 # Install required packages
 echo "Installing required packages..."
-apt install supervisor python3-pip python3-virtualenv
+apt install supervisor python3-pip python3-venv
 
 # Create venv
 echo "Createing virtual environment..."
