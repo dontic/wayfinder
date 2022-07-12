@@ -1,11 +1,13 @@
 # wayfinder
 
-> :warning: Under early developement
-
 ## What is wayfinder?
 Wayfinder is a Flask application that reads, process, stores and displays data gathered by the overland-ios app.
 
 Wayfinder is built in Python with it's main libraries being Flask for the App (API and data display) and Pandas for data processing.
+
+![Travel History demo](docs/assets/readme/wayfinder_travel_history.png)   
+
+![Visits demo](docs/assets/readme/wayfinder_visits.png)   
 
 ## Usage
 
