@@ -5,6 +5,10 @@ Wayfinder is a Flask application that reads, process, stores and displays data g
 
 Wayfinder is built in Python with it's main libraries being Flask for the App (API and data display) and Pandas for data processing.
 
+![Travel History demo](docs/assets/readme/wayfinder_travel_history.png)   
+
+![Visits demo](docs/assets/readme/wayfinder_visits.png)   
+
 ## Usage
 
 This installation guide is intended for Debian environments.
