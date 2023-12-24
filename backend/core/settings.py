@@ -53,6 +53,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Rest Framework
     "rest_framework",  # Django REST Framework
+    # Apps
+    "wayfinder",
 ]
 
 MIDDLEWARE = [
