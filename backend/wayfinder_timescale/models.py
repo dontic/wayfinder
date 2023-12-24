@@ -1,7 +1,14 @@
+from django.conf import settings
 from django.db import models
 
+from timescale.db.models.fields import TimescaleDateTimeField
+from timescale.db.models.managers import TimescaleManager
 
+
+# Models change if TimescaleDB is used
 class Location(models.Model):
+    time = TimescaleDateTimeField(interval=settings.TIMESCALE_INTERVAL)
+
     type = models.CharField(max_length=50)
 
     # Geometry
@@ -21,16 +28,20 @@ class Location(models.Model):
     motion = models.CharField(max_length=50, blank=True)  # ['stationary']
     pauses = models.BooleanField()
     speed = models.IntegerField()
-    time = models.DateTimeField()
     tracking_mode = models.IntegerField()
     vertical_accuracy = models.IntegerField()
     wifi = models.CharField(max_length=50, blank=True)
+
+    objects = models.Manager()
+    timescale = TimescaleManager()
 
     def __str__(self):
         return f"{self.coordinates_latitude}, {self.coordinates_longitude}"
 
 
 class Visit(models.Model):
+    time = TimescaleDateTimeField(interval=settings.TIMESCALE_INTERVAL)
+
     type = models.CharField(max_length=50)
 
     # Geometry
@@ -46,8 +57,10 @@ class Visit(models.Model):
     departure_datetime = models.DateTimeField(blank=True, null=True)  # Can be None
     device_id = models.CharField(max_length=50)
     horizontal_accuracy = models.IntegerField()
-    time = models.DateTimeField()
     wifi = models.CharField(max_length=50, blank=True)
+
+    objects = models.Manager()
+    timescale = TimescaleManager()
 
     def __str__(self):
         return f"{self.coordinates_latitude}, {self.coordinates_longitude}"

@@ -11,6 +11,7 @@ markdown = "*"
 django-filter = "*"
 psycopg2 = "*"
 gunicorn = "*"
+django-timescaledb = "*"
 
 [dev-packages]
 

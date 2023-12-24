@@ -24,6 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
+TIMESCALE_ENABLED = os.getenv("TIMESCALE_ENABLED", "False") == "True"
+TIMESCALE_INTERVAL = os.getenv("TIMESCALE_INTERVAL", "1 day")
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -54,7 +57,7 @@ INSTALLED_APPS = [
     # Rest Framework
     "rest_framework",  # Django REST Framework
     # Apps
-    "wayfinder",
+    "wayfinder_timescale" if TIMESCALE_ENABLED else "wayfinder",
 ]
 
 MIDDLEWARE = [
@@ -91,17 +94,30 @@ WSGI_APPLICATION = "core.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-if os.getenv("DJANGO_DATABASE", "sqlite3") == "sqlite3":
+DJANGO_DATABASE = os.getenv("DJANGO_DATABASE", "sqlite3")
+
+if DJANGO_DATABASE == "sqlite3":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": DATA_DIR / "db.sqlite3",
         }
     }
-else:
+elif DJANGO_DATABASE == "postgresql" and not TIMESCALE_ENABLED:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("POSTGRES_DB", "myproject"),
+            "USER": os.getenv("POSTGRES_USER", "myprojectuser"),
+            "PASSWORD": os.getenv("POSTGRES_PASSWORD", "password"),
+            "HOST": os.getenv("POSTGRES_HOST", "localhost"),
+            "PORT": os.getenv("POSTGRES_PORT", "5432"),
+        }
+    }
+elif DJANGO_DATABASE == "postgresql" and TIMESCALE_ENABLED:
+    DATABASES = {
+        "default": {
+            "ENGINE": "timescale.db.backends.postgresql",
             "NAME": os.getenv("POSTGRES_DB", "myproject"),
             "USER": os.getenv("POSTGRES_USER", "myprojectuser"),
             "PASSWORD": os.getenv("POSTGRES_PASSWORD", "password"),
