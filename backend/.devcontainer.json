@@ -30,7 +30,16 @@
                     "activityBar.background": "#A04000",
                     "titleBar.activeBackground": "#A04000",
                     "titleBar.activeForeground": "#FBFBF6"
-                }
+                },
+                "json.schemas": [
+                    {
+                        "fileMatch": [
+                            "/package.json"
+                        ],
+                        "url": "https://json.schemastore.org/package",
+                        "schema": true
+                    }
+                ]
             },
             "[python]": {
                 "editor.defaultFormatter": "ms-python.black-formatter"
