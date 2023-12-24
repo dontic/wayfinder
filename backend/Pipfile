@@ -9,6 +9,8 @@ python-dotenv = "*"
 djangorestframework = "*"
 markdown = "*"
 django-filter = "*"
+psycopg2 = "*"
+gunicorn = "*"
 
 [dev-packages]
 
