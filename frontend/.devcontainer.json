@@ -1,0 +1,62 @@
+// .devcontainer.json
+{
+    // Name of the development container
+    "name": "Wayfinder Frontend Devcontainer",
+    "dockerComposeFile": [
+        "./../docker-compose-devcontainer.yml"
+    ],
+    // Service to use from the docker compose file
+    "service": "frontend",
+    // Containers behavior on VSCode close
+    "shutdownAction": "none",
+    // The optional 'workspaceFolder' property is the path VS Code should open by default when
+    // connected. This is typically a file mount in .devcontainer/docker-compose.yml
+    "workspaceFolder": "/workspace/frontend",
+    // Configure extensions and settings
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "esbenp.prettier-vscode",
+                "mhutchie.git-graph",
+                "GitHub.copilot",
+                "stackbreak.comment-divider"
+            ],
+            "settings": {
+                "editor.formatOnSave": true,
+                "prettier.enable": true,
+                "editor.defaultFormatter": "esbenp.prettier-vscode",
+                "[typescript]": {
+                    "editor.defaultFormatter": "esbenp.prettier-vscode"
+                },
+                "[typescriptreact]": {
+                    "editor.defaultFormatter": "esbenp.prettier-vscode"
+                },
+                "[json]": {
+                    "editor.defaultFormatter": "esbenp.prettier-vscode",
+                    "editor.quickSuggestions": {
+                        "strings": true
+                    },
+                    "editor.suggest.insertMode": "replace"
+                },
+                "prettier.semi": true,
+                "prettier.trailingComma": "none",
+                "prettier.singleQuote": false,
+                "prettier.printWidth": 80,
+                "workbench.colorCustomizations": {
+                    "activityBar.background": "#57ffdb",
+                    "titleBar.activeBackground": "#57ffdb",
+                    "titleBar.activeForeground": "#FBFBF6"
+                },
+                "json.schemas": [
+                    {
+                        "fileMatch": [
+                            "/package.json"
+                        ],
+                        "url": "https://json.schemastore.org/package",
+                        "schema": true
+                    }
+                ]
+            }
+        }
+    }
+}
