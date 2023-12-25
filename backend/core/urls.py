@@ -23,4 +23,5 @@ urlpatterns = [
     path("wayfinder/", include("wayfinder_timescale.urls"))
     if settings.TIMESCALE_ENABLED
     else path("wayfinder/", include("wayfinder.urls")),
+    path('auth/', include('dj_rest_auth.urls')),
 ]

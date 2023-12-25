@@ -12,6 +12,7 @@ django-filter = "*"
 psycopg2 = "*"
 gunicorn = "*"
 django-timescaledb = "*"
+dj-rest-auth = "*"
 
 [dev-packages]
 
