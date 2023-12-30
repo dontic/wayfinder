@@ -19,7 +19,7 @@ fi
 
 echo "Starting server..."
 
-gunicorn core.wsgi:application --forwarded-allow-ips="*" --bind 0.0.0.0:8000 
+gunicorn core.wsgi:application --forwarded-allow-ips="*" --bind 0.0.0.0:8000 --env SCRIPT_NAME=/api
 
 #####################################################################################
 # Options to DEBUG Django server
