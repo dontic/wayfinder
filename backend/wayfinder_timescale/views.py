@@ -3,6 +3,8 @@ import os
 import dotenv
 import pandas as pd
 
+from django.db.models import Q
+
 # REST Framework imports
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
@@ -233,7 +235,9 @@ class VisitsView(ListAPIView):
         )
 
         # Exclude the visits that don't have an arrival or departure datetime
-        visits = visits.exclude(arrival_datetime=None, departure_datetime=None)
+        visits = visits.exclude(
+            Q(arrival_datetime=None) | Q(departure_datetime=None)
+        )
 
         return visits
 
@@ -254,7 +258,9 @@ class VisitsPlotView(APIView):
         )
 
         # Exclude the visits that don't have an arrival or departure datetime
-        visits = visits.exclude(arrival_datetime=None, departure_datetime=None)
+        visits = visits.exclude(
+            Q(arrival_datetime=None) | Q(departure_datetime=None)
+        )
 
         # If visists is empty, return an empty response
         if visits.count() == 0:

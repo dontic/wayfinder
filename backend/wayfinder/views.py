@@ -228,7 +228,9 @@ class VisitsView(ListAPIView):
         visits = Visit.objects.filter(time__range=[start_date, end_date])
 
         # Exclude the visits that don't have an arrival or departure datetime
-        visits = visits.exclude(arrival_datetime=None, departure_datetime=None)
+        visits = visits.exclude(
+            Q(arrival_datetime=None) | Q(departure_datetime=None)
+        )
 
         return visits
 
@@ -247,7 +249,9 @@ class VisitsPlotView(APIView):
         visits = Visit.objects.filter(time__range=[start_date, end_date])
 
         # Exclude the visits that don't have an arrival or departure datetime
-        visits = visits.exclude(arrival_datetime=None, departure_datetime=None)
+        visits = visits.exclude(
+            Q(arrival_datetime=None) | Q(departure_datetime=None)
+        )
 
         # If visists is empty, return an empty response
         if visits.count() == 0:
