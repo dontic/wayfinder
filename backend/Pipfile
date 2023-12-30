@@ -13,6 +13,7 @@ psycopg2 = "*"
 gunicorn = "*"
 django-timescaledb = "*"
 dj-rest-auth = "*"
+django-cors-headers = "*"
 
 [dev-packages]
 
