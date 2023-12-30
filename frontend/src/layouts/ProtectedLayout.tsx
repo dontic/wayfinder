@@ -13,9 +13,12 @@ const ProtectedLayout = () => {
 
   if (!basicUserInfo) {
     // Try to get the user from /auth/getuser/
-    getUser();
-
-    return <Navigate replace to={"/login"} />;
+    try {
+      getUser();
+    } catch (error) {
+      console.log(error);
+      return <Navigate replace to={"/login"} />;
+    }
   }
 
   if (status === "loading") {
