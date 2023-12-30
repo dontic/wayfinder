@@ -41,7 +41,11 @@ DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
-FORCE_SCRIPT_NAME = os.getenv("DJANGO_FORCE_SCRIPT_NAME", "")
+FORCE_SCRIPT_NAME = os.getenv("DJANGO_FORCE_SCRIPT_NAME", "/")
+LOGIN_URL = FORCE_SCRIPT_NAME + "accounts/login/"
+LOGIN_REDIRECT_URL = FORCE_SCRIPT_NAME + "accounts/profile/"
+LOGOUT_REDIRECT_URL = FORCE_SCRIPT_NAME + "accounts/login/"
+
 
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = os.getenv(
@@ -191,8 +195,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
-STATIC_ROOT = BASE_DIR / "django_static"
-STATIC_URL = "/static/"
+STATIC_URL = FORCE_SCRIPT_NAME + "static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
