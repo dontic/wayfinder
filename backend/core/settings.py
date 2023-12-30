@@ -78,7 +78,6 @@ INSTALLED_APPS = [
     "corsheaders",  # Django CORS Headers
     # Rest Framework
     "rest_framework",  # Django REST Framework
-    "rest_framework.authtoken",
     "dj_rest_auth",  # Django REST Auth
     # Apps
     "wayfinder_timescale" if TIMESCALE_ENABLED else "wayfinder",
@@ -197,6 +196,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.TokenAuthentication",
     ),
+}
+
+REST_AUTH = {
+    "TOKEN_MODEL": None
 }
