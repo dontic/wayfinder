@@ -23,7 +23,10 @@ const Visits = () => {
   const [isDateSelectVisible, setIsDateSelectVisible] =
     useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [dateRange, setDateRange] = useState<Date[] | null[]>([null, null]);
+  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
+    null,
+    null
+  ]);
   const [startDate, endDate] = dateRange;
   const [data, setData] = useState<any>(null);
   const [layout, setLayout] = useState<any>(null);
@@ -156,7 +159,7 @@ const Visits = () => {
               selectsRange={true}
               startDate={startDate}
               endDate={endDate}
-              onChange={(update: Date[]) => {
+              onChange={(update: [Date | null, Date | null]) => {
                 setDateRange(update);
                 setSelectedQuickDateRange("");
               }}
