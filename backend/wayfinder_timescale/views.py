@@ -3,10 +3,13 @@ import dotenv
 
 # REST Framework imports
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework import permissions, status
 
-from .serializers import LocationSerializer, VisitSerializer
+from wayfinder_timescale.models import Visit
+
+from .serializers import FrontentVisitSerializer, LocationSerializer, VisitSerializer
 
 # Load the .env file
 dotenv.load_dotenv()
@@ -198,3 +201,32 @@ class OverlandView(APIView):
         print("Data saved to the database")
 
         return Response({"result": "ok"}, status=status.HTTP_200_OK)
+
+
+class VisitsView(ListAPIView):
+    # Configure the view
+    queryset = Visit.objects.all()
+    serializer_class = FrontentVisitSerializer
+
+    def get_queryset(self):
+        # The request should always receive a date range
+        # If not, return an error
+        start_date = self.request.query_params.get("start_date")
+        end_date = self.request.query_params.get("end_date")
+
+        if start_date is None or end_date is None:
+            return Response(
+                {"message": "No date range provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Get the visits in the date range with timescale
+        # visits = Visit.objects.filter(time__range=[start_date, end_date])
+        visits = Visit.timescale.filter(time__range=[start_date, end_date]).time_bucket(
+            "time", "1 day"
+        )
+
+        # Exclude the visits that don't have an arrival or departure datetime
+        visits = visits.exclude(arrival_datetime=None, departure_datetime=None)
+
+        return visits

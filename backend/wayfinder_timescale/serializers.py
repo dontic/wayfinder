@@ -13,3 +13,15 @@ class VisitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Visit
         fields = "__all__"
+
+
+class FrontentVisitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Visit
+        fields = [
+            "coordinates_longitude",
+            "coordinates_latitude",
+            "arrival_datetime",
+            "departure_datetime",
+        ]
+        depth = 1

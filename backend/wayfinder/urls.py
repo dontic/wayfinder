@@ -8,6 +8,7 @@ router = routers.DefaultRouter()
 
 urlpatterns = [
     path("overland/", views.OverlandView.as_view()),
+    path("visits/", views.VisitsView.as_view(), name="visits"),
 ]
 
 urlpatterns = router.urls + urlpatterns
