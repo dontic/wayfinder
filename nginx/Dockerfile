@@ -45,5 +45,8 @@ FROM nginx:stable-bullseye
 # Copy the built app files to the nginx container
 COPY --from=build /app/frontend/dist /usr/share/nginx/html/frontend
 
+# Copy the src/assets files to the nginx container
+COPY --from=build /app/frontend/src/assets /usr/share/nginx/html/frontend/src/assets
+
 # Run nginx
 CMD ["nginx", "-g", "daemon off;"]
