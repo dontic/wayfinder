@@ -1,5 +1,4 @@
 import { Box, Text } from "@chakra-ui/react";
-import LogoutButton from "../components/LogoutButton";
 import useAuthStore from "../stores/authStore";
 
 const Home = () => {
@@ -7,9 +6,7 @@ const Home = () => {
 
   return (
     <Box>
-      <Text>Home</Text>
       <Text>Hello {basicUserInfo?.username}</Text>
-      <LogoutButton />
     </Box>
   );
 };

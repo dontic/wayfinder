@@ -4,6 +4,7 @@ import { Outlet } from "react-router-dom";
 import { Navigate } from "react-router-dom";
 import useAuthStore from "../stores/authStore";
 import { Box, Text } from "@chakra-ui/react";
+import NavBar from "../components/NavBar";
 
 const ProtectedLayout = () => {
   const basicUserInfo = useAuthStore((state) => state.basicUserInfo);
@@ -27,6 +28,7 @@ const ProtectedLayout = () => {
 
   return (
     <>
+      <NavBar />
       <Outlet />
     </>
   );

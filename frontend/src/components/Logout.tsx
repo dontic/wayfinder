@@ -1,12 +1,15 @@
-import { Button, useToast } from "@chakra-ui/react";
+import { Box, useToast } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../stores/authStore";
 
-const LogoutButton = () => {
+interface Props {
+  children?: React.ReactNode;
+}
+
+const LogoutButton = ({ children }: Props = { children: "Logout" }) => {
   const toast = useToast();
   const navigate = useNavigate();
   const logout = useAuthStore((state) => state.logout);
-  const status = useAuthStore((state) => state.logoutStatus);
 
   const handleLogout = async () => {
     console.log("Logging out...");
@@ -26,11 +29,7 @@ const LogoutButton = () => {
     }
   };
 
-  return (
-    <Button onClick={handleLogout} isLoading={status === "loading"}>
-      Logout
-    </Button>
-  );
+  return <Box onClick={handleLogout}>{children}</Box>;
 };
 
 export default LogoutButton;
