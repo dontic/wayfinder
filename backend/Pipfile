@@ -16,6 +16,7 @@ dj-rest-auth = "*"
 django-cors-headers = "*"
 plotly = "*"
 pandas = "*"
+whitenoise = "*"
 
 [dev-packages]
 
