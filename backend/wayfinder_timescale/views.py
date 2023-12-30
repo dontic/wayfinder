@@ -185,8 +185,15 @@ class OverlandView(APIView):
 
         # Save the data to the database
         print("Saving data to the database...")
-        visits_serializer.save()
-        locations_serializer.save()
+        try:
+            visits_serializer.save()
+            locations_serializer.save()
+        except Exception as e:
+            print(f"Exception: {e}")
+            return Response(
+                {"result": "Data not saved to the database"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         print("Data saved to the database")
 

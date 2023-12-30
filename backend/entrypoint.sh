@@ -1,9 +1,5 @@
 #!/bin/sh
 
-echo "Making migrations..."
-
-python manage.py makemigrations
-
 echo "Migrating..."
 
 python manage.py migrate --no-input
