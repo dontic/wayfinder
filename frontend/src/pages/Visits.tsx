@@ -15,9 +15,9 @@ import { useEffect, useState } from "react";
 
 import { ChevronUpIcon, ChevronDownIcon } from "@chakra-ui/icons";
 
-import Plotly from "react-plotly.js";
-import createPlotlyComponent from "react-plotly.js/factory";
-const Plot = createPlotlyComponent(Plotly);
+import Plot from "react-plotly.js";
+// import createPlotlyComponent from "react-plotly.js/factory";
+// const Plot = createPlotlyComponent(Plotly);
 
 const Visits = () => {
   const [isDateSelectVisible, setIsDateSelectVisible] =
