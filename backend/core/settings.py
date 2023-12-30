@@ -41,11 +41,15 @@ DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
+# CSRF settings
 CSRF_TRUSTED_ORIGINS = os.getenv(
     "DJANGO_CSRF_TRUSTED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
 ).split(",")
 
-# CORS config
+# CORS settings
+CORS_ALLOWED_ORIGINS = os.getenv(
+    "DJANGO_CORS_ALLOW_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+).split(",")
 CORS_ORIGIN_WHITELIST = os.getenv(
     "DJANGO_CORS_ORIGIN_WHITELIST", "http://localhost:5173,http://127.0.0.1:5173"
 ).split(",")
