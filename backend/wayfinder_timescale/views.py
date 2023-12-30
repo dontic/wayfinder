@@ -1,5 +1,7 @@
+import json
 import os
 import dotenv
+import pandas as pd
 
 # REST Framework imports
 from rest_framework.views import APIView
@@ -8,6 +10,10 @@ from rest_framework.response import Response
 from rest_framework import permissions, status
 
 from wayfinder_timescale.models import Visit
+
+# Plotly imports
+import plotly.express as px
+from plotly.utils import PlotlyJSONEncoder
 
 from .serializers import FrontentVisitSerializer, LocationSerializer, VisitSerializer
 
@@ -230,3 +236,50 @@ class VisitsView(ListAPIView):
         visits = visits.exclude(arrival_datetime=None, departure_datetime=None)
 
         return visits
+
+
+class VisitsPlotView(APIView):
+    def get(self, request):
+        # The request should always receive a date range
+        # If not, return an error
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        if start_date is None or end_date is None:
+            raise Exception("Start date or end date missing")
+
+        # Get the visits in the date range
+        visits = Visit.timescale.filter(time__range=[start_date, end_date]).time_bucket(
+            "time", "1 day"
+        )
+
+        # Exclude the visits that don't have an arrival or departure datetime
+        visits = visits.exclude(arrival_datetime=None, departure_datetime=None)
+
+        # If visists is empty, return an empty response
+        if visits.count() == 0:
+            return Response({}, status=status.HTTP_200_OK)
+
+        # Convert the visits to a pandas dataframe
+        visits = pd.DataFrame(list(visits.values()))
+
+        # Plot the visits
+        fig = px.density_mapbox(
+            visits,
+            lat="coordinates_latitude",
+            lon="coordinates_longitude",
+            z="duration",
+            hover_data=["arrival_datetime", "departure_datetime"],
+            zoom=1,
+        )
+        fig.update_layout(mapbox_style="open-street-map")
+        fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+        fig.update_layout(coloraxis_showscale=False)
+
+        graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
+
+        # GraphJSON is a json string, so you have to parse it into a json object
+        # in order to return it
+        parsed_graphJSON = json.loads(graphJSON)
+
+        return Response(parsed_graphJSON, status=status.HTTP_200_OK)

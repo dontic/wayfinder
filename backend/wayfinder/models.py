@@ -49,5 +49,19 @@ class Visit(models.Model):
     time = models.DateTimeField()
     wifi = models.CharField(max_length=50, blank=True)
 
+    # Calculated properties
+    duration = models.DurationField(blank=True, null=True)
+
     def __str__(self):
         return f"{self.coordinates_latitude}, {self.coordinates_longitude}"
+
+    def save(self, *args, **kwargs):
+        # Calculate the duration of the visit in hours
+        if self.arrival_datetime and self.departure_datetime:
+            print(self.arrival_datetime)
+            print(self.departure_datetime)
+            self.duration = self.departure_datetime - self.arrival_datetime
+            print(self.duration)
+        else:
+            self.duration = None
+        super().save(*args, **kwargs)
