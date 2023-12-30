@@ -40,7 +40,7 @@ class Visit(models.Model):
 
     # Properties
     action = models.CharField(max_length=50)
-    arrival_datetime = models.DateTimeField()
+    arrival_datetime = models.DateTimeField(blank=True, null=True)  # Can be null
     battery_level = models.DecimalField(max_digits=3, decimal_places=2)
     battery_state = models.CharField(max_length=50)
     departure_datetime = models.DateTimeField(blank=True, null=True)  # Can be None
