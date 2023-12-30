@@ -1,0 +1,35 @@
+// Desc: Protected layour, if the user is not logged in, redirect to login page
+
+import { Outlet } from "react-router-dom";
+import { Navigate } from "react-router-dom";
+import useAuthStore from "../stores/authStore";
+import { Box, Text } from "@chakra-ui/react";
+
+const ProtectedLayout = () => {
+  const basicUserInfo = useAuthStore((state) => state.basicUserInfo);
+  const getUser = useAuthStore((state) => state.getUser);
+  const status = useAuthStore((state) => state.getUserStatus);
+
+  if (!basicUserInfo) {
+    // Try to get the user from /auth/getuser/
+    getUser();
+
+    return <Navigate replace to={"/login"} />;
+  }
+
+  if (status === "loading") {
+    return (
+      <Box>
+        <Text>Loading...</Text>
+      </Box>
+    );
+  }
+
+  return (
+    <>
+      <Outlet />
+    </>
+  );
+};
+
+export default ProtectedLayout;
