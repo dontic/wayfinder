@@ -1,0 +1,32 @@
+services:
+  timescaledb:
+    restart: always
+    image: timescale/timescaledb-ha:pg16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: django
+      POSTGRES_PASSWORD: django
+    volumes:
+      - timescaledb_data:/home/postgres/pgdata/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+
+  backend:
+    restart: always
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+
+volumes:
+  timescaledb_data:
