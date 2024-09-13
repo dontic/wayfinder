@@ -1,0 +1,50 @@
+// devcontainer.json
+
+{
+    "name": "Django Devcontainer",  // Name of the development container
+    "shutdownAction": "none",  // Container behavior on VSCode close: none, stopContainer (default for image or Dockerfile), and stopCompose (default for Docker Compose)
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "django",
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+    
+    // Extensions and settings
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "mhutchie.git-graph",
+                "GitHub.copilot",
+                "ms-python.black-formatter",
+                "stuart.unique-window-colors",
+                "stackbreak.comment-divider"
+            ],
+            "settings": {
+                // Black formatter settings
+                "editor.formatOnSave": true,
+                "editor.defaultFormatter": "ms-python.black-formatter",
+                "[python]": {
+                    "editor.defaultFormatter": "ms-python.black-formatter"
+                },
+                // Window colors settings
+                "workbench.colorCustomizations": {
+                    "activityBar.background": "#0C4B33",
+                    "titleBar.activeBackground": "#0C4B33",
+                    "titleBar.activeForeground": "#FBFBF6"
+                },
+                // Prevent json schema warnings
+                "json.schemas": [
+                    {
+                        "fileMatch": [
+                            "/package.json"
+                        ],
+                        "url": "https://json.schemastore.org/package",
+                        "schema": true
+                    }
+                ]
+            }
+        }
+    },
+    "mounts": [
+        "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,consistency=cached"
+    ]
+}
