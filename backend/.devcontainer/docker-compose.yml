@@ -1,16 +1,14 @@
 # docker-compose.yml
 
 services:
-  redis:
-    image: redis:alpine
-
-  postgres:
-    image: postgres:16-bullseye
+  timescaledb:
+    image: timescale/timescaledb-ha:pg16
     restart: always
     environment:
       POSTGRES_USER: django
       POSTGRES_PASSWORD: django
     volumes:
+      # Create the postgresdata directory for debugging purposes
       - ./postgresdata:/var/lib/postgresql/data
       # Copy the provision_postgres.sql file to the container
       - ./provision_postgres.sql:/docker-entrypoint-initdb.d/provision_postgres.sql
@@ -29,5 +27,4 @@ services:
     # Overrides default command so things don't shut down after the process ends.
     command: /bin/sh -c "while sleep 1000; do :; done"
     depends_on:
-      - postgres
-      - redis
+      - timescaledb
