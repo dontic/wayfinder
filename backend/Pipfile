@@ -5,6 +5,16 @@ name = "pypi"
 
 [packages]
 django = "*"
+python-dotenv = "*"
+django-timescaledb = "*"
+django-cors-headers = "*"
+djangorestframework = "*"
+drf-spectacular = "*"
+markdown = "*"
+django-filter = "*"
+psycopg2 = "*"
+gunicorn = "*"
+whitenoise = "*"
 
 [dev-packages]
 
