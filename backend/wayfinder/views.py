@@ -93,6 +93,7 @@ class OverlandView(APIView):
         # Extract the list of locations
         locations_data = request.data.get("locations", [])
         log.info(f"Received {len(locations_data)} locations")
+        log.debug(locations_data)
 
         locations_to_create = []
         visits_to_create = []
