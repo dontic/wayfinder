@@ -156,6 +156,8 @@ INSTALLED_APPS = [
     # ----------------------------------- REST ----------------------------------- #
     "rest_framework",  # Django REST Framework
     "drf_spectacular",  # Django Spectacular
+    # ----------------------------------- Apps ----------------------------------- #
+    "wayfinder",
 ]
 
 MIDDLEWARE = [
