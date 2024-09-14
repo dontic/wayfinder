@@ -47,7 +47,7 @@ class Location(TimescaleModel):
     course = models.IntegerField()
 
     # The accuracy of the course in degrees (-1 if speed is unknown)
-    course_accuracy = models.IntegerField()
+    course_accuracy = models.DecimalField(max_digits=5, decimal_places=2)
 
     # The device id set in Overland settings or an empty string if not set
     device_id = models.CharField(max_length=50, blank=True)
@@ -63,7 +63,7 @@ class Location(TimescaleModel):
     speed = models.IntegerField()
 
     # The accuracy of the speed in meters per second (-1 if speed is unknown)
-    speed_accuracy = models.IntegerField()
+    speed_accuracy = models.DecimalField(max_digits=5, decimal_places=2)
 
     # The timestamp of the location
     # Set to the Timescale's time field
