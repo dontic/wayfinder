@@ -107,6 +107,7 @@ class OverlandView(APIView):
                 else:
                     # Log validation errors
                     log.error(f"Visit validation error: {visit_serializer.errors}")
+                    log.info(f"Visit data: {item}")
             else:
                 location_serializer = LocationSerializer(data=item)
                 if location_serializer.is_valid():
@@ -118,6 +119,7 @@ class OverlandView(APIView):
                     log.error(
                         f"Location validation error: {location_serializer.errors}"
                     )
+                    log.info(f"Location data: {item}")
 
         log.info(f"Parsed {len(locations_to_create)} locations")
         log.info(f"Parsed {len(visits_to_create)} visits")
