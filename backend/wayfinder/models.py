@@ -94,7 +94,7 @@ class Visit(TimescaleModel):
     # Properties
 
     # Altitude of the location in meters
-    altitude = models.IntegerField()
+    altitude = models.IntegerField(blank=True, null=True)
 
     # The arrival datetime of the visit
     arrival_date = models.DateTimeField()
@@ -123,7 +123,7 @@ class Visit(TimescaleModel):
     unique_id = models.CharField(max_length=50, blank=True, null=True)
 
     # The vertical accuracy in meters
-    vertical_accuracy = models.IntegerField()
+    vertical_accuracy = models.IntegerField(blank=True, null=True)
 
     # Wifi SSID if connected to a wifi network, an empty string if not connected
     wifi = models.CharField(max_length=100, blank=True)
