@@ -10,7 +10,7 @@ services:
     volumes:
       - timescaledb_data:/home/postgres/pgdata/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
+      test: ["CMD-SHELL", "pg_isready -U django -d django"]
       interval: 10s
       timeout: 30s
       retries: 5
