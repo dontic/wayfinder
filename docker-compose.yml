@@ -1,6 +1,6 @@
 services:
   timescaledb:
-    restart: always
+    restart: unless-stopped
     image: timescale/timescaledb-ha:pg16
     ports:
       - "5432:5432"
@@ -16,8 +16,8 @@ services:
       retries: 5
       start_period: 20s
 
-  backend:
-    restart: always
+  django:
+    restart: unless-stopped
     build:
       context: ./backend
       dockerfile: Dockerfile
