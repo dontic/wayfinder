@@ -1,5 +1,7 @@
 # docker-compose.yml
 
+name: wayfinder-backend-devcontainer
+
 services:
   timescaledb:
     image: timescale/timescaledb-ha:pg16

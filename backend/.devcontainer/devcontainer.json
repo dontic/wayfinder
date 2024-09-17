@@ -1,12 +1,10 @@
 // devcontainer.json
-
 {
-    "name": "Django Devcontainer",  // Name of the development container
-    "shutdownAction": "none",  // Container behavior on VSCode close: none, stopContainer (default for image or Dockerfile), and stopCompose (default for Docker Compose)
+    "name": "Django Devcontainer", // Name of the development container
+    "shutdownAction": "stopCompose", // Container behavior on VSCode close: none, stopContainer (default for image or Dockerfile), and stopCompose (default for Docker Compose)
     "dockerComposeFile": "docker-compose.yml",
     "service": "django",
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-    
     // Extensions and settings
     "customizations": {
         "vscode": {
