@@ -20,7 +20,7 @@ from drf_spectacular.types import OpenApiTypes
 # Local App
 from .models import Location, Visit
 from .serializers import LocationSerializer, VisitSerializer
-from .filters import LocationFilterSet
+from .filters import LocationFilterSet, VisitFilterSet
 
 
 log = logging.getLogger("app_logger")
@@ -169,3 +169,15 @@ class LocationViewSet(
     serializer_class = LocationSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = LocationFilterSet
+
+
+class VisitViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+):
+    permission_classes = []
+
+    queryset = Visit.objects.all()
+    serializer_class = VisitSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = VisitFilterSet
