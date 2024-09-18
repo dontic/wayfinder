@@ -14,7 +14,6 @@ from rest_framework.views import APIView
 from rest_framework import viewsets, mixins
 from rest_framework.authentication import (
     SessionAuthentication,
-    BasicAuthentication,
     TokenAuthentication,
 )
 
