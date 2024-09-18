@@ -4,6 +4,8 @@ import logging
 
 # Django
 from django.db import transaction
+from django_filters.rest_framework import DjangoFilterBackend
+
 
 # REST Framework
 from rest_framework import status
@@ -18,6 +20,7 @@ from drf_spectacular.types import OpenApiTypes
 # Local App
 from .models import Location, Visit
 from .serializers import LocationSerializer, VisitSerializer
+from .filters import LocationFilterSet
 
 
 log = logging.getLogger("app_logger")
@@ -154,3 +157,15 @@ class OverlandView(APIView):
 
         log.info("Data saved successfully")
         return Response({"result": "ok"}, status=status.HTTP_200_OK)
+
+
+class LocationViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+):
+    permission_classes = []
+
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = LocationFilterSet
