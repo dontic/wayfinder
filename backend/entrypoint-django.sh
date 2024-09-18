@@ -8,8 +8,17 @@ echo "Collecting static files..."
 
 python manage.py collectstatic --no-input
 
-# Ensure the data directory exists
-mkdir -p data
+# Create superuser if environment variables are set
+if [ -n "$DJANGO_SUPERUSER_USERNAME" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ]
+then
+    echo "Creating superuser..."
+    python manage.py createsuperuser \
+        --noinput \
+        --username $DJANGO_SUPERUSER_USERNAME
+    echo "Superuser created successfully!"
+else
+    echo "Superuser environment variables not set. Skipping superuser creation."
+fi
 
 echo "Starting server..."
 

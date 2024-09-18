@@ -24,7 +24,7 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - .env
+      - config.env
     depends_on:
       timescaledb:
         condition: service_healthy
