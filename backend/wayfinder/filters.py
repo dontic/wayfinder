@@ -4,7 +4,7 @@
 from django_filters import rest_framework as filters
 
 # Local App
-from .models import Location
+from .models import Location, Visit
 
 
 class LocationFilterSet(filters.FilterSet):
@@ -22,4 +22,23 @@ class LocationFilterSet(filters.FilterSet):
 
     class Meta:
         model = Location
+        fields = [
+            "time_after",
+            "time_before",
+            "motion_contains",
+            "h_accuracy_lte",
+            "speed_gte",
+        ]
+
+
+class VisitFilterSet(filters.FilterSet):
+    time_after = filters.IsoDateTimeFilter(
+        field_name="time", lookup_expr="gte", required=True
+    )
+    time_before = filters.IsoDateTimeFilter(
+        field_name="time", lookup_expr="lte", required=True
+    )
+
+    class Meta:
+        model = Visit
         fields = ["time_after", "time_before"]
