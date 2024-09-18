@@ -30,9 +30,14 @@ from .filters import LocationFilterSet, VisitFilterSet
 log = logging.getLogger("app_logger")
 
 
+# Subclassing TokenAuthentication to accept Bearer instead of Token as the keyword
+class BearerTokenAuthentication(TokenAuthentication):
+    keyword = "Bearer"
+
+
 class OverlandView(APIView):
 
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [BearerTokenAuthentication]
 
     @extend_schema(
         request=OpenApiTypes.OBJECT,
@@ -167,7 +172,7 @@ class LocationViewSet(
     viewsets.GenericViewSet,
     mixins.ListModelMixin,
 ):
-    authentication_classes = [SessionAuthentication]
+    authentication_classes = [BearerTokenAuthentication]
 
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
