@@ -2,10 +2,10 @@
 
 import logging
 
-from rest_framework import status, serializers
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
+from drf_spectacular.utils import extend_schema, OpenApiExample
 from drf_spectacular.types import OpenApiTypes
 from django.db import transaction
 
