@@ -25,6 +25,22 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+if "BASE_URL" not in os.environ:
+    raise ValueError("BASE_URL environment variable not set.")
+
+# I.e.: http://localhost:8000, https://example.com
+BASE_URL = os.getenv("BASE_URL")
+
+BASE_URL_PROTOCOL = BASE_URL.split("://")[0]
+BASE_URL_HOST = BASE_URL.split("://")[1].split(":")[0]
+BASE_URL_PORT = BASE_URL.split("://")[1].split(":")[1]
+
+PARSED_ALLOWED_HOSTS = [BASE_URL_HOST]
+PARSED_ALLOWED_ORIGINS = [BASE_URL]
+PARSED_CORS_ORIGIN_WHITELIST = [BASE_URL]
+PARSED_DJANGO_CSRF_COOKIE_DOMAIN = BASE_URL_HOST
+PARSED_DJANGO_SESSION_COOKIE_DOMAIN = BASE_URL_HOST
+
 
 # ---------------------------------------------------------------------------- #
 #                                   DEBUGGING                                  #
@@ -60,7 +76,7 @@ LOGGING = {
         # Consistent logger for the application
         # Use `log = logging.getLogger("app_logger")` in your code
         "app_logger": {
-            "level": os.getenv("LOGGING_LOG_LEVEL", "DEBUG"),
+            "level": os.getenv("LOGGING_LOG_LEVEL", "INFO"),
             "handlers": ["console"],
             "propagate": False,
         },
@@ -96,26 +112,21 @@ if "DJANGO_SECRET_KEY" not in os.environ:
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # Hosts
-if "DJANGO_ALLOWED_HOSTS" not in os.environ:
-    raise ValueError("DJANGO_ALLOWED_HOSTS environment variable not set.")
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS").split(",")
+
+ALLOWED_HOSTS = PARSED_ALLOWED_HOSTS
 
 # CSRF
-if "DJANGO_ALLOWED_ORIGINS" not in os.environ:
-    raise ValueError("DJANGO_ALLOWED_ORIGINS environment variable not set.")
-CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_ALLOWED_ORIGINS").split(",")
+CSRF_TRUSTED_ORIGINS = PARSED_ALLOWED_ORIGINS
 
-CSRF_COOKIE_NAME = os.getenv("DJANGO_CSRF_COOKIE_NAME", "csrftoken")
+CSRF_COOKIE_NAME = "csrftoken"
 
-if "DJANGO_CSRF_COOKIE_DOMAIN" not in os.environ:
-    raise ValueError("DJANGO_CSRF_COOKIE_DOMAIN environment variable is not set.")
-CSRF_COOKIE_DOMAIN = os.getenv("DJANGO_CSRF_COOKIE_DOMAIN")
+CSRF_COOKIE_DOMAIN = PARSED_DJANGO_CSRF_COOKIE_DOMAIN
 
 CSRF_COOKIE_SAMESITE = "None"
 CSRF_COOKIE_SECURE = True
 
 # CORS settings
-CORS_ORIGIN_WHITELIST = os.getenv("DJANGO_ALLOWED_ORIGINS").split(",")
+CORS_ORIGIN_WHITELIST = PARSED_CORS_ORIGIN_WHITELIST
 
 CORS_ALLOW_METHODS = ["DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"]
 
@@ -134,9 +145,7 @@ CORS_ALLOW_HEADERS = [
 CORS_ALLOW_CREDENTIALS = True
 
 # Sessions
-if "DJANGO_SESSION_COOKIE_DOMAIN" not in os.environ:
-    raise ValueError("DJANGO_SESSION_COOKIE_DOMAIN environment variable is not set.")
-SESSION_COOKIE_DOMAIN = os.getenv("DJANGO_SESSION_COOKIE_DOMAIN")
+SESSION_COOKIE_DOMAIN = PARSED_DJANGO_SESSION_COOKIE_DOMAIN
 
 SESSION_COOKIE_SAMESITE = "None"
 SESSION_COOKIE_SECURE = True
