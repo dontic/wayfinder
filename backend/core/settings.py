@@ -33,7 +33,9 @@ BASE_URL = os.getenv("BASE_URL")
 
 BASE_URL_PROTOCOL = BASE_URL.split("://")[0]
 BASE_URL_HOST = BASE_URL.split("://")[1].split(":")[0]
-BASE_URL_PORT = BASE_URL.split("://")[1].split(":")[1]
+BASE_URL_PORT = (
+    BASE_URL.split("://")[1].split(":")[1] if ":" in BASE_URL.split("://")[1] else ""
+)
 
 PARSED_ALLOWED_HOSTS = [BASE_URL_HOST]
 PARSED_ALLOWED_ORIGINS = [BASE_URL]
