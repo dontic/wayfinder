@@ -5,16 +5,6 @@ from rest_framework import serializers
 from .models import Location, Visit
 
 
-class OverlandFeatureSerializer(serializers.Serializer):
-    type = serializers.CharField()
-    geometry = serializers.DictField()
-    properties = serializers.DictField()
-
-
-class OverlandSerializer(serializers.Serializer):
-    locations = OverlandFeatureSerializer(many=True)
-
-
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location

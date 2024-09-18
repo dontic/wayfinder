@@ -11,7 +11,7 @@ from django.db import transaction
 
 from wayfinder.models import Location, Visit
 
-from .serializers import LocationSerializer, VisitSerializer, OverlandSerializer
+from .serializers import LocationSerializer, VisitSerializer
 
 log = logging.getLogger("app_logger")
 
