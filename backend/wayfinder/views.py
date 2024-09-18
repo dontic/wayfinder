@@ -2,16 +2,23 @@
 
 import logging
 
+# Django
+from django.db import transaction
+
+# REST Framework
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import viewsets, mixins
+
+# Spectacular
 from drf_spectacular.utils import extend_schema, OpenApiExample
 from drf_spectacular.types import OpenApiTypes
-from django.db import transaction
 
-from wayfinder.models import Location, Visit
-
+# Local App
+from .models import Location, Visit
 from .serializers import LocationSerializer, VisitSerializer
+
 
 log = logging.getLogger("app_logger")
 
