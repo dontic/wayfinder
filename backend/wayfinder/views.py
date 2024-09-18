@@ -12,6 +12,11 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import viewsets, mixins
+from rest_framework.authentication import (
+    SessionAuthentication,
+    BasicAuthentication,
+    TokenAuthentication,
+)
 
 # Spectacular
 from drf_spectacular.utils import extend_schema, OpenApiExample
@@ -28,7 +33,7 @@ log = logging.getLogger("app_logger")
 
 class OverlandView(APIView):
 
-    permission_classes = []
+    authentication_classes = [TokenAuthentication]
 
     @extend_schema(
         request=OpenApiTypes.OBJECT,
@@ -163,7 +168,7 @@ class LocationViewSet(
     viewsets.GenericViewSet,
     mixins.ListModelMixin,
 ):
-    permission_classes = []
+    authentication_classes = [SessionAuthentication]
 
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
@@ -175,7 +180,7 @@ class VisitViewSet(
     viewsets.GenericViewSet,
     mixins.ListModelMixin,
 ):
-    permission_classes = []
+    authentication_classes = [SessionAuthentication]
 
     queryset = Visit.objects.all()
     serializer_class = VisitSerializer
