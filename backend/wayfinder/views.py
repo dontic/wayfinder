@@ -109,6 +109,9 @@ class OverlandView(APIView):
     )
     def post(self, request):
 
+        # Log the token
+        log.debug(f"Received token: {request.auth}")
+
         # Extract the list of locations
         locations_data = request.data.get("locations", [])
         log.info(f"Received {len(locations_data)} locations")
