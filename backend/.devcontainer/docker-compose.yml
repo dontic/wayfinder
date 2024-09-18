@@ -5,20 +5,17 @@ name: wayfinder-backend-devcontainer
 services:
   timescaledb:
     image: timescale/timescaledb-ha:pg16
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: django
       POSTGRES_PASSWORD: django
     volumes:
-      # Create the postgresdata directory for debugging purposes
-      - ./postgresdata:/var/lib/postgresql/data
-      # Copy the provision_postgres.sql file to the container
-      - ./provision_postgres.sql:/docker-entrypoint-initdb.d/provision_postgres.sql
+      - timescaledb_data:/home/postgres/pgdata/data
 
   django:
     build:
-      context: ../  # Path to the project's root folder so that the Dockerfile commands can access the project
-      dockerfile: ./.devcontainer/Dockerfile  # Path to the Dockerfile
+      context: ../ # Path to the project's root folder so that the Dockerfile commands can access the project
+      dockerfile: ./.devcontainer/Dockerfile # Path to the Dockerfile
     volumes:
       # Update this to wherever you want VS Code to mount the folder of your project
       # Mount the root folder that contains .git
@@ -30,3 +27,6 @@ services:
     command: /bin/sh -c "while sleep 1000; do :; done"
     depends_on:
       - timescaledb
+
+volumes:
+  timescaledb_data:
