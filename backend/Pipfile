@@ -15,6 +15,7 @@ django-filter = "*"
 psycopg2 = "*"
 gunicorn = "*"
 whitenoise = "*"
+dj-rest-auth = "*"
 
 [dev-packages]
 

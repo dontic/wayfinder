@@ -163,6 +163,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework.authtoken",
+    # ----------------------------------- AUTH ----------------------------------- #
+    "dj_rest_auth",
     # ----------------------------------- CORS ----------------------------------- #
     "corsheaders",  # Django CORS Headers
     # ----------------------------------- REST ----------------------------------- #
@@ -310,4 +312,16 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     # OTHER SETTINGS
+}
+
+
+# ------------------------------- DJ-REST-AUTH ------------------------------- #
+
+# See defaults in https://dj-rest-auth.readthedocs.io/en/latest/configuration.html
+REST_AUTH = {
+    # Use sessions instead of tokens
+    "TOKEN_MODEL": None,
+    "TOKEN_SERIALIZER": None,
+    "SESSION_LOGIN": True,
+    "OLD_PASSWORD_FIELD_ENABLED": False,
 }

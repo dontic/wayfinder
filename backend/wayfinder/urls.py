@@ -7,10 +7,13 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 # Local App
-from .views import OverlandView, LocationViewSet, VisitViewSet
+from .views import OverlandView, LocationViewSet, VisitViewSet, TokenView
 
 
-urlpatterns = [path("overland/", OverlandView.as_view(), name="overland")]
+urlpatterns = [
+    path("overland/", OverlandView.as_view(), name="overland"),
+    path("token/", TokenView.as_view(), name="token"),
+]
 
 router = DefaultRouter()
 router.register(r"locations", LocationViewSet)
