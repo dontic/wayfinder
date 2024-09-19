@@ -86,9 +86,9 @@ const Login = () => {
     <CenteredLayout>
       <VStack spacing={6}>
         <Image src="src/assets/logo.svg" alt="Logo" />
-        <Text fontSize={"2xl"} fontWeight={"bold"}>
+        {/* <Text fontSize={"2xl"} fontWeight={"bold"}>
           Login
-        </Text>
+        </Text> */}
         <Box
           minW={{ base: "", md: "sm" }}
           rounded={"lg"}
