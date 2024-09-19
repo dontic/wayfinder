@@ -30,11 +30,12 @@ import { useUserStore } from "~/stores/UserStore";
 interface LinkItemProps {
   name: string;
   icon: IconType;
+  href?: string;
 }
 const LinkItems: Array<LinkItemProps> = [
-  { name: "Home", icon: FiHome },
-  { name: "Trips", icon: BiTrip },
-  { name: "Visits", icon: IoLocationOutline }
+  { name: "Home", icon: FiHome, href: "/" },
+  { name: "Trips", icon: BiTrip, href: "/trips" },
+  { name: "Visits", icon: IoLocationOutline, href: "/visits" }
 ];
 
 interface Props {
@@ -122,7 +123,13 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
             />
           </Flex>
           {LinkItems.map((link) => (
-            <NavItem key={link.name} icon={link.icon}>
+            <NavItem
+              key={link.name}
+              icon={link.icon}
+              onClick={() => {
+                link.href && navigate(link.href);
+              }}
+            >
               {link.name}
             </NavItem>
           ))}
