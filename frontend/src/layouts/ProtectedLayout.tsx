@@ -1,7 +1,7 @@
 import { Box } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { useLocation, Navigate, Outlet } from "react-router-dom";
-import SidebarWithHeader from "~/components/SideBarWithHeader";
+import Sidebar from "~/components/Sidebar";
 
 import { useUserStore } from "~/stores/UserStore";
 import { authUserRetrieve } from "~/api/endpoints/auth/auth";
@@ -50,9 +50,9 @@ const ProtectedLayout = () => {
     <>
       {/* If a user is authenticated return an outlet, which are the nested routes */}
       <Box id="mainbox" as="main" w={"100%"} bg={"transparent"}>
-        <SidebarWithHeader>
+        <Sidebar>
           <Outlet />
-        </SidebarWithHeader>
+        </Sidebar>
       </Box>
     </>
   ) : (
