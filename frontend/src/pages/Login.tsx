@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import LoginForm, { LoginFormValues } from "~/forms/LoginForm";
 
-import { Box, Image, useToast, VStack, Text } from "@chakra-ui/react";
+import { Box, Image, useToast, VStack } from "@chakra-ui/react";
 import CenteredLayout from "~/layouts/CenteredLayout";
 
 import {
