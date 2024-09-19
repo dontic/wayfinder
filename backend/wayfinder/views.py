@@ -18,7 +18,7 @@ from rest_framework.authentication import (
 )
 
 # Spectacular
-from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
 # Local App
@@ -193,3 +193,58 @@ class VisitViewSet(
     serializer_class = VisitSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = VisitFilterSet
+
+
+from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
+
+
+class TokenView(APIView):
+    authentication_classes = [SessionAuthentication]
+
+    @extend_schema(
+        summary="Generate or regenerate authentication token",
+        description="This endpoint creates a new token for the authenticated user or regenerates an existing one if requested.",
+        request={
+            "application/json": {
+                "type": "object",
+                "properties": {
+                    "recreate": {
+                        "type": "boolean",
+                        "description": "If set to true, the existing token will be deleted and a new one will be created.",
+                    },
+                },
+            }
+        },
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "example": "9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b",
+                    }
+                },
+            },
+            401: {},
+        },
+    )
+    def post(self, request, *args, **kwargs):
+
+        # Get the authenticated user
+        user = request.user
+
+        # Get the recreate parameter
+        recreate = request.data.get("recreate", False)
+
+        # Get or create the token
+        token, created = Token.objects.get_or_create(user=user)
+
+        # If the token already exists and the recreate parameter is set to True, delete the token and create a new one
+        if not created and recreate:
+            print("Deleting token")
+            token.delete()
+            print("Creating new token")
+            token = Token.objects.create(user=user)
+
+        return Response({"token": token.key})
