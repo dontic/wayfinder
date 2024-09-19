@@ -107,7 +107,7 @@ class Visit(TimescaleModel):
 
     # The departure datetime of the visit
     # Is null when a visit is created and get's populated afterwards
-    departure_date = models.DateTimeField(blank=True, null=True)
+    departure_date = models.DateTimeField()
 
     # The device id set in Overland settings or an empty string if not set
     device_id = models.CharField(max_length=50, blank=True)
@@ -127,3 +127,27 @@ class Visit(TimescaleModel):
 
     # Wifi SSID if connected to a wifi network, an empty string if not connected
     wifi = models.CharField(max_length=100, blank=True)
+
+    # Duration of the visit in seconds
+    # This is a calculated field and should not be set manually
+    duration = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.arrival_date} - {self.departure_date} - {self.device_id}"
+
+    def calculate_duration(self):
+        """
+        This function calculates the duration of the visit and returns it in seconds.
+        """
+        return (self.departure_date - self.arrival_date).seconds
+
+    # Modify the save method to calculate the duration
+    def save(self, *args, **kwargs):
+        """
+        This function calculates the duration of the visit and saves it to the database.
+        """
+        # Calculate the duration
+        self.duration = self.calculate_duration()
+
+        # Call the parent's save method
+        super().save(*args, **kwargs)
