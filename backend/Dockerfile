@@ -1,46 +1,32 @@
-# For more information, please refer to https://aka.ms/vscode-docker-python
+# Stage 1: Build dependencies
+FROM python:3.11-bullseye as builder
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir pipenv
+
+COPY Pipfile Pipfile.lock ./
+RUN pipenv requirements > requirements.txt
+
+
+# Stage 2: Final image
 FROM python:3.11-bullseye
 
-# Expose port 8000
-EXPOSE 8000
+WORKDIR /app
 
-# Keeps Python from generating .pyc files in the container
-ENV PYTHONDONTWRITEBYTECODE=1
+# Copy only the requirements file from the builder stage
+COPY --from=builder /app/requirements.txt .
 
-# Turns off buffering for easier container logging
-ENV PYTHONUNBUFFERED=1
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Working directory
-WORKDIR /app/backend
-
-# Install pipenv
-RUN pip install -U pipenv
-
-# Install pipenv requirements
-COPY Pipfile Pipfile.lock /app/backend/
-RUN pipenv install --system
-RUN rm -rf ./Pipfile ./Pipfile.lock
-
-# Copy all the code over
+# Copy the rest of the application
 COPY . .
 
-# Create the media directory
-RUN mkdir -p /app/backend/media
-
-# Create a volume for the media directory
-VOLUME /app/backend/media
-
-# Create a volume for the static directory
-VOLUME /app/backend/django_static
-
-# Create the data directory
-RUN mkdir -p /app/backend/data
-
-# Create a volume for the data directory
-VOLUME /app/backend/data
+RUN ls
 
 # Make the entrypoint scripts executable
-RUN chmod +x /app/backend/entrypoint.sh
+RUN chmod +x /app/entrypoint-django.sh
 
 # Set the entrypoint
-ENTRYPOINT ["/app/backend/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint-django.sh"]

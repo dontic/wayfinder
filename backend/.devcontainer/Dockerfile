@@ -1,4 +1,4 @@
-# Dockerfile.dev
+# Dockerfile
 
 # Get the base image
 FROM python:3.11-bullseye

@@ -1,200 +1,195 @@
-import os
-import dotenv
+# views.py
 
-# REST Framework imports
-from rest_framework.views import APIView
+import logging
+
+# Django
+from django.db import transaction
+from django_filters.rest_framework import DjangoFilterBackend
+
+
+# REST Framework
+from rest_framework import status
 from rest_framework.response import Response
-from rest_framework import permissions, status
+from rest_framework.views import APIView
+from rest_framework import viewsets, mixins
+from rest_framework.authentication import (
+    SessionAuthentication,
+    TokenAuthentication,
+)
 
+# Spectacular
+from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
+
+# Local App
+from .models import Location, Visit
 from .serializers import LocationSerializer, VisitSerializer
+from .filters import LocationFilterSet, VisitFilterSet
 
-# Load the .env file
-dotenv.load_dotenv()
+
+log = logging.getLogger("app_logger")
+
+
+# Subclassing TokenAuthentication to accept Bearer instead of Token as the keyword
+class BearerTokenAuthentication(TokenAuthentication):
+    keyword = "Bearer"
 
 
 class OverlandView(APIView):
-    # Make the view public
-    permission_classes = [permissions.AllowAny]
-    authentication_classes = []
 
+    authentication_classes = [BearerTokenAuthentication]
+
+    @extend_schema(
+        request=OpenApiTypes.OBJECT,
+        responses={200: OpenApiTypes.OBJECT, 500: OpenApiTypes.OBJECT},
+        examples=[
+            OpenApiExample(
+                "Request Example",
+                value={
+                    "locations": [
+                        {
+                            "type": "Feature",
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [-4.2838405, 38.665856],
+                            },
+                            "properties": {
+                                "speed": -1,
+                                "battery_state": "unplugged",
+                                "motion": ["stationary"],
+                                "timestamp": "2024-09-13T11:33:33Z",
+                                "horizontal_accuracy": 3000,
+                                "speed_accuracy": -1,
+                                "vertical_accuracy": 30,
+                                "battery_level": 0.75,
+                                "wifi": "",
+                                "course": -1,
+                                "device_id": "iphone",
+                                "altitude": 8,
+                                "course_accuracy": -1,
+                            },
+                        },
+                        {
+                            "type": "Feature",
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [-4.2702682, 38.6637597],
+                            },
+                            "properties": {
+                                "arrival_date": "2024-09-13T11:33:35Z",
+                                "departure_date": "",
+                                "battery_state": "unplugged",
+                                "timestamp": "2024-09-13T11:33:35Z",
+                                "horizontal_accuracy": 3000,
+                                "vertical_accuracy": 30,
+                                "battery_level": 0.75,
+                                "wifi": "",
+                                "device_id": "iphone",
+                                "altitude": 8,
+                            },
+                        },
+                    ]
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Success Response",
+                value={"result": "ok"},
+                response_only=True,
+                status_codes=["200"],
+            ),
+            OpenApiExample(
+                "Error Response",
+                value={"result": "not_ok"},
+                response_only=True,
+                status_codes=["500"],
+            ),
+        ],
+        description="Endpoint for receiving and storing location and visit data from Overland app.",
+    )
     def post(self, request):
-        # Get the authorization header
-        # The authorization header is expected to be in the format:
-        # "Bearer <token>"
-        auth_header = request.headers.get("Authorization")
 
-        # Extract the token
-        token = auth_header.split(" ")[1]
+        # Log the token
+        log.debug(f"Received token: {request.auth}")
 
-        # Check if the token is valid
-        verification_token = os.getenv("OVERLAND_VERIFICATION_TOKEN", "overlandtoken")
-        if token != verification_token:
-            return Response(
-                {"result": "Token not valid"}, status=status.HTTP_401_UNAUTHORIZED
-            )
+        # Extract the list of locations
+        locations_data = request.data.get("locations", [])
+        log.info(f"Received {len(locations_data)} locations")
+        log.debug(locations_data)
 
-        # Get the locations list
-        overland_locations = request.data.get("locations")
+        locations_to_create = []
+        visits_to_create = []
 
-        # To see which formats locatons can have, check the locations_format_examples.json file
-        # or the Overland API documentation https://github.com/aaronpk/Overland-iOS/blob/main/README.md
+        for item in locations_data:
+            if "arrival_date" in item.get("properties", {}):
+                # This is a visit
+                visit_serializer = VisitSerializer(data=item)
+                if visit_serializer.is_valid():
 
-        # Print the number of locations
-        print(f"Saving {len(overland_locations)} locations to the database...")
+                    # Check that the visit has a departure date
+                    # Visit data is first sent when the user arrives at a location, setting an arrival date but no departure date
+                    # When the user leaves the location, the same object with the departure date is sent
+                    # There is no need to save the first object, as it will be updated with the departure date when the second object is received
+                    if not visit_serializer.validated_data.get("departure_date"):
+                        log.debug("Skipping visit without departure date")
+                        log.debug(f"Visit data: {item}")
+                        continue
 
-        # Initialize the lists
-        trips = []
-        visits = []
-        locations = []
-
-        # For every location save it to the database
-        for overland_location in overland_locations:
-            # Trip case
-            if "start" in overland_location["properties"]:
-                # TODO: Save the trip to the database
-                print("Location is a trip, skipping...")
-                print(overland_location)
-                continue
-
-            # Visit case
-            if "arrival_date" in overland_location["properties"]:
-                # Try to parse the visit
-                try:
-                    clean_data = {}
-                    clean_data["type"] = overland_location["type"]
-                    clean_data["geometry_type"] = overland_location["geometry"]["type"]
-                    clean_data["coordinates_longitude"] = overland_location["geometry"][
-                        "coordinates"
-                    ][0]
-                    clean_data["coordinates_latitude"] = overland_location["geometry"][
-                        "coordinates"
-                    ][1]
-                    clean_data["action"] = overland_location["properties"]["action"]
-                    clean_data["arrival_datetime"] = overland_location["properties"][
-                        "arrival_date"
-                    ]
-                    clean_data["battery_level"] = overland_location["properties"][
-                        "battery_level"
-                    ]
-                    clean_data["battery_state"] = overland_location["properties"][
-                        "battery_state"
-                    ]
-                    clean_data["departure_datetime"] = overland_location["properties"][
-                        "departure_date"
-                    ]
-                    clean_data["device_id"] = overland_location["properties"][
-                        "device_id"
-                    ]
-                    clean_data["horizontal_accuracy"] = overland_location["properties"][
-                        "horizontal_accuracy"
-                    ]
-                    clean_data["time"] = overland_location["properties"]["timestamp"]
-                    clean_data["wifi"] = overland_location["properties"]["wifi"]
-
-                    # Add the visit to the visits list
-                    visits.append(clean_data)
-
-                except KeyError as e:
-                    # Case not handled
-                    print(f"KeyError: {e}")
-                    print(f"Location: {overland_location}")
-                    continue
-
-            # Normal location case
-            if "activity" in overland_location["properties"]:
-                # Try to parse the location
-                try:
-                    clean_data = {}
-                    clean_data["type"] = overland_location["type"]
-                    clean_data["geometry_type"] = overland_location["geometry"]["type"]
-                    clean_data["coordinates_longitude"] = overland_location["geometry"][
-                        "coordinates"
-                    ][0]
-                    clean_data["coordinates_latitude"] = overland_location["geometry"][
-                        "coordinates"
-                    ][1]
-                    clean_data["activity"] = overland_location["properties"]["activity"]
-                    clean_data["altitude"] = overland_location["properties"]["altitude"]
-                    clean_data["battery_level"] = overland_location["properties"][
-                        "battery_level"
-                    ]
-                    clean_data["battery_state"] = overland_location["properties"][
-                        "battery_state"
-                    ]
-                    clean_data["desired_accuracy"] = overland_location["properties"][
-                        "desired_accuracy"
-                    ]
-                    clean_data["device_id"] = overland_location["properties"][
-                        "device_id"
-                    ]
-                    clean_data["horizontal_accuracy"] = overland_location["properties"][
-                        "horizontal_accuracy"
-                    ]
-                    clean_data["locations_in_payload"] = overland_location[
-                        "properties"
-                    ]["locations_in_payload"]
-                    # Turn the motion list into a string
-                    clean_data["motion"] = ",".join(
-                        overland_location["properties"]["motion"]
+                    visits_to_create.append(Visit(**visit_serializer.validated_data))
+                else:
+                    log.error(f"Visit validation error: {visit_serializer.errors}")
+                    log.info(f"Visit data: {item}")
+            else:
+                location_serializer = LocationSerializer(data=item)
+                if location_serializer.is_valid():
+                    locations_to_create.append(
+                        Location(**location_serializer.validated_data)
                     )
-                    clean_data["pauses"] = overland_location["properties"]["pauses"]
-                    clean_data["speed"] = overland_location["properties"]["speed"]
-                    clean_data["time"] = overland_location["properties"]["timestamp"]
-                    clean_data["tracking_mode"] = overland_location["properties"][
-                        "tracking_mode"
-                    ]
-                    clean_data["vertical_accuracy"] = overland_location["properties"][
-                        "vertical_accuracy"
-                    ]
-                    clean_data["wifi"] = overland_location["properties"]["wifi"]
-                except KeyError as e:
-                    # Case not handled
-                    print(f"KeyError: {e}")
-                    print(f"Location: {overland_location}")
-                    continue
+                else:
+                    log.error(
+                        f"Location validation error: {location_serializer.errors}"
+                    )
+                    log.info(f"Location data: {item}")
 
-                # Add the location to the locations list
-                locations.append(clean_data)
+        log.info(f"Parsed {len(locations_to_create)} locations")
+        log.info(f"Parsed {len(visits_to_create)} visits")
 
-        # Print the number of visits and locations
-        print(f"Parsed visits: {len(visits)}")
-        print(f"Parsed locations: {len(locations)}")
-
-        # Serialize the data
-        # Visits
-        visits_serializer = VisitSerializer(data=visits, many=True)
-        if visits_serializer.is_valid():
-            print("Visits serializer is valid")
-        else:
-            print(visits_serializer.errors)
-            return Response(
-                {"result": "Serializer not valid"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Locations
-        locations_serializer = LocationSerializer(data=locations, many=True)
-        if locations_serializer.is_valid():
-            print("Locations serializer is valid")
-        else:
-            print(locations_serializer.errors)
-            return Response(
-                {"result": "Serializer not valid"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Save the data to the database
-        print("Saving data to the database...")
         try:
-            visits_serializer.save()
-            locations_serializer.save()
+            with transaction.atomic():
+                Location.objects.bulk_create(locations_to_create)
+                Visit.objects.bulk_create(visits_to_create)
         except Exception as e:
-            print(f"Exception: {e}")
+            # Log the error
+            log.error(f"Error saving data: {str(e)}")
+
             return Response(
-                {"result": "Data not saved to the database"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"result": "not_ok"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        print("Data saved to the database")
-
+        log.info("Data saved successfully")
         return Response({"result": "ok"}, status=status.HTTP_200_OK)
+
+
+class LocationViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+):
+    authentication_classes = [BearerTokenAuthentication]
+
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = LocationFilterSet
+
+
+class VisitViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+):
+    authentication_classes = [SessionAuthentication]
+
+    queryset = Visit.objects.all()
+    serializer_class = VisitSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = VisitFilterSet
