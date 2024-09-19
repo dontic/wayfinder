@@ -4,8 +4,21 @@ import { ChakraProvider } from "@chakra-ui/react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import ProtectedLayout from "./layouts/ProtectedLayout";
+import Home from "./pages/Home";
 
 const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <ProtectedLayout />,
+    errorElement: <NotFound />,
+    children: [
+      {
+        path: "/",
+        element: <Home />
+      }
+    ]
+  },
   {
     path: "/login",
     element: <Login />,
