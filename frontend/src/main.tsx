@@ -6,6 +6,8 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import ProtectedLayout from "./layouts/ProtectedLayout";
 import Home from "./pages/Home";
+import Visits from "./pages/Visits";
+import Trips from "./pages/Trips";
 
 const router = createBrowserRouter([
   {
@@ -16,6 +18,14 @@ const router = createBrowserRouter([
       {
         path: "/",
         element: <Home />
+      },
+      {
+        path: "/visits",
+        element: <Visits />
+      },
+      {
+        path: "/trips",
+        element: <Trips />
       }
     ]
   },
