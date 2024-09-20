@@ -80,6 +80,7 @@ class VisitSerializer(serializers.ModelSerializer):
             "unique_id",
             "vertical_accuracy",
             "wifi",
+            "duration",
         ]
 
     def to_internal_value(self, data):
