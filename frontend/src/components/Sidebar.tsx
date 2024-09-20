@@ -19,7 +19,7 @@ import {
 } from "@chakra-ui/react";
 import { FiHome, FiMenu } from "react-icons/fi";
 import { BiTrip } from "react-icons/bi";
-import { IoLocationOutline } from "react-icons/io5";
+import { IoLocationOutline, IoSettingsOutline } from "react-icons/io5";
 
 import { IconType } from "react-icons";
 import { ReactNode, ReactText } from "react";
@@ -35,7 +35,8 @@ interface LinkItemProps {
 const LinkItems: Array<LinkItemProps> = [
   { name: "Home", icon: FiHome, href: "/" },
   { name: "Trips", icon: BiTrip, href: "/trips" },
-  { name: "Visits", icon: IoLocationOutline, href: "/visits" }
+  { name: "Visits", icon: IoLocationOutline, href: "/visits" },
+  { name: "Settings", icon: IoSettingsOutline, href: "/settings" }
 ];
 
 interface Props {
@@ -136,6 +137,8 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
         </Box>
 
         <Spacer />
+
+        {/* Bottom stuff */}
         <Box w="100%" textAlign="center" pb="4">
           <Button
             w="80%"
