@@ -112,6 +112,9 @@ logging.config.dictConfig(LOGGING)
 # ---------------------------------------------------------------------------- #
 #                                  CONNECTIONS                                 #
 # ---------------------------------------------------------------------------- #
+
+FORCE_SCRIPT_NAME = "/api"
+
 # SECURITY WARNING: keep the secret key used in production secret!
 if "DJANGO_SECRET_KEY" not in os.environ:
     raise ValueError("DJANGO_SECRET_KEY environment variable not set.")
