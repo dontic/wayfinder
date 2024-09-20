@@ -255,6 +255,12 @@ paths:
       operationId: wayfinder_locations_list
       parameters:
       - in: query
+        name: end_datetime
+        schema:
+          type: string
+          format: date-time
+        required: true
+      - in: query
         name: h_accuracy_lte
         schema:
           type: integer
@@ -267,13 +273,7 @@ paths:
         schema:
           type: integer
       - in: query
-        name: time_after
-        schema:
-          type: string
-          format: date-time
-        required: true
-      - in: query
-        name: time_before
+        name: start_datetime
         schema:
           type: string
           format: date-time
@@ -420,13 +420,13 @@ paths:
       operationId: wayfinder_visits_list
       parameters:
       - in: query
-        name: time_after
+        name: end_datetime
         schema:
           type: string
           format: date-time
         required: true
       - in: query
-        name: time_before
+        name: start_datetime
         schema:
           type: string
           format: date-time
@@ -444,8 +444,52 @@ paths:
                 items:
                   $ref: '#/components/schemas/Visit'
           description: ''
+  /wayfinder/visits/plot/:
+    get:
+      operationId: wayfinder_visits_plot_retrieve
+      description: Endpoint for generating a density map of visits within a specified
+        date range.
+      parameters:
+      - in: query
+        name: end_datetime
+        schema:
+          type: string
+          format: date-time
+        description: End date for the date range filter (inclusive)
+        required: true
+      - in: query
+        name: start_datetime
+        schema:
+          type: string
+          format: date-time
+        description: Start date for the date range filter (inclusive)
+        required: true
+      tags:
+      - wayfinder
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitPlotlyResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
 components:
   schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
     Location:
       type: object
       properties:
@@ -666,7 +710,6 @@ components:
         departure_date:
           type: string
           format: date-time
-          nullable: true
         device_id:
           type: string
           maxLength: 50
@@ -686,14 +729,99 @@ components:
         wifi:
           type: string
           maxLength: 100
+        duration:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
       required:
       - arrival_date
       - battery_level
       - battery_state
+      - departure_date
+      - duration
       - horizontal_accuracy
       - latitude
       - longitude
       - time
+    VisitPlotlyData:
+      type: object
+      properties:
+        coloraxis:
+          type: string
+        customdata:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        hovertemplate:
+          type: string
+        lat:
+          type: array
+          items:
+            type: number
+            format: double
+        lon:
+          type: array
+          items:
+            type: number
+            format: double
+        name:
+          type: string
+        subplot:
+          type: string
+        z:
+          type: array
+          items:
+            type: integer
+        type:
+          type: string
+      required:
+      - coloraxis
+      - customdata
+      - hovertemplate
+      - lat
+      - lon
+      - name
+      - subplot
+      - type
+      - z
+    VisitPlotlyLayout:
+      type: object
+      properties:
+        mapbox:
+          type: object
+          additionalProperties: {}
+        coloraxis:
+          type: object
+          additionalProperties: {}
+        legend:
+          type: object
+          additionalProperties: {}
+        margin:
+          type: object
+          additionalProperties: {}
+        template:
+          type: object
+          additionalProperties: {}
+      required:
+      - coloraxis
+      - legend
+      - mapbox
+      - margin
+      - template
+    VisitPlotlyResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisitPlotlyData'
+        layout:
+          $ref: '#/components/schemas/VisitPlotlyLayout'
+      required:
+      - data
+      - layout
   securitySchemes:
     cookieAuth:
       type: apiKey
