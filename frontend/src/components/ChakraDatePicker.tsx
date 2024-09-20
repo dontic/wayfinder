@@ -15,7 +15,7 @@ import React, {
   forwardRef,
   ForwardRefRenderFunction
 } from "react";
-import ReactDatePicker, { ReactDatePickerProps } from "react-datepicker";
+import ReactDatePicker, { DatePickerProps } from "react-datepicker";
 
 const datePickerThemes = {
   light: {
@@ -64,7 +64,8 @@ type Props<
   CustomModifierNames extends string = never,
   WithRange extends boolean | undefined = undefined
 > = Omit<
-  ReactDatePickerProps<CustomModifierNames, WithRange>,
+  // @ts-ignore
+  DatePickerProps<CustomModifierNames, WithRange>,
   "todayButton"
 > & {
   rootProps?: BoxProps;
@@ -76,6 +77,7 @@ type Props<
     provide: DatePickerTheme
   ) => DatePickerTheme;
 };
+
 const DatePicker = <
   CustomModifierNames extends string = never,
   WithRange extends boolean | undefined = undefined
