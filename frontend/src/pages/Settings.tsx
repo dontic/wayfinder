@@ -10,7 +10,7 @@ const Settings = () => {
   return (
     <CenteredLayout>
       <Box
-        w={{ base: "100%", md: "50%" }}
+        w={{ base: "100%", md: "70%" }}
         bg={"white"}
         rounded={"lg"}
         boxShadow={"lg"}
