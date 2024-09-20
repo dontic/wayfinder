@@ -3,8 +3,15 @@
 import axios, { AxiosRequestConfig } from "axios";
 
 export const customAxios = axios.create({
-  baseURL: "http://localhost:8000",
-  timeout: 10000,
+  // Match the origin of the window to determine if we are in development or production
+  baseURL: window.location.origin.match(
+    /(http:\/\/localhost|http:\/\/127\.0\.0\.1)/
+  )
+    ? "http://localhost:8000"
+    : "/api",
+  timeout: import.meta.env.VITE_API_TIMEOUT
+    ? import.meta.env.VITE_API_TIMEOUT
+    : 10000,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
   withXSRFToken: true,
