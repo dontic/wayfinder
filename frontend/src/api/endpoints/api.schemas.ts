@@ -5,9 +5,20 @@
  * Description placeholder
  * OpenAPI spec version: 1.0.0
  */
+export type WayfinderVisitsPlotRetrieveParams = {
+  /**
+   * End date for the date range filter (inclusive)
+   */
+  end_datetime: string;
+  /**
+   * Start date for the date range filter (inclusive)
+   */
+  start_datetime: string;
+};
+
 export type WayfinderVisitsListParams = {
-  time_after: string;
-  time_before: string;
+  end_datetime: string;
+  start_datetime: string;
 };
 
 export type WayfinderTokenCreate200 = {
@@ -30,12 +41,47 @@ export type WayfinderOverlandCreateBodyTwo = { [key: string]: unknown };
 export type WayfinderOverlandCreateBodyOne = { [key: string]: unknown };
 
 export type WayfinderLocationsListParams = {
+  end_datetime: string;
   h_accuracy_lte?: number;
   motion_contains?: string;
   speed_gte?: number;
-  time_after: string;
-  time_before: string;
+  start_datetime: string;
 };
+
+export interface VisitPlotlyResponse {
+  data: VisitPlotlyData[];
+  layout: VisitPlotlyLayout;
+}
+
+export type VisitPlotlyLayoutTemplate = { [key: string]: unknown };
+
+export type VisitPlotlyLayoutMargin = { [key: string]: unknown };
+
+export type VisitPlotlyLayoutMapbox = { [key: string]: unknown };
+
+export type VisitPlotlyLayoutLegend = { [key: string]: unknown };
+
+export type VisitPlotlyLayoutColoraxis = { [key: string]: unknown };
+
+export interface VisitPlotlyLayout {
+  coloraxis: VisitPlotlyLayoutColoraxis;
+  legend: VisitPlotlyLayoutLegend;
+  mapbox: VisitPlotlyLayoutMapbox;
+  margin: VisitPlotlyLayoutMargin;
+  template: VisitPlotlyLayoutTemplate;
+}
+
+export interface VisitPlotlyData {
+  coloraxis: string;
+  customdata: string[][];
+  hovertemplate: string;
+  lat: number[];
+  lon: number[];
+  name: string;
+  subplot: string;
+  type: string;
+  z: number[];
+}
 
 export interface Visit {
   /**
@@ -49,10 +95,14 @@ export interface Visit {
   battery_level: string;
   /** @maxLength 20 */
   battery_state: string;
-  /** @nullable */
-  departure_date?: string | null;
+  departure_date: string;
   /** @maxLength 50 */
   device_id?: string;
+  /**
+   * @minimum -2147483648
+   * @maximum 2147483647
+   */
+  duration: number;
   /**
    * @minimum -2147483648
    * @maximum 2147483647
@@ -199,4 +249,8 @@ export interface Location {
   vertical_accuracy: number;
   /** @maxLength 100 */
   wifi?: string;
+}
+
+export interface ErrorResponse {
+  message: string;
 }
