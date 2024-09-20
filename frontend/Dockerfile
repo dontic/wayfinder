@@ -7,13 +7,13 @@ FROM node:20.2.0-bullseye AS build
 WORKDIR /app
 
 # Copy the package.json and package-lock.json files over to the frontend directory
-COPY frontend/package*.json ./
+COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
 # Copy all the code over to the frontend directory
-COPY ./frontend/ ./
+COPY ./ ./
 
 # Build the app
 RUN npm run build
