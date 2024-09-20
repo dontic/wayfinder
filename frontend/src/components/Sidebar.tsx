@@ -64,7 +64,7 @@ export default function SimpleSidebar({ children }: Props) {
       </Drawer>
       {/* mobilenav */}
       <MobileNav display={{ base: "flex", md: "none" }} onOpen={onOpen} />
-      <Box ml={{ base: 0, md: 60 }} p="4">
+      <Box ml={{ base: 0, md: 60 }} h={{ base: "100%", md: "100vh" }}>
         {children}
       </Box>
     </Box>
