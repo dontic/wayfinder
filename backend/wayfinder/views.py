@@ -215,19 +215,17 @@ class TokenView(APIView):
     authentication_classes = [SessionAuthentication]
 
     @extend_schema(
-        summary="Generate or regenerate authentication token",
-        description="This endpoint creates a new token for the authenticated user or regenerates an existing one if requested.",
-        request={
-            "application/json": {
-                "type": "object",
-                "properties": {
-                    "recreate": {
-                        "type": "boolean",
-                        "description": "If set to true, the existing token will be deleted and a new one will be created.",
-                    },
-                },
-            }
-        },
+        summary="Get or regenerate authentication token",
+        description="This endpoint gets or creates a new token for the authenticated user or regenerates an existing one if requested.",
+        parameters=[
+            OpenApiParameter(
+                name="recreate",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description="Boolean flag to indicate if the token should be regenerated",
+                required=False,
+            ),
+        ],
         responses={
             200: {
                 "type": "object",
@@ -241,13 +239,14 @@ class TokenView(APIView):
             401: {},
         },
     )
-    def post(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
 
         # Get the authenticated user
         user = request.user
 
         # Get the recreate parameter
-        recreate = request.data.get("recreate", False)
+        # recreate can be "true" or "false"
+        recreate = request.query_params.get("recreate", "false").lower() == "true"
 
         # Get or create the token
         token, created = Token.objects.get_or_create(user=user)
