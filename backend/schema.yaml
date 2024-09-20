@@ -383,23 +383,19 @@ paths:
                   summary: Error Response
           description: ''
   /wayfinder/token/:
-    post:
-      operationId: wayfinder_token_create
-      description: This endpoint creates a new token for the authenticated user or
-        regenerates an existing one if requested.
-      summary: Generate or regenerate authentication token
+    get:
+      operationId: wayfinder_token_retrieve
+      description: This endpoint gets or creates a new token for the authenticated
+        user or regenerates an existing one if requested.
+      summary: Get or regenerate authentication token
+      parameters:
+      - in: query
+        name: recreate
+        schema:
+          type: boolean
+        description: Boolean flag to indicate if the token should be regenerated
       tags:
       - wayfinder
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                recreate:
-                  type: boolean
-                  description: If set to true, the existing token will be deleted
-                    and a new one will be created.
       security:
       - cookieAuth: []
       responses:
