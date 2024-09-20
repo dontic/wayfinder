@@ -1,6 +1,8 @@
 # views.py
 
 import logging
+import json
+import pandas as pd
 
 # Django
 from django.db import transaction
@@ -16,6 +18,8 @@ from rest_framework.authentication import (
     SessionAuthentication,
     TokenAuthentication,
 )
+from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
 
 # Spectacular
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
@@ -23,8 +27,18 @@ from drf_spectacular.types import OpenApiTypes
 
 # Local App
 from .models import Location, Visit
-from .serializers import LocationSerializer, VisitSerializer
+from .serializers import (
+    ErrorResponseSerializer,
+    LocationSerializer,
+    VisitPlotlyResponseSerializer,
+    VisitSerializer,
+)
 from .filters import LocationFilterSet, VisitFilterSet
+
+# Plotly
+# Plotly imports
+import plotly.express as px
+from plotly.utils import PlotlyJSONEncoder
 
 
 log = logging.getLogger("app_logger")
@@ -171,6 +185,7 @@ class OverlandView(APIView):
         return Response({"result": "ok"}, status=status.HTTP_200_OK)
 
 
+# This viewset is not necessary
 class LocationViewSet(
     viewsets.GenericViewSet,
     mixins.ListModelMixin,
@@ -183,6 +198,7 @@ class LocationViewSet(
     filterset_class = LocationFilterSet
 
 
+# This viewset is not necessary
 class VisitViewSet(
     viewsets.GenericViewSet,
     mixins.ListModelMixin,
@@ -193,10 +209,6 @@ class VisitViewSet(
     serializer_class = VisitSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = VisitFilterSet
-
-
-from rest_framework.authtoken.models import Token
-from rest_framework.response import Response
 
 
 class TokenView(APIView):
@@ -248,3 +260,73 @@ class TokenView(APIView):
             token = Token.objects.create(user=user)
 
         return Response({"token": token.key})
+
+
+class VisitPlotView(APIView):
+    authentication_classes = [SessionAuthentication]
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="start_datetime",
+                type=OpenApiTypes.DATETIME,
+                location=OpenApiParameter.QUERY,
+                description="Start date for the date range filter (inclusive)",
+                required=True,
+            ),
+            OpenApiParameter(
+                name="end_datetime",
+                type=OpenApiTypes.DATETIME,
+                location=OpenApiParameter.QUERY,
+                description="End date for the date range filter (inclusive)",
+                required=True,
+            ),
+        ],
+        responses={200: VisitPlotlyResponseSerializer, 400: ErrorResponseSerializer},
+        description="Endpoint for generating a density map of visits within a specified date range.",
+    )
+    def get(self, request):
+        # The request should always receive a date range
+        # Otherwise, return an error
+        start_date = request.query_params.get("start_datetime")
+        end_date = request.query_params.get("end_datetime")
+
+        if start_date is None or end_date is None:
+            return Response(
+                {"message": "Please provide a start_date and end_date query parameter"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Get the visits in the date range
+        visits = Visit.objects.filter(time__range=[start_date, end_date]).time_bucket(
+            "time", "1 day"
+        )
+
+        # If visists is empty, return an empty response
+        if visits.count() == 0:
+            log.debug("No visits found in the date range")
+            return Response({}, status=status.HTTP_200_OK)
+
+        # Convert the visits to a pandas dataframe
+        visits = pd.DataFrame(list(visits.values()))
+
+        # Plot the visits
+        fig = px.density_mapbox(
+            visits,
+            lat="latitude",
+            lon="longitude",
+            z="duration",
+            hover_data=["arrival_date", "departure_date"],
+            zoom=1,
+        )
+        fig.update_layout(mapbox_style="open-street-map")
+        fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+        fig.update_layout(coloraxis_showscale=False)
+
+        graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
+
+        # GraphJSON is a json string, so you have to parse it into a json object
+        # in order to return it
+        parsed_graphJSON = json.loads(graphJSON)
+
+        return Response(parsed_graphJSON, status=status.HTTP_200_OK)
