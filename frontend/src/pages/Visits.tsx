@@ -1,9 +1,10 @@
 import {
   Box,
   Button,
-  HStack,
+  Flex,
   Icon,
   Select,
+  Spacer,
   Text,
   VStack
 } from "@chakra-ui/react";
@@ -23,16 +24,19 @@ import {
 } from "~/api/endpoints/api.schemas";
 
 const Visits = () => {
+  /* ---------------------------------- HOOKS --------------------------------- */
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // State to manage the visibility of the date select
-  const [isDateSelectVisible, setIsDateSelectVisible] =
-    useState<boolean>(false);
+  const [isDateSelectVisible, setIsDateSelectVisible] = useState<boolean>(true);
   const [selectedQuickDateRange, setSelectedQuickDateRange] =
     useState<string>("");
 
-  const [dateRange, setDateRange] = useState<Date[] | null[]>([null, null]);
-  const [startDate, endDate] = dateRange;
+  // Set initial date range to last week
+  const [startDate, setStartDate] = useState<Date>(
+    new Date(new Date().setDate(new Date().getDate() - 7))
+  );
+  const [endDate, setEndDate] = useState<Date>(new Date());
 
   // Plot states
   const [plotData, setPlotData] = useState<VisitPlotlyData[]>([]);
@@ -113,9 +117,12 @@ const Visits = () => {
         break;
     }
 
-    setDateRange([new Date(start_date), new Date(end_date)]);
+    // Set date states
+    setStartDate(new Date(start_date));
+    setEndDate(new Date(end_date));
   };
 
+  // On submit, fetch the data
   const onSubmit = () => {
     if (!startDate || !endDate) {
       return;
@@ -127,13 +134,7 @@ const Visits = () => {
 
   // Create a use effect to set the default date range
   useEffect(() => {
-    const start_date = new Date(
-      new Date().setDate(new Date().getDate() - 7)
-    ).toISOString();
-    const end_date = new Date().toISOString();
-    setDateRange([new Date(start_date), new Date(end_date)]);
-
-    getVisitsPlot(start_date, end_date);
+    getVisitsPlot(startDate.toISOString(), endDate.toISOString());
   }, []);
 
   return (
@@ -167,7 +168,12 @@ const Visits = () => {
               startDate={startDate}
               endDate={endDate}
               onChange={(update: Date[]) => {
-                setDateRange(update);
+                // Update the date range
+                const [newStartDate, newEndDate] = update;
+                setStartDate(newStartDate);
+                setEndDate(newEndDate);
+
+                // Reset the quick date range
                 setSelectedQuickDateRange("");
               }}
               withPortal
@@ -185,8 +191,12 @@ const Visits = () => {
               <option value="last_year">Last Year</option>
               <option value="ytd">YTD</option>
             </Select>
-            <HStack>
+            <Flex w={"100%"} alignItems={"center"}>
               <Icon
+                border={"1px"}
+                borderColor={"gray.300"}
+                rounded={"md"}
+                boxSize={6}
                 as={ChevronUpIcon}
                 _hover={{
                   cursor: "pointer",
@@ -197,6 +207,9 @@ const Visits = () => {
                   setIsDateSelectVisible(false);
                 }}
               />
+
+              <Spacer />
+
               <Button
                 colorScheme="blue"
                 onClick={() => {
@@ -206,10 +219,14 @@ const Visits = () => {
               >
                 Submit
               </Button>
-            </HStack>
+
+              <Spacer />
+            </Flex>
           </VStack>
         ) : (
           <Icon
+            rounded={"md"}
+            boxSize={6}
             as={ChevronDownIcon}
             _hover={{
               cursor: "pointer",
