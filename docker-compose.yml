@@ -29,5 +29,14 @@ services:
       timescaledb:
         condition: service_healthy
 
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - django
+
 volumes:
   timescaledb_data:
