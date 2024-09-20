@@ -14,8 +14,8 @@ import type {
   WayfinderOverlandCreateBodyOne,
   WayfinderOverlandCreateBodyThree,
   WayfinderOverlandCreateBodyTwo,
-  WayfinderTokenCreate200,
-  WayfinderTokenCreateBody,
+  WayfinderTokenRetrieve200,
+  WayfinderTokenRetrieveParams,
   WayfinderVisitsListParams,
   WayfinderVisitsPlotRetrieveParams,
 } from "../api.schemas";
@@ -52,20 +52,15 @@ export const wayfinderOverlandCreate = (
   );
 };
 /**
- * This endpoint creates a new token for the authenticated user or regenerates an existing one if requested.
- * @summary Generate or regenerate authentication token
+ * This endpoint gets or creates a new token for the authenticated user or regenerates an existing one if requested.
+ * @summary Get or regenerate authentication token
  */
-export const wayfinderTokenCreate = (
-  wayfinderTokenCreateBody: WayfinderTokenCreateBody,
+export const wayfinderTokenRetrieve = (
+  params?: WayfinderTokenRetrieveParams,
   options?: SecondParameter<typeof customAxiosInstance>,
 ) => {
-  return customAxiosInstance<WayfinderTokenCreate200>(
-    {
-      url: `/wayfinder/token/`,
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      data: wayfinderTokenCreateBody,
-    },
+  return customAxiosInstance<WayfinderTokenRetrieve200>(
+    { url: `/wayfinder/token/`, method: "GET", params },
     options,
   );
 };
@@ -96,8 +91,8 @@ export type WayfinderLocationsListResult = NonNullable<
 export type WayfinderOverlandCreateResult = NonNullable<
   Awaited<ReturnType<typeof wayfinderOverlandCreate>>
 >;
-export type WayfinderTokenCreateResult = NonNullable<
-  Awaited<ReturnType<typeof wayfinderTokenCreate>>
+export type WayfinderTokenRetrieveResult = NonNullable<
+  Awaited<ReturnType<typeof wayfinderTokenRetrieve>>
 >;
 export type WayfinderVisitsListResult = NonNullable<
   Awaited<ReturnType<typeof wayfinderVisitsList>>

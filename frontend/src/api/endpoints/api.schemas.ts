@@ -21,12 +21,14 @@ export type WayfinderVisitsListParams = {
   start_datetime: string;
 };
 
-export type WayfinderTokenCreate200 = {
+export type WayfinderTokenRetrieve200 = {
   token?: string;
 };
 
-export type WayfinderTokenCreateBody = {
-  /** If set to true, the existing token will be deleted and a new one will be created. */
+export type WayfinderTokenRetrieveParams = {
+  /**
+   * Boolean flag to indicate if the token should be regenerated
+   */
   recreate?: boolean;
 };
 
