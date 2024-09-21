@@ -138,7 +138,7 @@ const Visits = () => {
   }, []);
 
   return (
-    <Box w={"100%"} h={"100%"} justifyContent="center" alignItems="center">
+    <Box w={"100%"} h={"100vh"} justifyContent="center" alignItems="center">
       {/* Plot */}
 
       <Plot
