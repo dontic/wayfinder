@@ -5,50 +5,20 @@ export const WayfinderLogo = createIcon({
   viewBox: "0 0 300 100",
   path: (
     <>
-      <svg
-        color-interpolation-filters="sRGB"
-        data-v-0dd9719b=""
-        version="1.0"
-        viewBox="0 0 300 100"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <rect
-          width="100%"
-          height="100%"
-          fill="url(#watermark)"
-          data-v-0dd9719b=""
-        />
-        <g transform="translate(35,20)" fill="#00c9ff" data-v-0dd9719b="">
-          <g transform="translate(0)" mask="url(#b)">
-            <rect
-              width="60"
-              height="63.949"
-              fill="#00c9ff"
-              fill-opacity="0"
-              stroke-width="2"
-            />
+      <svg color-interpolation-filters="sRGB" viewBox="0 0 300 100">
+        <g transform="translate(35,20)" fill="#00c9ff">
+          <g transform="translate(0)">
             <svg width="60" height="63.949" overflow="visible">
               <svg
                 enable-background="new 0 0 64 64"
-                fill="#000000"
-                version="1.1"
                 viewBox="3.14833402633667 1.2495145797729492 57.70317459106445 61.501094818115234"
-                xmlns="http://www.w3.org/2000/svg"
               >
                 <path d="m58.254 2.789c-2.143-1.725-5.105-2.027-7.547-0.771l-43.783 22.51c-2.643 1.359-4.101 4.143-3.714 7.094 0.387 2.953 2.515 5.267 5.418 5.9l18.443 4.009 7.859 17.164c1.24 2.702 3.955 4.283 6.92 4.029s5.374-2.273 6.136-5.145l12.633-47.582 1e-3 -3e-3c0.703-2.655-0.226-5.482-2.366-7.205zm-17.397 49.766-8.216-17.944-19.286-4.192 38.655-19.872-11.153 42.008z"></path>
               </svg>
             </svg>
-            <rect
-              transform="translate(-6 -6)"
-              width="72"
-              height="75.949"
-              fill="url(#a)"
-              pointer-events="none"
-              v-gra="id"
-            />
           </g>
           <g transform="translate(67 15.219)">
-            <g fill="url(#a)" fill-rule="" data-gra="path-name">
+            <g fill="#00c9ff">
               <g transform="scale(1)">
                 <path
                   transform="translate(-.37 26.04)"
@@ -81,7 +51,6 @@ export const WayfinderLogo = createIcon({
             <svg width="60" height="63.949" overflow="visible">
               <svg
                 enable-background="new 0 0 64 64"
-                fill="#000000"
                 version="1.1"
                 viewBox="3.14833402633667 1.2495145797729492 57.70317459106445 61.501094818115234"
                 xmlns="http://www.w3.org/2000/svg"
