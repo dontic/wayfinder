@@ -1,5 +1,5 @@
-import { Button, Flex, VStack, Text } from "@chakra-ui/react";
-import { useState } from "react";
+import { Button, VStack, Text, HStack } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
 import { wayfinderTokenRetrieve } from "~/api/endpoints/wayfinder/wayfinder";
 
 const OverlandToken = () => {
@@ -45,26 +45,23 @@ const OverlandToken = () => {
     }, 2000);
   };
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    getToken();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
   return (
     <VStack spacing={4} w={"100%"}>
-      <Flex gap={4} w={"100%"} justifyContent={"center"}>
-        <Button colorScheme="blue" isLoading={isSubmitting} onClick={getToken}>
-          Get Token
-        </Button>
-        <Button
-          colorScheme="orange"
-          isLoading={isSubmitting}
-          onClick={regenerateToken}
-        >
-          Regenerate Token
-        </Button>
-      </Flex>
-
       {/* Display the token if not an empty string */}
       {token && (
         <VStack w={"100%"} justifyContent={"center"}>
           <Text
-            fontSize={"xl"}
+            fontSize={"md"}
             border={"1px"}
             borderColor={"gray.200"}
             p={4}
@@ -72,9 +69,19 @@ const OverlandToken = () => {
           >
             {token}
           </Text>
-          <Button colorScheme="gray" size="sm" onClick={handleCopy}>
-            {copyTokenButtonText}
-          </Button>
+          <HStack>
+            <Button colorScheme="gray" size="sm" onClick={handleCopy}>
+              {copyTokenButtonText}
+            </Button>
+            <Button
+              colorScheme="orange"
+              size="sm"
+              isLoading={isSubmitting}
+              onClick={regenerateToken}
+            >
+              Regenerate Token
+            </Button>
+          </HStack>
         </VStack>
       )}
     </VStack>
