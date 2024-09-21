@@ -66,7 +66,11 @@ export default function SimpleSidebar({ children }: Props) {
         </DrawerContent>
       </Drawer>
       {/* mobilenav */}
-      <MobileNav display={{ base: "flex", md: "none" }} onOpen={onOpen} />
+      <MobileNav
+        display={{ base: "flex", md: "none" }}
+        onOpen={onOpen}
+        isOpen={isOpen}
+      />
       <Box ml={{ base: 0, md: 60 }} h={{ base: "100%", md: "100vh" }}>
         {children}
       </Box>
@@ -203,10 +207,18 @@ const NavItem = ({ icon, children, ...rest }: NavItemProps) => {
 
 interface MobileProps extends FlexProps {
   onOpen: () => void;
+  isOpen: boolean;
 }
-const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
+const MobileNav = ({ onOpen, isOpen, ...rest }: MobileProps) => {
   return (
-    <Flex position="fixed" top={4} left={4} zIndex={9999} {...rest}>
+    <Flex
+      position="fixed"
+      top={4}
+      left={4}
+      zIndex={9999}
+      hidden={isOpen ? true : false}
+      {...rest}
+    >
       <IconButton
         variant="solid"
         onClick={onOpen}
