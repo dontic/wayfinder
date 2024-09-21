@@ -206,12 +206,13 @@ interface MobileProps extends FlexProps {
 }
 const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
   return (
-    <Flex position="absolute" top={1} left={1} {...rest}>
+    <Flex position="fixed" top={4} left={4} zIndex={9999} {...rest}>
       <IconButton
-        variant="outline"
+        variant="solid"
         onClick={onOpen}
         aria-label="open menu"
         icon={<FiMenu />}
+        boxShadow="md"
       />
     </Flex>
   );
