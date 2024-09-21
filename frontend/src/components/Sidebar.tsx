@@ -12,7 +12,6 @@ import {
   useDisclosure,
   BoxProps,
   FlexProps,
-  Image,
   Spacer,
   Button,
   useToast
@@ -27,7 +26,7 @@ import { authLogoutCreate } from "~/api/endpoints/auth/auth";
 import { useNavigate } from "react-router-dom";
 import { useUserStore } from "~/stores/UserStore";
 
-import logoUrl from "~/assets/logo.svg";
+import { WayfinderLogo } from "./Icons";
 
 interface LinkItemProps {
   name: string;
@@ -123,7 +122,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
             mx="8"
             justifyContent="space-between"
           >
-            <Image maxH={"50px"} src={logoUrl} alt="Logo" />
+            <WayfinderLogo h={"50px"} w={"150px"} />
             <CloseButton
               display={{ base: "flex", md: "none" }}
               onClick={onClose}

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import LoginForm, { LoginFormValues } from "~/forms/LoginForm";
 
-import { Box, Image, useToast, VStack } from "@chakra-ui/react";
+import { Box, useToast, VStack } from "@chakra-ui/react";
 import CenteredLayout from "~/layouts/CenteredLayout";
 
 import {
@@ -12,6 +12,7 @@ import {
   authUserRetrieve
 } from "~/api/endpoints/auth/auth.ts";
 import { AxiosError } from "axios";
+import { WayfinderLogo } from "~/components/Icons";
 
 const Login = () => {
   /* ---------------------------------- HOOKS --------------------------------- */
@@ -85,10 +86,9 @@ const Login = () => {
   return (
     <CenteredLayout>
       <VStack spacing={6}>
-        <Image src="src/assets/logo.svg" alt="Logo" />
-        {/* <Text fontSize={"2xl"} fontWeight={"bold"}>
-          Login
-        </Text> */}
+        {/* <Image maxH={"50px"} src={logoUrl} alt="Logo" /> */}
+        <WayfinderLogo h={"100px"} w={"300px"} />
+
         <Box
           minW={{ base: "", md: "sm" }}
           rounded={"lg"}
