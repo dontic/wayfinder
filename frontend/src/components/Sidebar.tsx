@@ -27,6 +27,8 @@ import { authLogoutCreate } from "~/api/endpoints/auth/auth";
 import { useNavigate } from "react-router-dom";
 import { useUserStore } from "~/stores/UserStore";
 
+import logoUrl from "~/assets/logo.svg";
+
 interface LinkItemProps {
   name: string;
   icon: IconType;
@@ -117,7 +119,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
             mx="8"
             justifyContent="space-between"
           >
-            <Image maxH={"50px"} src="src/assets/logo.svg" alt="Logo" />
+            <Image maxH={"50px"} src={logoUrl} alt="Logo" />
             <CloseButton
               display={{ base: "flex", md: "none" }}
               onClick={onClose}
@@ -221,7 +223,7 @@ const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
 
       <Spacer />
 
-      <Image maxH={"50px"} src="src/assets/logo.svg" alt="Logo" />
+      <Image maxH={"50px"} src={logoUrl} alt="Logo" />
 
       <Spacer />
     </Flex>
