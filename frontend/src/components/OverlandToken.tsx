@@ -61,7 +61,7 @@ const OverlandToken = () => {
       {token && (
         <VStack w={"100%"} justifyContent={"center"}>
           <Text
-            fontSize={"md"}
+            fontSize={{ base: "sm", md: "md" }}
             border={"1px"}
             borderColor={"gray.200"}
             p={4}
