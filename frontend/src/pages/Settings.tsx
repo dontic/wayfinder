@@ -11,12 +11,13 @@ const Settings = () => {
     <CenteredLayout>
       <Box
         w={{ base: "100%", md: "70%" }}
+        h={{ base: "100vh", md: "auto" }}
         bg={"white"}
         rounded={"lg"}
         boxShadow={"lg"}
-        p={10}
+        p={{ base: 12, md: 8 }}
       >
-        <VStack spacing={4} w={"100%"}>
+        <VStack spacing={4} w={"100%"} pt={{ base: 4, md: 0 }}>
           <Box>
             <Text mb={3} fontSize="xl" fontWeight="bold" textAlign={"center"}>
               Overland Token
