@@ -16,7 +16,7 @@ services:
       retries: 5
       start_period: 20s
 
-  django:
+  backend:
     restart: unless-stopped
     build:
       context: ./backend
@@ -28,6 +28,16 @@ services:
     depends_on:
       timescaledb:
         condition: service_healthy
+
+  frontend:
+    restart: unless-stopped
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
 
 volumes:
   timescaledb_data:

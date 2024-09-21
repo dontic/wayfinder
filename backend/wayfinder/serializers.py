@@ -80,6 +80,7 @@ class VisitSerializer(serializers.ModelSerializer):
             "unique_id",
             "vertical_accuracy",
             "wifi",
+            "duration",
         ]
 
     def to_internal_value(self, data):
@@ -113,3 +114,35 @@ class VisitSerializer(serializers.ModelSerializer):
 
         # Use the parent's to_internal_value to do the actual validation
         return super().to_internal_value(prepared_data)
+
+
+# ------------------------- Visits Plotly serializers ------------------------ #
+class VisitPlotlyDataSerializer(serializers.Serializer):
+    coloraxis = serializers.CharField()
+    customdata = serializers.ListField(
+        child=serializers.ListField(child=serializers.CharField())
+    )
+    hovertemplate = serializers.CharField()
+    lat = serializers.ListField(child=serializers.FloatField())
+    lon = serializers.ListField(child=serializers.FloatField())
+    name = serializers.CharField()
+    subplot = serializers.CharField()
+    z = serializers.ListField(child=serializers.IntegerField())
+    type = serializers.CharField()
+
+
+class VisitPlotlyLayoutSerializer(serializers.Serializer):
+    mapbox = serializers.DictField()
+    coloraxis = serializers.DictField()
+    legend = serializers.DictField()
+    margin = serializers.DictField()
+    template = serializers.DictField()
+
+
+class VisitPlotlyResponseSerializer(serializers.Serializer):
+    data = serializers.ListField(child=VisitPlotlyDataSerializer())
+    layout = VisitPlotlyLayoutSerializer()
+
+
+class ErrorResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()

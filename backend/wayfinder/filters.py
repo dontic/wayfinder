@@ -8,10 +8,10 @@ from .models import Location, Visit
 
 
 class LocationFilterSet(filters.FilterSet):
-    time_after = filters.IsoDateTimeFilter(
+    start_datetime = filters.IsoDateTimeFilter(
         field_name="time", lookup_expr="gte", required=True
     )
-    time_before = filters.IsoDateTimeFilter(
+    end_datetime = filters.IsoDateTimeFilter(
         field_name="time", lookup_expr="lte", required=True
     )
     motion_contains = filters.CharFilter(field_name="motion", lookup_expr="contains")
@@ -23,8 +23,8 @@ class LocationFilterSet(filters.FilterSet):
     class Meta:
         model = Location
         fields = [
-            "time_after",
-            "time_before",
+            "start_datetime",
+            "end_datetime",
             "motion_contains",
             "h_accuracy_lte",
             "speed_gte",
@@ -32,13 +32,13 @@ class LocationFilterSet(filters.FilterSet):
 
 
 class VisitFilterSet(filters.FilterSet):
-    time_after = filters.IsoDateTimeFilter(
+    start_datetime = filters.IsoDateTimeFilter(
         field_name="time", lookup_expr="gte", required=True
     )
-    time_before = filters.IsoDateTimeFilter(
+    end_datetime = filters.IsoDateTimeFilter(
         field_name="time", lookup_expr="lte", required=True
     )
 
     class Meta:
         model = Visit
-        fields = ["time_after", "time_before"]
+        fields = ["start_datetime", "end_datetime"]
