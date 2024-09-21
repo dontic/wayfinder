@@ -41,6 +41,3 @@ urlpatterns = [
     ),
     path("auth/", include("dj_rest_auth.urls")),
 ]
-
-# Host all urls under /api
-urlpatterns = [path("api/", include(urlpatterns))]
