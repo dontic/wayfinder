@@ -130,7 +130,10 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
               key={link.name}
               icon={link.icon}
               onClick={() => {
-                link.href && navigate(link.href);
+                if (link.href) {
+                  navigate(link.href);
+                  onClose(); // Close the drawer on mobile
+                }
               }}
             >
               {link.name}
@@ -203,29 +206,13 @@ interface MobileProps extends FlexProps {
 }
 const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
   return (
-    <Flex
-      ml={{ base: 0, md: 60 }}
-      px={{ base: 4, md: 24 }}
-      height="20"
-      alignItems="center"
-      bg={useColorModeValue("white", "gray.900")}
-      borderBottomWidth="1px"
-      borderBottomColor={useColorModeValue("gray.200", "gray.700")}
-      justifyContent="flex-start"
-      {...rest}
-    >
+    <Flex position="absolute" top={1} left={1} {...rest}>
       <IconButton
         variant="outline"
         onClick={onOpen}
         aria-label="open menu"
         icon={<FiMenu />}
       />
-
-      <Spacer />
-
-      <Image maxH={"50px"} src={logoUrl} alt="Logo" />
-
-      <Spacer />
     </Flex>
   );
 };
