@@ -26,7 +26,7 @@ FROM nginx:stable-bullseye
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # Copy the nginx configuration file to the nginx container
-COPY deafult-nginx.conf /etc/nginx/conf.d/default.conf
+COPY default-nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port 80 to the Docker host
 EXPOSE 80
