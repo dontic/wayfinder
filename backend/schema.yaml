@@ -423,6 +423,11 @@ paths:
           type: boolean
         description: Flag to indicate if trips should be colored
       - in: query
+        name: desired_accuracy
+        schema:
+          type: number
+        description: Desired accuracy in meters. 0 means no filtering
+      - in: query
         name: end_datetime
         schema:
           type: string

@@ -389,6 +389,13 @@ class TripPlotView(APIView):
                 description="Flag to indicate if locations during visits should be removed",
                 required=False,
             ),
+            OpenApiParameter(
+                name="desired_accuracy",
+                type=OpenApiTypes.NUMBER,
+                location=OpenApiParameter.QUERY,
+                description="Desired accuracy in meters. 0 means no filtering",
+                required=False,
+            ),
         ],
         responses={200: VisitPlotlyResponseSerializer, 400: ErrorResponseSerializer},
         description="Endpoint for generating a path plot of trips within a specified date range.",
@@ -399,6 +406,7 @@ class TripPlotView(APIView):
         SHOW_VISITS = False
         COLOR_TRIPS = False
         LOCATIONS_DURING_VISITS = False
+        DESIRED_ACCURACY = 0
 
         log.debug("Received request to plot trips")
 
@@ -428,6 +436,8 @@ class TripPlotView(APIView):
             LOCATIONS_DURING_VISITS = (
                 request.query_params.get("locations_during_visits").lower() == "true"
             )
+        if "desired_accuracy" in request.query_params:
+            DESIRED_ACCURACY = request.query_params.get("desired_accuracy")
 
         # Get the locations in the date range
         locations = Location.objects.filter(
@@ -499,6 +509,12 @@ class TripPlotView(APIView):
 
             # Remove locations during visits
             locations_df = remove_locations_during_visit(locations_df, visits_df)
+
+        if DESIRED_ACCURACY > 0:
+            log.debug(f"Filtering locations with accuracy < {DESIRED_ACCURACY}")
+            locations_df = locations_df[
+                locations_df["horizontal_accuracy"] <= DESIRED_ACCURACY
+            ]
 
         # Plot the trips
         fig = px.line_mapbox(

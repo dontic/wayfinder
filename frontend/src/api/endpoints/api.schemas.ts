@@ -27,6 +27,10 @@ export type WayfinderTripsPlotRetrieveParams = {
    */
   color_trips?: boolean;
   /**
+   * Desired accuracy in meters. 0 means no filtering
+   */
+  desired_accuracy?: number;
+  /**
    * End date for the date range filter (inclusive)
    */
   end_datetime: string;
