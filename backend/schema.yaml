@@ -411,6 +411,43 @@ paths:
           description: ''
         '401':
           description: No response body
+  /wayfinder/trips/plot/:
+    get:
+      operationId: wayfinder_trips_plot_retrieve
+      description: Endpoint for generating a density map of visits within a specified
+        date range.
+      parameters:
+      - in: query
+        name: end_datetime
+        schema:
+          type: string
+          format: date-time
+        description: End date for the date range filter (inclusive)
+        required: true
+      - in: query
+        name: start_datetime
+        schema:
+          type: string
+          format: date-time
+        description: Start date for the date range filter (inclusive)
+        required: true
+      tags:
+      - wayfinder
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitPlotlyResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /wayfinder/visits/:
     get:
       operationId: wayfinder_visits_list

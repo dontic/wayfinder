@@ -285,12 +285,15 @@ class VisitPlotView(APIView):
         description="Endpoint for generating a density map of visits within a specified date range.",
     )
     def get(self, request):
+        log.debug("Received request to plot visits")
+
         # The request should always receive a date range
         # Otherwise, return an error
         start_date = request.query_params.get("start_datetime")
         end_date = request.query_params.get("end_datetime")
 
         if start_date is None or end_date is None:
+            log.error("No date range provided")
             return Response(
                 {"message": "Please provide a start_date and end_date query parameter"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -301,8 +304,12 @@ class VisitPlotView(APIView):
             "time", "1 day"
         )
 
+        visits_count = visits.count()
+
+        log.debug(f"Found {visits_count} visits in the date range")
+
         # If visists is empty, return an empty response
-        if visits.count() == 0:
+        if visits_count == 0:
             log.debug("No visits found in the date range")
             return Response({}, status=status.HTTP_200_OK)
 
@@ -317,6 +324,84 @@ class VisitPlotView(APIView):
             z="duration",
             hover_data=["arrival_date", "departure_date"],
             zoom=1,
+        )
+        fig.update_layout(mapbox_style="open-street-map")
+        fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+        fig.update_layout(coloraxis_showscale=False)
+
+        graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
+
+        # GraphJSON is a json string, so you have to parse it into a json object
+        # in order to return it
+        parsed_graphJSON = json.loads(graphJSON)
+
+        return Response(parsed_graphJSON, status=status.HTTP_200_OK)
+
+
+class TripPlotView(APIView):
+    authentication_classes = [SessionAuthentication]
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="start_datetime",
+                type=OpenApiTypes.DATETIME,
+                location=OpenApiParameter.QUERY,
+                description="Start date for the date range filter (inclusive)",
+                required=True,
+            ),
+            OpenApiParameter(
+                name="end_datetime",
+                type=OpenApiTypes.DATETIME,
+                location=OpenApiParameter.QUERY,
+                description="End date for the date range filter (inclusive)",
+                required=True,
+            ),
+        ],
+        responses={200: VisitPlotlyResponseSerializer, 400: ErrorResponseSerializer},
+        description="Endpoint for generating a path plot of trips within a specified date range.",
+    )
+    def get(self, request):
+
+        log.debug("Received request to plot trips")
+
+        # The request should always receive a date range
+        # Otherwise, return an error
+        start_date = request.query_params.get("start_datetime")
+        end_date = request.query_params.get("end_datetime")
+
+        if start_date is None or end_date is None:
+            log.error("No date range provided")
+
+            return Response(
+                {"message": "Please provide a start_date and end_date query parameter"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Get the locations in the date range
+        locations = Location.objects.filter(
+            time__range=[start_date, end_date]
+        ).time_bucket("time", "1 day")
+
+        locations_count = locations.count()
+
+        log.debug(f"Found {locations_count} locations in the date range")
+
+        # If locations is empty, return an empty response
+        if locations_count == 0:
+            log.debug("No locations found in the selected date range")
+            return Response({}, status=status.HTTP_404_NOT_FOUND)
+
+        # Convert the locations to a pandas dataframe
+        locations = pd.DataFrame(list(locations.values()))
+
+        # Plot the trips
+        fig = px.line_mapbox(
+            locations,
+            lat="latitude",
+            lon="longitude",
+            hover_data=["speed", "time"],
+            zoom=8,
         )
         fig.update_layout(mapbox_style="open-street-map")
         fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})

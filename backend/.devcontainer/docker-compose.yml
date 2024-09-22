@@ -9,6 +9,7 @@ services:
     environment:
       POSTGRES_USER: django
       POSTGRES_PASSWORD: django
+    user: root
     volumes:
       - timescaledb_data:/home/postgres/pgdata/data
 
