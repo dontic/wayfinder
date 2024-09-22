@@ -41,6 +41,7 @@ const Trips = () => {
 
   // Set other parameters
   const [showVisits, setShowVisits] = useState<boolean>(false);
+  const [showStationary, setShowStationary] = useState<boolean>(false);
 
   // Plot states
   const [plotData, setPlotData] = useState<VisitPlotlyData[]>([]);
@@ -52,11 +53,10 @@ const Trips = () => {
   const getTripsPlot = async (
     start_date: string,
     end_date: string,
-    show_visits?: boolean
+    show_visits?: boolean,
+    show_stationary?: boolean
   ) => {
     setIsLoading(true);
-
-    console.log(show_visits);
 
     // Fetch the data
     try {
@@ -64,7 +64,8 @@ const Trips = () => {
       let newTripPlotlyData = await wayfinderTripsPlotRetrieve({
         start_datetime: start_date,
         end_datetime: end_date,
-        show_visits: show_visits
+        show_visits: show_visits,
+        show_stationary: show_stationary
       });
 
       // If no trips, set data to null
@@ -146,12 +147,17 @@ const Trips = () => {
     }
     const start_date = startDate.toISOString();
     const end_date = endDate.toISOString();
-    getTripsPlot(start_date, end_date, showVisits);
+    getTripsPlot(start_date, end_date, showVisits, showStationary);
   };
 
   // Create a use effect to set the default date range
   useEffect(() => {
-    getTripsPlot(startDate.toISOString(), endDate.toISOString(), showVisits);
+    getTripsPlot(
+      startDate.toISOString(),
+      endDate.toISOString(),
+      showVisits,
+      showStationary
+    );
   }, []);
 
   return (
@@ -221,6 +227,17 @@ const Trips = () => {
                 checked={showVisits}
                 onChange={(e) => {
                   setShowVisits(e.target.checked);
+                }}
+              />
+            </Flex>
+            <Flex w={"100%"} alignItems={"center"}>
+              <Text>Show Stationary</Text>
+              <Spacer />
+              <input
+                type="checkbox"
+                checked={showStationary}
+                onChange={(e) => {
+                  setShowStationary(e.target.checked);
                 }}
               />
             </Flex>
