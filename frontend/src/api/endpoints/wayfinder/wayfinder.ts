@@ -66,7 +66,7 @@ export const wayfinderTokenRetrieve = (
   );
 };
 /**
- * Endpoint for generating a density map of visits within a specified date range.
+ * Endpoint for generating a path plot of trips within a specified date range.
  */
 export const wayfinderTripsPlotRetrieve = (
   params: WayfinderTripsPlotRetrieveParams,
