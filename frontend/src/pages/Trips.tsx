@@ -43,6 +43,8 @@ const Trips = () => {
   const [showVisits, setShowVisits] = useState<boolean>(false);
   const [showStationary, setShowStationary] = useState<boolean>(false);
   const [colorTrips, setColorTrips] = useState<boolean>(false);
+  const [locationsDuringVisits, setLocationsDuringVisits] =
+    useState<boolean>(false);
 
   // Plot states
   const [plotData, setPlotData] = useState<VisitPlotlyData[]>([]);
@@ -253,6 +255,17 @@ const Trips = () => {
                 checked={colorTrips}
                 onChange={(e) => {
                   setColorTrips(e.target.checked);
+                }}
+              />
+            </Flex>
+            <Flex w={"100%"} alignItems={"center"}>
+              <Text>Locations during visits</Text>
+              <Spacer />
+              <input
+                type="checkbox"
+                checked={locationsDuringVisits}
+                onChange={(e) => {
+                  setLocationsDuringVisits(e.target.checked);
                 }}
               />
             </Flex>
