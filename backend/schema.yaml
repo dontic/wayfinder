@@ -414,7 +414,7 @@ paths:
   /wayfinder/trips/plot/:
     get:
       operationId: wayfinder_trips_plot_retrieve
-      description: Endpoint for generating a density map of visits within a specified
+      description: Endpoint for generating a path plot of trips within a specified
         date range.
       parameters:
       - in: query
@@ -424,6 +424,11 @@ paths:
           format: date-time
         description: End date for the date range filter (inclusive)
         required: true
+      - in: query
+        name: show_visits
+        schema:
+          type: boolean
+        description: Flag to indicate if visits should be shown on the plot
       - in: query
         name: start_datetime
         schema:

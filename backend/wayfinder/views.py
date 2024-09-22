@@ -38,6 +38,7 @@ from .filters import LocationFilterSet, VisitFilterSet
 # Plotly
 # Plotly imports
 import plotly.express as px
+import plotly.graph_objects as go
 from plotly.utils import PlotlyJSONEncoder
 
 
@@ -357,11 +358,22 @@ class TripPlotView(APIView):
                 description="End date for the date range filter (inclusive)",
                 required=True,
             ),
+            OpenApiParameter(
+                name="show_visits",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description="Flag to indicate if visits should be shown on the plot",
+                required=False,
+            ),
         ],
         responses={200: VisitPlotlyResponseSerializer, 400: ErrorResponseSerializer},
         description="Endpoint for generating a path plot of trips within a specified date range.",
     )
     def get(self, request):
+
+        SHOW_STATIONARY = False
+        SHOW_VISITS = False
+        TRIPS_COLOR = False
 
         log.debug("Received request to plot trips")
 
@@ -377,6 +389,10 @@ class TripPlotView(APIView):
                 {"message": "Please provide a start_date and end_date query parameter"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        # Get the optional parameters
+        if "show_visits" in request.query_params:
+            SHOW_VISITS = request.query_params.get("show_visits").lower() == "true"
 
         # Get the locations in the date range
         locations = Location.objects.filter(
@@ -395,6 +411,21 @@ class TripPlotView(APIView):
         # Convert the locations to a pandas dataframe
         locations = pd.DataFrame(list(locations.values()))
 
+        # Get the visits if the SHOW_VISITS flag is set
+        if SHOW_VISITS:
+            visits = Visit.objects.filter(
+                time__range=[start_date, end_date]
+            ).time_bucket("time", "1 day")
+
+            visits_count = visits.count()
+
+            log.debug(f"Found {visits_count} visits in the date range")
+
+            # Convert the visits to a pandas dataframe
+            visits = pd.DataFrame(list(visits.values()))
+        else:
+            visits = pd.DataFrame()
+
         # Plot the trips
         fig = px.line_mapbox(
             locations,
@@ -403,9 +434,25 @@ class TripPlotView(APIView):
             hover_data=["speed", "time"],
             zoom=8,
         )
+
+        # Add visits waypoints
+        if not visits.empty:
+            fig.add_trace(
+                go.Scattermapbox(
+                    lat=visits["latitude"],
+                    lon=visits["longitude"],
+                    mode="markers",
+                    marker=go.scattermapbox.Marker(
+                        size=25, color="RoyalBlue", opacity=0.7
+                    ),
+                    hoverinfo="none",
+                )
+            )
+
         fig.update_layout(mapbox_style="open-street-map")
         fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
         fig.update_layout(coloraxis_showscale=False)
+        fig.update_layout(showlegend=False)
 
         graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
 
@@ -414,3 +461,110 @@ class TripPlotView(APIView):
         parsed_graphJSON = json.loads(graphJSON)
 
         return Response(parsed_graphJSON, status=status.HTTP_200_OK)
+
+
+# def getPathPlot(current_user, date_i, date_f, showVisits, removeIdle, tripsColor):
+#     conn = create_connection(current_user)
+#     date_i = date_format_utc(date_i)
+#     date_f = date_format_utc(date_f)
+
+#     query = """
+#     SELECT *
+#     FROM path
+#     WHERE timestamp BETWEEN "%s" AND "%s"
+#     """ % (
+#         str(date_i),
+#         str(date_f),
+#     )
+#     df = pd.read_sql(query, conn)
+
+#     visits_query = """
+#     SELECT *
+#     FROM visits
+#     WHERE (arrival BETWEEN "%s" AND "%s") OR (departure BETWEEN "%s" AND "%s")
+#     """ % (
+#         str(date_i),
+#         str(date_f),
+#         str(date_i),
+#         str(date_f),
+#     )
+#     df_visits = pd.read_sql(visits_query, conn)
+
+#     df["trip"] = 0
+#     if removeIdle or tripsColor:
+#         # Remove redundant points and apply color between stops
+#         i = 0
+#         df["timestamp_datetime"] = pd.to_datetime(df["timestamp"])
+#         df_visits["arrival_datetime"] = pd.to_datetime(df_visits["arrival"])
+#         df_visits["departure_datetime"] = pd.to_datetime(df_visits["departure"])
+
+#         for index, row in df_visits.iterrows():
+#             arrival = row["arrival_datetime"]
+#             departure = row["departure_datetime"]
+#             midTime = arrival + (departure - arrival) / 2
+
+#             if removeIdle:
+#                 # Delete redundant points
+#                 minuteOffset = 10
+#                 arrivalDel = arrival + pd.Timedelta(minutes=minuteOffset)
+#                 departureDel = departure - pd.Timedelta(minutes=minuteOffset)
+#                 df = df[
+#                     ~(
+#                         (df["timestamp_datetime"] >= arrivalDel)
+#                         & (df["timestamp_datetime"] <= departureDel)
+#                     )
+#                 ]
+
+#             if tripsColor:
+#                 # Color trips
+#                 if index == 0:
+#                     df.loc[df["timestamp_datetime"] < midTime, "trip"] = i
+#                     i += 1
+#                     df.loc[df["timestamp_datetime"] >= midTime, "trip"] = i
+#                     i += 1
+#                 elif index == df_visits.index[-1]:
+#                     df.loc[df["timestamp_datetime"] >= midTime, "trip"] = i
+#                     i += 1
+#                 else:
+#                     # All the cases in between
+#                     nextArrival = df_visits.iloc[index + 1]["arrival_datetime"]
+#                     nexDeparture = df_visits.iloc[index + 1]["departure_datetime"]
+#                     nextMidTime = nextArrival + (nexDeparture - nextArrival) / 2
+
+#                     df.loc[
+#                         (df["timestamp_datetime"] >= midTime)
+#                         & (df["timestamp_datetime"] < nextMidTime),
+#                         "trip",
+#                     ] = i
+#                     i += 1
+#     print(df)
+
+#     # Plot
+#     fig = px.line_mapbox(
+#         df,
+#         lat="LAT",
+#         lon="LONG",
+#         hover_data=["speed", "timestamp"],
+#         color="trip",
+#         # color_discrete_sequence=["White","Green","Yellow","Red","Pink"],
+#         zoom=8,
+#     )
+
+#     # Add visits waypoints
+#     if not df_visits.empty and showVisits:
+#         fig.add_trace(
+#             go.Scattermapbox(
+#                 lat=df_visits["LAT"],
+#                 lon=df_visits["LONG"],
+#                 mode="markers",
+#                 marker=go.scattermapbox.Marker(size=25, color="RoyalBlue", opacity=0.7),
+#                 hoverinfo="none",
+#             )
+#         )
+
+#     fig.update_layout(mapbox_style="carto-positron")
+#     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     fig.update_layout(coloraxis_showscale=False)
+#     fig.update_layout(showlegend=False)
+
+#     return fig
