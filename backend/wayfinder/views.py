@@ -438,6 +438,15 @@ class TripPlotView(APIView):
             )
         if "desired_accuracy" in request.query_params:
             DESIRED_ACCURACY = request.query_params.get("desired_accuracy")
+            # Ensure that the desired accuracy is a number
+            try:
+                DESIRED_ACCURACY = float(DESIRED_ACCURACY)
+            except ValueError:
+                log.error("Desired accuracy is not a number")
+                return Response(
+                    {"message": "Desired accuracy must be a number"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         # Get the locations in the date range
         locations = Location.objects.filter(
