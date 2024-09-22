@@ -128,9 +128,9 @@ class Visit(TimescaleModel):
     # Wifi SSID if connected to a wifi network, an empty string if not connected
     wifi = models.CharField(max_length=100, blank=True)
 
-    # Duration of the visit in seconds
+    # Duration of the visit in hours
     # This is a calculated field and should not be set manually
-    duration = models.IntegerField()
+    duration = models.DecimalField(max_digits=8, decimal_places=2)
 
     def __str__(self):
         return f"{self.arrival_date} - {self.departure_date} - {self.device_id}"
@@ -139,7 +139,17 @@ class Visit(TimescaleModel):
         """
         This function calculates the duration of the visit and returns it in seconds.
         """
-        return (self.departure_date - self.arrival_date).seconds
+
+        # Calculate the duration in seconds
+        duration_seconds = (self.departure_date - self.arrival_date).seconds
+
+        # Convert the seconds to hours
+        duration_hours = duration_seconds / 3600
+
+        # Round the value to 2 decimal places
+        duration_hours = round(duration_hours, 2)
+
+        return duration_hours
 
     # Modify the save method to calculate the duration
     def save(self, *args, **kwargs):
