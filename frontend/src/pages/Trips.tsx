@@ -42,6 +42,7 @@ const Trips = () => {
   // Set other parameters
   const [showVisits, setShowVisits] = useState<boolean>(false);
   const [showStationary, setShowStationary] = useState<boolean>(false);
+  const [colorTrips, setColorTrips] = useState<boolean>(false);
 
   // Plot states
   const [plotData, setPlotData] = useState<VisitPlotlyData[]>([]);
@@ -54,7 +55,8 @@ const Trips = () => {
     start_date: string,
     end_date: string,
     show_visits?: boolean,
-    show_stationary?: boolean
+    show_stationary?: boolean,
+    color_trips?: boolean
   ) => {
     setIsLoading(true);
 
@@ -65,7 +67,8 @@ const Trips = () => {
         start_datetime: start_date,
         end_datetime: end_date,
         show_visits: show_visits,
-        show_stationary: show_stationary
+        show_stationary: show_stationary,
+        color_trips: color_trips
       });
 
       // If no trips, set data to null
@@ -147,7 +150,7 @@ const Trips = () => {
     }
     const start_date = startDate.toISOString();
     const end_date = endDate.toISOString();
-    getTripsPlot(start_date, end_date, showVisits, showStationary);
+    getTripsPlot(start_date, end_date, showVisits, showStationary, colorTrips);
   };
 
   // Create a use effect to set the default date range
@@ -156,7 +159,8 @@ const Trips = () => {
       startDate.toISOString(),
       endDate.toISOString(),
       showVisits,
-      showStationary
+      showStationary,
+      colorTrips
     );
   }, []);
 
@@ -238,6 +242,17 @@ const Trips = () => {
                 checked={showStationary}
                 onChange={(e) => {
                   setShowStationary(e.target.checked);
+                }}
+              />
+            </Flex>
+            <Flex w={"100%"} alignItems={"center"}>
+              <Text>Color Trips</Text>
+              <Spacer />
+              <input
+                type="checkbox"
+                checked={colorTrips}
+                onChange={(e) => {
+                  setColorTrips(e.target.checked);
                 }}
               />
             </Flex>
