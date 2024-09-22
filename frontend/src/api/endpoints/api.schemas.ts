@@ -21,6 +21,17 @@ export type WayfinderVisitsListParams = {
   start_datetime: string;
 };
 
+export type WayfinderTripsPlotRetrieveParams = {
+  /**
+   * End date for the date range filter (inclusive)
+   */
+  end_datetime: string;
+  /**
+   * Start date for the date range filter (inclusive)
+   */
+  start_datetime: string;
+};
+
 export type WayfinderTokenRetrieve200 = {
   token?: string;
 };

@@ -16,6 +16,7 @@ import type {
   WayfinderOverlandCreateBodyTwo,
   WayfinderTokenRetrieve200,
   WayfinderTokenRetrieveParams,
+  WayfinderTripsPlotRetrieveParams,
   WayfinderVisitsListParams,
   WayfinderVisitsPlotRetrieveParams,
 } from "../api.schemas";
@@ -64,6 +65,18 @@ export const wayfinderTokenRetrieve = (
     options,
   );
 };
+/**
+ * Endpoint for generating a density map of visits within a specified date range.
+ */
+export const wayfinderTripsPlotRetrieve = (
+  params: WayfinderTripsPlotRetrieveParams,
+  options?: SecondParameter<typeof customAxiosInstance>,
+) => {
+  return customAxiosInstance<VisitPlotlyResponse>(
+    { url: `/wayfinder/trips/plot/`, method: "GET", params },
+    options,
+  );
+};
 export const wayfinderVisitsList = (
   params: WayfinderVisitsListParams,
   options?: SecondParameter<typeof customAxiosInstance>,
@@ -93,6 +106,9 @@ export type WayfinderOverlandCreateResult = NonNullable<
 >;
 export type WayfinderTokenRetrieveResult = NonNullable<
   Awaited<ReturnType<typeof wayfinderTokenRetrieve>>
+>;
+export type WayfinderTripsPlotRetrieveResult = NonNullable<
+  Awaited<ReturnType<typeof wayfinderTripsPlotRetrieve>>
 >;
 export type WayfinderVisitsListResult = NonNullable<
   Awaited<ReturnType<typeof wayfinderVisitsList>>
