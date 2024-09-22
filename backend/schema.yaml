@@ -418,6 +418,11 @@ paths:
         date range.
       parameters:
       - in: query
+        name: color_trips
+        schema:
+          type: boolean
+        description: Flag to indicate if trips should be colored
+      - in: query
         name: end_datetime
         schema:
           type: string

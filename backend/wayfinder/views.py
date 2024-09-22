@@ -25,6 +25,9 @@ from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
+# Utils
+from wayfinder.utils import color_trips, remove_locations_during_visit
+
 # Local App
 from .models import Location, Visit
 from .serializers import (
@@ -372,6 +375,13 @@ class TripPlotView(APIView):
                 description="Flag to indicate if stationary locations should be shown on the plot",
                 required=False,
             ),
+            OpenApiParameter(
+                name="color_trips",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description="Flag to indicate if trips should be colored",
+                required=False,
+            ),
         ],
         responses={200: VisitPlotlyResponseSerializer, 400: ErrorResponseSerializer},
         description="Endpoint for generating a path plot of trips within a specified date range.",
@@ -380,7 +390,7 @@ class TripPlotView(APIView):
 
         SHOW_STATIONARY = False
         SHOW_VISITS = False
-        TRIPS_COLOR = False
+        COLOR_TRIPS = False
 
         log.debug("Received request to plot trips")
 
@@ -404,6 +414,8 @@ class TripPlotView(APIView):
             SHOW_STATIONARY = (
                 request.query_params.get("show_stationary").lower() == "true"
             )
+        if "color_trips" in request.query_params:
+            COLOR_TRIPS = request.query_params.get("color_trips").lower() == "true"
 
         # Get the locations in the date range
         locations = Location.objects.filter(
@@ -442,8 +454,23 @@ class TripPlotView(APIView):
 
             # Convert the visits to a pandas dataframe
             visits_df = pd.DataFrame(list(visits.values()))
+
         else:
             visits_df = pd.DataFrame()
+
+        if COLOR_TRIPS:
+            # Get the visits_df if it is empty
+            if visits_df.empty:
+                visits = Visit.objects.filter(
+                    time__range=[start_date, end_date]
+                ).time_bucket("time", "1 day")
+                visits_df = pd.DataFrame(list(visits.values()))
+
+            # Generate a "color" column in the locations_df
+            locations_df = color_trips(locations_df, visits_df)
+        else:
+            # Generate a "color" column with NaN values
+            locations_df["color"] = None
 
         # Plot the trips
         fig = px.line_mapbox(
@@ -452,6 +479,7 @@ class TripPlotView(APIView):
             lon="longitude",
             hover_data=["speed", "time", "motion"],
             zoom=8,
+            color="color",
         )
 
         # Add visits waypoints
@@ -468,7 +496,7 @@ class TripPlotView(APIView):
                 )
             )
 
-        fig.update_layout(mapbox_style="open-street-map")
+        fig.update_layout(mapbox_style="carto-positron")
         fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
         fig.update_layout(coloraxis_showscale=False)
         fig.update_layout(showlegend=False)
