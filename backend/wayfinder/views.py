@@ -468,12 +468,17 @@ class TripPlotView(APIView):
 
         # Get the visits if the SHOW_VISITS flag is set
         if SHOW_VISITS:
+            log.debug("Showing visits")
+
             visits_df = get_visits_df()
 
         else:
             visits_df = pd.DataFrame()
 
         if COLOR_TRIPS:
+
+            log.debug("Coloring trips")
+
             # Get the visits_df if it is empty
             if visits_df.empty:
                 visits_df = get_visits_df()
@@ -485,6 +490,8 @@ class TripPlotView(APIView):
             locations_df["color"] = None
 
         if not LOCATIONS_DURING_VISITS:
+
+            log.debug("Removing locations during visits")
 
             # Get the visits_df if it is empty
             if visits_df.empty:
