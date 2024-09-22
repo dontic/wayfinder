@@ -18,9 +18,7 @@ services:
 
   backend:
     restart: unless-stopped
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: dontic/wayfinder-backend:latest
     ports:
       - "8000:8000"
     env_file:
@@ -31,9 +29,7 @@ services:
 
   frontend:
     restart: unless-stopped
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: dontic/wayfinder-frontend:latest
     ports:
       - "8080:80"
     depends_on:
