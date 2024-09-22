@@ -23,9 +23,29 @@ export type WayfinderVisitsListParams = {
 
 export type WayfinderTripsPlotRetrieveParams = {
   /**
+   * Flag to indicate if trips should be colored
+   */
+  color_trips?: boolean;
+  /**
+   * Desired accuracy in meters. 0 means no filtering
+   */
+  desired_accuracy?: number;
+  /**
    * End date for the date range filter (inclusive)
    */
   end_datetime: string;
+  /**
+   * Flag to indicate if locations during visits should be removed
+   */
+  locations_during_visits?: boolean;
+  /**
+   * Flag to indicate if stationary locations should be shown on the plot
+   */
+  show_stationary?: boolean;
+  /**
+   * Flag to indicate if visits should be shown on the plot
+   */
+  show_visits?: boolean;
   /**
    * Start date for the date range filter (inclusive)
    */

@@ -25,6 +25,9 @@ from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
+# Utils
+from wayfinder.utils import color_trips, remove_locations_during_visit
+
 # Local App
 from .models import Location, Visit
 from .serializers import (
@@ -38,6 +41,7 @@ from .filters import LocationFilterSet, VisitFilterSet
 # Plotly
 # Plotly imports
 import plotly.express as px
+import plotly.graph_objects as go
 from plotly.utils import PlotlyJSONEncoder
 
 
@@ -357,11 +361,52 @@ class TripPlotView(APIView):
                 description="End date for the date range filter (inclusive)",
                 required=True,
             ),
+            OpenApiParameter(
+                name="show_visits",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description="Flag to indicate if visits should be shown on the plot",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="show_stationary",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description="Flag to indicate if stationary locations should be shown on the plot",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="color_trips",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description="Flag to indicate if trips should be colored",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="locations_during_visits",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description="Flag to indicate if locations during visits should be removed",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="desired_accuracy",
+                type=OpenApiTypes.NUMBER,
+                location=OpenApiParameter.QUERY,
+                description="Desired accuracy in meters. 0 means no filtering",
+                required=False,
+            ),
         ],
         responses={200: VisitPlotlyResponseSerializer, 400: ErrorResponseSerializer},
         description="Endpoint for generating a path plot of trips within a specified date range.",
     )
     def get(self, request):
+
+        SHOW_STATIONARY = False
+        SHOW_VISITS = False
+        COLOR_TRIPS = False
+        LOCATIONS_DURING_VISITS = False
+        DESIRED_ACCURACY = 0
 
         log.debug("Received request to plot trips")
 
@@ -378,10 +423,43 @@ class TripPlotView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Get the optional parameters
+        if "show_visits" in request.query_params:
+            SHOW_VISITS = request.query_params.get("show_visits").lower() == "true"
+        if "show_stationary" in request.query_params:
+            SHOW_STATIONARY = (
+                request.query_params.get("show_stationary").lower() == "true"
+            )
+        if "color_trips" in request.query_params:
+            COLOR_TRIPS = request.query_params.get("color_trips").lower() == "true"
+        if "locations_during_visits" in request.query_params:
+            LOCATIONS_DURING_VISITS = (
+                request.query_params.get("locations_during_visits").lower() == "true"
+            )
+        if "desired_accuracy" in request.query_params:
+            DESIRED_ACCURACY = request.query_params.get("desired_accuracy")
+            # Ensure that the desired accuracy is a number
+            try:
+                DESIRED_ACCURACY = float(DESIRED_ACCURACY)
+            except ValueError:
+                log.error("Desired accuracy is not a number")
+                return Response(
+                    {"message": "Desired accuracy must be a number"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
         # Get the locations in the date range
         locations = Location.objects.filter(
             time__range=[start_date, end_date]
         ).time_bucket("time", "1 day")
+
+        if not SHOW_STATIONARY:
+            # Exclude the locations where motion = ["stationary"]
+            # Note that motion can be ["driving", "stationary"]
+            # We only want to exclude the fully stationary locations
+            locations = locations.exclude(motion__contains="stationary").exclude(
+                motion=[]
+            )
 
         locations_count = locations.count()
 
@@ -393,19 +471,88 @@ class TripPlotView(APIView):
             return Response({}, status=status.HTTP_404_NOT_FOUND)
 
         # Convert the locations to a pandas dataframe
-        locations = pd.DataFrame(list(locations.values()))
+        locations_df = pd.DataFrame(list(locations.values()))
+
+        def get_visits_df():
+            visits = Visit.objects.filter(
+                time__range=[start_date, end_date]
+            ).time_bucket("time", "1 day")
+            visits_df = pd.DataFrame(list(visits.values()))
+
+            visits_count = visits_df.shape[0]
+
+            log.debug(f"Found {visits_count} visits in the date range")
+
+            return visits_df
+
+        # Get the visits if the SHOW_VISITS flag is set
+        if SHOW_VISITS:
+            log.debug("Showing visits")
+
+            visits_df = get_visits_df()
+
+        else:
+            visits_df = pd.DataFrame()
+
+        if COLOR_TRIPS:
+
+            log.debug("Coloring trips")
+
+            # Get the visits_df if it is empty
+            if visits_df.empty:
+                visits_df = get_visits_df()
+
+            # Generate a "color" column in the locations_df
+            locations_df = color_trips(locations_df, visits_df)
+        else:
+            # Generate a "color" column with NaN values
+            locations_df["color"] = None
+
+        if not LOCATIONS_DURING_VISITS:
+
+            log.debug("Removing locations during visits")
+
+            # Get the visits_df if it is empty
+            if visits_df.empty:
+                visits_df = get_visits_df()
+
+            # Remove locations during visits
+            locations_df = remove_locations_during_visit(locations_df, visits_df)
+
+        if DESIRED_ACCURACY > 0:
+            log.debug(f"Filtering locations with accuracy < {DESIRED_ACCURACY}")
+            locations_df = locations_df[
+                locations_df["horizontal_accuracy"] <= DESIRED_ACCURACY
+            ]
 
         # Plot the trips
         fig = px.line_mapbox(
-            locations,
+            locations_df,
             lat="latitude",
             lon="longitude",
-            hover_data=["speed", "time"],
+            hover_data=["speed", "time", "motion"],
             zoom=8,
+            color="color",
         )
-        fig.update_layout(mapbox_style="open-street-map")
+
+        # Add visits waypoints
+        if SHOW_VISITS:
+            fig.add_trace(
+                go.Scattermapbox(
+                    lat=visits_df["latitude"],
+                    lon=visits_df["longitude"],
+                    mode="markers",
+                    marker=go.scattermapbox.Marker(
+                        size=25, color="RoyalBlue", opacity=0.7
+                    ),
+                    hoverinfo="none",
+                )
+            )
+
+        fig.update_layout(mapbox_style="carto-positron")
         fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
         fig.update_layout(coloraxis_showscale=False)
+        fig.update_layout(showlegend=False)
 
         graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
 

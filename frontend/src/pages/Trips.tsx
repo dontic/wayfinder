@@ -4,6 +4,7 @@ import {
   Divider,
   Flex,
   Icon,
+  Input,
   Select,
   Spacer,
   Text,
@@ -39,6 +40,14 @@ const Trips = () => {
   );
   const [endDate, setEndDate] = useState<Date>(new Date());
 
+  // Set other parameters
+  const [showVisits, setShowVisits] = useState<boolean>(false);
+  const [showStationary, setShowStationary] = useState<boolean>(false);
+  const [colorTrips, setColorTrips] = useState<boolean>(false);
+  const [locationsDuringVisits, setLocationsDuringVisits] =
+    useState<boolean>(false);
+  const [desiredAccuracy, setDesiredAccuracy] = useState<number>(0);
+
   // Plot states
   const [plotData, setPlotData] = useState<VisitPlotlyData[]>([]);
   const [plotLayout, setPlotLayout] = useState<VisitPlotlyLayout | {}>({});
@@ -46,19 +55,24 @@ const Trips = () => {
   // Plot revision state to force plotly to update
   const [plotRevision, setPlotRevision] = useState<number>(0);
 
-  const getTripsPlot = async (start_date: string, end_date: string) => {
+  const getTripsPlot = async () => {
     setIsLoading(true);
 
     // Fetch the data
     try {
-      // Fetch the visits plot endpoint
-      let newVisitPlotlyData = await wayfinderTripsPlotRetrieve({
-        start_datetime: start_date,
-        end_datetime: end_date
+      // Fetch the trips plot endpoint
+      let newTripPlotlyData = await wayfinderTripsPlotRetrieve({
+        start_datetime: startDate.toISOString(),
+        end_datetime: endDate.toISOString(),
+        show_visits: showVisits,
+        show_stationary: showStationary,
+        color_trips: colorTrips,
+        locations_during_visits: locationsDuringVisits,
+        desired_accuracy: desiredAccuracy
       });
 
-      // If no visits, set data to null
-      if (!newVisitPlotlyData) {
+      // If no trips, set data to null
+      if (!newTripPlotlyData) {
         setPlotData([]);
         setPlotLayout({});
         setIsLoading(false);
@@ -66,15 +80,15 @@ const Trips = () => {
       }
 
       const newLayout = {
-        ...newVisitPlotlyData.layout,
+        ...newTripPlotlyData.layout,
         datarevision: plotRevision + 1
       };
 
-      setPlotData(newVisitPlotlyData.data);
+      setPlotData(newTripPlotlyData.data);
       setPlotLayout(newLayout);
       setPlotRevision(plotRevision + 1);
       setIsLoading(false);
-      return newVisitPlotlyData;
+      return newTripPlotlyData;
     } catch (err) {
       setIsLoading(false);
       console.log(err);
@@ -134,14 +148,12 @@ const Trips = () => {
     if (!startDate || !endDate) {
       return;
     }
-    const start_date = startDate.toISOString();
-    const end_date = endDate.toISOString();
-    getTripsPlot(start_date, end_date);
+    getTripsPlot();
   };
 
   // Create a use effect to set the default date range
   useEffect(() => {
-    getTripsPlot(startDate.toISOString(), endDate.toISOString());
+    getTripsPlot();
   }, []);
 
   return (
@@ -202,6 +214,63 @@ const Trips = () => {
               <option value="last_year">Last Year</option>
               <option value="ytd">YTD</option>
             </Select>
+            <Divider />
+            <Flex w={"100%"} alignItems={"center"}>
+              <Text>Show Visits</Text>
+              <Spacer />
+              <input
+                type="checkbox"
+                checked={showVisits}
+                onChange={(e) => {
+                  setShowVisits(e.target.checked);
+                }}
+              />
+            </Flex>
+            <Flex w={"100%"} alignItems={"center"}>
+              <Text>Show Stationary</Text>
+              <Spacer />
+              <input
+                type="checkbox"
+                checked={showStationary}
+                onChange={(e) => {
+                  setShowStationary(e.target.checked);
+                }}
+              />
+            </Flex>
+            <Flex w={"100%"} alignItems={"center"}>
+              <Text>Color Trips</Text>
+              <Spacer />
+              <input
+                type="checkbox"
+                checked={colorTrips}
+                onChange={(e) => {
+                  setColorTrips(e.target.checked);
+                }}
+              />
+            </Flex>
+            <Flex w={"100%"} alignItems={"center"}>
+              <Text>Locations during visits</Text>
+              <Spacer />
+              <input
+                type="checkbox"
+                checked={locationsDuringVisits}
+                onChange={(e) => {
+                  setLocationsDuringVisits(e.target.checked);
+                }}
+              />
+            </Flex>
+            <Flex w={"100%"} alignItems={"center"}>
+              <Text>Desired accuracy</Text>
+              <Spacer />
+              <Input
+                maxW={"75px"}
+                type="number"
+                value={desiredAccuracy}
+                onChange={(e) => {
+                  setDesiredAccuracy(parseInt(e.target.value));
+                }}
+              />
+            </Flex>
             <Flex w={"100%"} alignItems={"center"}>
               <Icon
                 border={"1px"}
