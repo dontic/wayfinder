@@ -428,7 +428,7 @@ class TripPlotView(APIView):
             return Response({}, status=status.HTTP_404_NOT_FOUND)
 
         # Convert the locations to a pandas dataframe
-        locations = pd.DataFrame(list(locations.values()))
+        locations_df = pd.DataFrame(list(locations.values()))
 
         # Get the visits if the SHOW_VISITS flag is set
         if SHOW_VISITS:
@@ -441,13 +441,13 @@ class TripPlotView(APIView):
             log.debug(f"Found {visits_count} visits in the date range")
 
             # Convert the visits to a pandas dataframe
-            visits = pd.DataFrame(list(visits.values()))
+            visits_df = pd.DataFrame(list(visits.values()))
         else:
-            visits = pd.DataFrame()
+            visits_df = pd.DataFrame()
 
         # Plot the trips
         fig = px.line_mapbox(
-            locations,
+            locations_df,
             lat="latitude",
             lon="longitude",
             hover_data=["speed", "time", "motion"],
@@ -455,11 +455,11 @@ class TripPlotView(APIView):
         )
 
         # Add visits waypoints
-        if not visits.empty:
+        if not visits_df.empty:
             fig.add_trace(
                 go.Scattermapbox(
-                    lat=visits["latitude"],
-                    lon=visits["longitude"],
+                    lat=visits_df["latitude"],
+                    lon=visits_df["longitude"],
                     mode="markers",
                     marker=go.scattermapbox.Marker(
                         size=25, color="RoyalBlue", opacity=0.7
