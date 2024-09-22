@@ -1,4 +1,4 @@
 .devcontainer
 .env
 .env.template
-schema.yaml
+node_modules
