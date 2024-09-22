@@ -39,6 +39,9 @@ const Trips = () => {
   );
   const [endDate, setEndDate] = useState<Date>(new Date());
 
+  // Set other parameters
+  const [showVisits, setShowVisits] = useState<boolean>(false);
+
   // Plot states
   const [plotData, setPlotData] = useState<VisitPlotlyData[]>([]);
   const [plotLayout, setPlotLayout] = useState<VisitPlotlyLayout | {}>({});
@@ -46,19 +49,26 @@ const Trips = () => {
   // Plot revision state to force plotly to update
   const [plotRevision, setPlotRevision] = useState<number>(0);
 
-  const getTripsPlot = async (start_date: string, end_date: string) => {
+  const getTripsPlot = async (
+    start_date: string,
+    end_date: string,
+    show_visits?: boolean
+  ) => {
     setIsLoading(true);
+
+    console.log(show_visits);
 
     // Fetch the data
     try {
-      // Fetch the visits plot endpoint
-      let newVisitPlotlyData = await wayfinderTripsPlotRetrieve({
+      // Fetch the trips plot endpoint
+      let newTripPlotlyData = await wayfinderTripsPlotRetrieve({
         start_datetime: start_date,
-        end_datetime: end_date
+        end_datetime: end_date,
+        show_visits: show_visits
       });
 
-      // If no visits, set data to null
-      if (!newVisitPlotlyData) {
+      // If no trips, set data to null
+      if (!newTripPlotlyData) {
         setPlotData([]);
         setPlotLayout({});
         setIsLoading(false);
@@ -66,15 +76,15 @@ const Trips = () => {
       }
 
       const newLayout = {
-        ...newVisitPlotlyData.layout,
+        ...newTripPlotlyData.layout,
         datarevision: plotRevision + 1
       };
 
-      setPlotData(newVisitPlotlyData.data);
+      setPlotData(newTripPlotlyData.data);
       setPlotLayout(newLayout);
       setPlotRevision(plotRevision + 1);
       setIsLoading(false);
-      return newVisitPlotlyData;
+      return newTripPlotlyData;
     } catch (err) {
       setIsLoading(false);
       console.log(err);
@@ -136,12 +146,12 @@ const Trips = () => {
     }
     const start_date = startDate.toISOString();
     const end_date = endDate.toISOString();
-    getTripsPlot(start_date, end_date);
+    getTripsPlot(start_date, end_date, showVisits);
   };
 
   // Create a use effect to set the default date range
   useEffect(() => {
-    getTripsPlot(startDate.toISOString(), endDate.toISOString());
+    getTripsPlot(startDate.toISOString(), endDate.toISOString(), showVisits);
   }, []);
 
   return (
@@ -202,6 +212,18 @@ const Trips = () => {
               <option value="last_year">Last Year</option>
               <option value="ytd">YTD</option>
             </Select>
+            <Divider />
+            <Flex w={"100%"} alignItems={"center"}>
+              <Text>Show Visits</Text>
+              <Spacer />
+              <input
+                type="checkbox"
+                checked={showVisits}
+                onChange={(e) => {
+                  setShowVisits(e.target.checked);
+                }}
+              />
+            </Flex>
             <Flex w={"100%"} alignItems={"center"}>
               <Icon
                 border={"1px"}
