@@ -31,6 +31,10 @@ export type WayfinderTripsPlotRetrieveParams = {
    */
   end_datetime: string;
   /**
+   * Flag to indicate if locations during visits should be removed
+   */
+  remove_visits_locations?: boolean;
+  /**
    * Flag to indicate if stationary locations should be shown on the plot
    */
   show_stationary?: boolean;
