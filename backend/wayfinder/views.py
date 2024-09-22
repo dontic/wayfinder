@@ -365,6 +365,13 @@ class TripPlotView(APIView):
                 description="Flag to indicate if visits should be shown on the plot",
                 required=False,
             ),
+            OpenApiParameter(
+                name="show_stationary",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description="Flag to indicate if stationary locations should be shown on the plot",
+                required=False,
+            ),
         ],
         responses={200: VisitPlotlyResponseSerializer, 400: ErrorResponseSerializer},
         description="Endpoint for generating a path plot of trips within a specified date range.",
@@ -393,11 +400,23 @@ class TripPlotView(APIView):
         # Get the optional parameters
         if "show_visits" in request.query_params:
             SHOW_VISITS = request.query_params.get("show_visits").lower() == "true"
+        if "show_stationary" in request.query_params:
+            SHOW_STATIONARY = (
+                request.query_params.get("show_stationary").lower() == "true"
+            )
 
         # Get the locations in the date range
         locations = Location.objects.filter(
             time__range=[start_date, end_date]
         ).time_bucket("time", "1 day")
+
+        if not SHOW_STATIONARY:
+            # Exclude the locations where motion = ["stationary"]
+            # Note that motion can be ["driving", "stationary"]
+            # We only want to exclude the fully stationary locations
+            locations = locations.exclude(motion__contains="stationary").exclude(
+                motion=[]
+            )
 
         locations_count = locations.count()
 
@@ -431,7 +450,7 @@ class TripPlotView(APIView):
             locations,
             lat="latitude",
             lon="longitude",
-            hover_data=["speed", "time"],
+            hover_data=["speed", "time", "motion"],
             zoom=8,
         )
 
