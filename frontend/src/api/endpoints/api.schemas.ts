@@ -23,6 +23,10 @@ export type WayfinderVisitsListParams = {
 
 export type WayfinderTripsPlotRetrieveParams = {
   /**
+   * Flag to indicate if trips should be colored
+   */
+  color_trips?: boolean;
+  /**
    * End date for the date range filter (inclusive)
    */
   end_datetime: string;
