@@ -9,12 +9,13 @@ echo "Collecting static files..."
 python manage.py collectstatic --no-input
 
 # Create superuser if environment variables are set
-if [ -n "$DJANGO_SUPERUSER_USERNAME" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ]
+if [ -n "$DJANGO_SUPERUSER_USERNAME" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ] && [ -n "$DJANGO_SUPERUSER_EMAIL" ]
 then
     echo "Creating superuser..."
     python manage.py createsuperuser \
         --noinput \
-        --username $DJANGO_SUPERUSER_USERNAME
+        --username $DJANGO_SUPERUSER_USERNAME \
+        --email $DJANGO_SUPERUSER_EMAIL
     echo "Superuser created successfully!"
 else
     echo "Superuser environment variables not set. Skipping superuser creation."
