@@ -789,9 +789,9 @@ components:
           type: string
           maxLength: 100
         duration:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
       required:
       - arrival_date
       - battery_level

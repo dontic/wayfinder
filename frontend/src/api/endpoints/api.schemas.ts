@@ -131,11 +131,8 @@ export interface Visit {
   departure_date: string;
   /** @maxLength 50 */
   device_id?: string;
-  /**
-   * @minimum -2147483648
-   * @maximum 2147483647
-   */
-  duration: number;
+  /** @pattern ^-?\d{0,6}(?:\.\d{0,2})?$ */
+  duration: string;
   /**
    * @minimum -2147483648
    * @maximum 2147483647
