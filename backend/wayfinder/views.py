@@ -382,6 +382,13 @@ class TripPlotView(APIView):
                 description="Flag to indicate if trips should be colored",
                 required=False,
             ),
+            OpenApiParameter(
+                name="remove_visits_locations",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description="Flag to indicate if locations during visits should be removed",
+                required=False,
+            ),
         ],
         responses={200: VisitPlotlyResponseSerializer, 400: ErrorResponseSerializer},
         description="Endpoint for generating a path plot of trips within a specified date range.",
@@ -391,6 +398,7 @@ class TripPlotView(APIView):
         SHOW_STATIONARY = False
         SHOW_VISITS = False
         COLOR_TRIPS = False
+        REMOVE_VISITS_LOCATIONS = False
 
         log.debug("Received request to plot trips")
 
@@ -416,6 +424,10 @@ class TripPlotView(APIView):
             )
         if "color_trips" in request.query_params:
             COLOR_TRIPS = request.query_params.get("color_trips").lower() == "true"
+        if "remove_visits_locations" in request.query_params:
+            REMOVE_VISITS_LOCATIONS = (
+                request.query_params.get("remove_visits_locations").lower() == "true"
+            )
 
         # Get the locations in the date range
         locations = Location.objects.filter(
@@ -442,18 +454,21 @@ class TripPlotView(APIView):
         # Convert the locations to a pandas dataframe
         locations_df = pd.DataFrame(list(locations.values()))
 
-        # Get the visits if the SHOW_VISITS flag is set
-        if SHOW_VISITS:
+        def get_visits_df():
             visits = Visit.objects.filter(
                 time__range=[start_date, end_date]
             ).time_bucket("time", "1 day")
+            visits_df = pd.DataFrame(list(visits.values()))
 
-            visits_count = visits.count()
+            visits_count = visits_df.shape[0]
 
             log.debug(f"Found {visits_count} visits in the date range")
 
-            # Convert the visits to a pandas dataframe
-            visits_df = pd.DataFrame(list(visits.values()))
+            return visits_df
+
+        # Get the visits if the SHOW_VISITS flag is set
+        if SHOW_VISITS:
+            visits_df = get_visits_df()
 
         else:
             visits_df = pd.DataFrame()
@@ -461,16 +476,22 @@ class TripPlotView(APIView):
         if COLOR_TRIPS:
             # Get the visits_df if it is empty
             if visits_df.empty:
-                visits = Visit.objects.filter(
-                    time__range=[start_date, end_date]
-                ).time_bucket("time", "1 day")
-                visits_df = pd.DataFrame(list(visits.values()))
+                visits_df = get_visits_df()
 
             # Generate a "color" column in the locations_df
             locations_df = color_trips(locations_df, visits_df)
         else:
             # Generate a "color" column with NaN values
             locations_df["color"] = None
+
+        if REMOVE_VISITS_LOCATIONS:
+
+            # Get the visits_df if it is empty
+            if visits_df.empty:
+                visits_df = get_visits_df()
+
+            # Remove locations during visits
+            locations_df = remove_locations_during_visit(locations_df, visits_df)
 
         # Plot the trips
         fig = px.line_mapbox(

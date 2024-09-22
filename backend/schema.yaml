@@ -430,6 +430,11 @@ paths:
         description: End date for the date range filter (inclusive)
         required: true
       - in: query
+        name: remove_visits_locations
+        schema:
+          type: boolean
+        description: Flag to indicate if locations during visits should be removed
+      - in: query
         name: show_stationary
         schema:
           type: boolean
