@@ -383,7 +383,7 @@ class TripPlotView(APIView):
                 required=False,
             ),
             OpenApiParameter(
-                name="remove_visits_locations",
+                name="locations_during_visits",
                 type=OpenApiTypes.BOOL,
                 location=OpenApiParameter.QUERY,
                 description="Flag to indicate if locations during visits should be removed",
@@ -398,7 +398,7 @@ class TripPlotView(APIView):
         SHOW_STATIONARY = False
         SHOW_VISITS = False
         COLOR_TRIPS = False
-        REMOVE_VISITS_LOCATIONS = False
+        LOCATIONS_DURING_VISITS = False
 
         log.debug("Received request to plot trips")
 
@@ -424,9 +424,9 @@ class TripPlotView(APIView):
             )
         if "color_trips" in request.query_params:
             COLOR_TRIPS = request.query_params.get("color_trips").lower() == "true"
-        if "remove_visits_locations" in request.query_params:
-            REMOVE_VISITS_LOCATIONS = (
-                request.query_params.get("remove_visits_locations").lower() == "true"
+        if "locations_during_visits" in request.query_params:
+            LOCATIONS_DURING_VISITS = (
+                request.query_params.get("locations_during_visits").lower() == "true"
             )
 
         # Get the locations in the date range
@@ -484,7 +484,7 @@ class TripPlotView(APIView):
             # Generate a "color" column with NaN values
             locations_df["color"] = None
 
-        if REMOVE_VISITS_LOCATIONS:
+        if not LOCATIONS_DURING_VISITS:
 
             # Get the visits_df if it is empty
             if visits_df.empty:
