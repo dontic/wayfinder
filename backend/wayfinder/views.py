@@ -474,6 +474,8 @@ class TripPlotView(APIView):
         locations_df = pd.DataFrame(list(locations.values()))
 
         def get_visits_df():
+            log.debug("Getting visits dataframe")
+
             visits = Visit.objects.filter(
                 time__range=[start_date, end_date]
             ).time_bucket("time", "1 day")
@@ -485,22 +487,23 @@ class TripPlotView(APIView):
 
             return visits_df
 
+        # Initialize visits_df and generated variable
+        visits_df = pd.DataFrame()
+        visits_df_generated = False
+
         # Get the visits if the SHOW_VISITS flag is set
         if SHOW_VISITS:
             log.debug("Showing visits")
-
             visits_df = get_visits_df()
-
-        else:
-            visits_df = pd.DataFrame()
+            visits_df_generated = True
 
         if COLOR_TRIPS:
-
             log.debug("Coloring trips")
 
             # Get the visits_df if it is empty
-            if visits_df.empty:
+            if visits_df.empty and not visits_df_generated:
                 visits_df = get_visits_df()
+                visits_df_generated = True
 
             # Generate a "color" column in the locations_df
             locations_df = color_trips(locations_df, visits_df)
@@ -509,12 +512,12 @@ class TripPlotView(APIView):
             locations_df["color"] = None
 
         if not LOCATIONS_DURING_VISITS:
-
             log.debug("Removing locations during visits")
 
             # Get the visits_df if it is empty
-            if visits_df.empty:
+            if visits_df.empty and not visits_df_generated:
                 visits_df = get_visits_df()
+                visits_df_generated = True
 
             # Remove locations during visits
             locations_df = remove_locations_during_visit(locations_df, visits_df)
@@ -536,7 +539,7 @@ class TripPlotView(APIView):
         )
 
         # Add visits waypoints
-        if SHOW_VISITS:
+        if SHOW_VISITS and not visits_df.empty:
             fig.add_trace(
                 go.Scattermapbox(
                     lat=visits_df["latitude"],
