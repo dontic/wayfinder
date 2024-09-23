@@ -140,19 +140,18 @@ class OverlandView(APIView):
 
         for item in locations_data:
             if "arrival_date" in item.get("properties", {}):
+
+                # If there is no departure date, skip the visit
+                departure_date = item.get("properties", {}).get("departure_date")
+                if departure_date is None or departure_date == "":
+                    log.debug("Skipping visit without valid departure date")
+                    log.debug(f"Visit data: {item}")
+                    continue
+
                 # This is a visit
                 visit_serializer = VisitSerializer(data=item)
+
                 if visit_serializer.is_valid():
-
-                    # Check that the visit has a departure date
-                    # Visit data is first sent when the user arrives at a location, setting an arrival date but no departure date
-                    # When the user leaves the location, the same object with the departure date is sent
-                    # There is no need to save the first object, as it will be updated with the departure date when the second object is received
-                    if not visit_serializer.validated_data.get("departure_date"):
-                        log.debug("Skipping visit without departure date")
-                        log.debug(f"Visit data: {item}")
-                        continue
-
                     visits_to_create.append(Visit(**visit_serializer.validated_data))
                 else:
                     log.error(f"Visit validation error: {visit_serializer.errors}")
