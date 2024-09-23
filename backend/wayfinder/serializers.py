@@ -1,5 +1,6 @@
 # serializers.py
 
+from datetime import datetime
 from rest_framework import serializers
 
 from .models import Location, Visit
@@ -95,6 +96,19 @@ class VisitSerializer(serializers.ModelSerializer):
         geometry = data.get("geometry", {})
         coordinates = geometry.get("coordinates", [])
 
+        # If there is no departure date, ignore this visit
+        if not properties.get("departure_date"):
+            return None
+
+        # Calculate the duration of the visit
+        arrival_date = properties.get("arrival_date")
+        departure_date = properties.get("departure_date")
+        if arrival_date and departure_date:
+            arrival_date = datetime.strptime(arrival_date, "%Y-%m-%dT%H:%M:%SZ")
+            departure_date = datetime.strptime(departure_date, "%Y-%m-%dT%H:%M:%SZ")
+            duration = (departure_date - arrival_date).seconds
+            properties["duration"] = duration / 3600
+
         # Prepare the data for the serializer
         prepared_data = {
             "time": properties.get("timestamp"),
@@ -110,6 +124,7 @@ class VisitSerializer(serializers.ModelSerializer):
             "unique_id": properties.get("unique_id"),
             "vertical_accuracy": properties.get("vertical_accuracy"),
             "wifi": properties.get("wifi"),
+            "duration": properties.get("duration"),
         }
 
         # Use the parent's to_internal_value to do the actual validation
