@@ -60,13 +60,17 @@ You can modify this port in the docker compose file under the `fronted` service.
 
 ### Configuration
 
-By default you will log in with user and password `admin:admin`.
+By default you will log in with user and password `admin:admin`, unless you uave modified it in `config.env`.
 
 Then go to settings:
 
-1. Copy the Overland token to your Overland app
+1. Copy the Overland token (you can regenerate it once in a while to increase security)
 
-2. Modify your username and password
+2. Paste the Token 'as is' into the Overland App token field
+
+3. Modify the Overland server url to `<BASE_URL>/api/wayfinder/overland/`
+
+4. Back in Wayfinder settings modify your username and password if needed
 
 ## Contributing
 
