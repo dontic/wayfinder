@@ -134,30 +134,3 @@ class Visit(TimescaleModel):
 
     def __str__(self):
         return f"{self.arrival_date} - {self.departure_date} - {self.device_id}"
-
-    def calculate_duration(self):
-        """
-        This function calculates the duration of the visit and returns it in seconds.
-        """
-
-        # Calculate the duration in seconds
-        duration_seconds = (self.departure_date - self.arrival_date).seconds
-
-        # Convert the seconds to hours
-        duration_hours = duration_seconds / 3600
-
-        # Round the value to 2 decimal places
-        duration_hours = round(duration_hours, 2)
-
-        return duration_hours
-
-    # Modify the save method to calculate the duration
-    def save(self, *args, **kwargs):
-        """
-        This function calculates the duration of the visit and saves it to the database.
-        """
-        # Calculate the duration
-        self.duration = self.calculate_duration()
-
-        # Call the parent's save method
-        super().save(*args, **kwargs)
