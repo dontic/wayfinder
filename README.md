@@ -1,9 +1,14 @@
-<img src="wayfinder_logo.svg" height="60">
+<img src="assets/wayfinder_logo.svg" height="60">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Latest version](https://img.shields.io/github/v/release/dontic/wayfinder)](https://img.shields.io/github/v/release/dontic/wayfinder)
 
 Wayfinder is a self-hosted web app for [Overland-iOS](https://github.com/aaronpk/Overland-iOS).
+
+<img src="assets/desktop_ui.png" height="200">
+<img src="assets/mobile_ui.png" height="200">
+
+---
 
 Wayfinder has 3 main components:
 
