@@ -536,7 +536,7 @@ class TripPlotView(APIView):
         )
 
         # Add visits waypoints
-        if SHOW_VISITS:
+        if SHOW_VISITS and not visits_df.empty:
             fig.add_trace(
                 go.Scattermapbox(
                     lat=visits_df["latitude"],
