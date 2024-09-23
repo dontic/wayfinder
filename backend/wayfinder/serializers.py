@@ -96,10 +96,6 @@ class VisitSerializer(serializers.ModelSerializer):
         geometry = data.get("geometry", {})
         coordinates = geometry.get("coordinates", [])
 
-        # If there is no departure date, ignore this visit
-        if not properties.get("departure_date"):
-            return None
-
         # Calculate the duration of the visit
         arrival_date = properties.get("arrival_date")
         departure_date = properties.get("departure_date")
