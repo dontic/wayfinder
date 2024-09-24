@@ -72,6 +72,18 @@ Then go to settings:
 
 4. Back in Wayfinder settings modify your username and password if needed
 
+### Overland settings
+
+These are the settings that work best with Wayfinder:
+
+> Note that only Wayfinder relevant settings are included. The rest are left to your choosing.
+
+- **Tracking Enabled**: `On`
+- **Continuous Tracking Mode**: `Both`
+- **Visit Tracking**: `On` -> Necessary to log visits in Wayfinder
+- **Loggin Mode**: `All Data`
+- **Locations per Batch**: Depends on where you host Wayfinder. Bigger servers will handle bigger batches easier. _I.e.: If you host on a raspberri pi keep it low to 50 or 100 per batch._
+
 ## Contributing
 
 Feel free to open issues, feature requests or pull requests to enhance Wayfinder!
