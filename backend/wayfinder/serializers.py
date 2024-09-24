@@ -100,10 +100,18 @@ class VisitSerializer(serializers.ModelSerializer):
         arrival_date = properties.get("arrival_date")
         departure_date = properties.get("departure_date")
         if arrival_date and departure_date:
+            # Convert the dates to datetime objects
             arrival_date = datetime.strptime(arrival_date, "%Y-%m-%dT%H:%M:%SZ")
             departure_date = datetime.strptime(departure_date, "%Y-%m-%dT%H:%M:%SZ")
+
+            # Calculate the duration in seconds
             duration = (departure_date - arrival_date).seconds
+
+            # Convert the duration to hours
             properties["duration"] = duration / 3600
+
+            # Ensure duration has 2 decimal places
+            properties["duration"] = round(properties["duration"], 2)
 
         # Prepare the data for the serializer
         prepared_data = {
