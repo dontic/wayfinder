@@ -32,7 +32,7 @@ const Trips = () => {
   // State to manage the visibility of the date select
   const [isDateSelectVisible, setIsDateSelectVisible] = useState<boolean>(true);
   const [selectedQuickDateRange, setSelectedQuickDateRange] =
-    useState<string>("");
+    useState<string>("last_24h");
 
   // Set initial date range to last 24h
   const [startDate, setStartDate] = useState<Date>(
