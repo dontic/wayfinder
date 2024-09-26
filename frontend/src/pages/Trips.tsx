@@ -99,6 +99,7 @@ const Trips = () => {
     }
   };
 
+  // Function to handle quick date range changes
   const onQuickDateRangeChange = (e: any) => {
     const value = e.target.value;
 
@@ -162,6 +163,23 @@ const Trips = () => {
     setEndDate(new Date(end_date));
   };
 
+  // Function to handle datepicker changes
+  const onStartDatePickerChange = (date: Date) => {
+    // Set the start date
+    setStartDate(date);
+
+    // Clear the quick date range
+    setSelectedQuickDateRange("");
+  };
+
+  const onEndDatePickerChange = (date: Date) => {
+    // Set the end date
+    setEndDate(date);
+
+    // Clear the quick date range
+    setSelectedQuickDateRange("");
+  };
+
   // On submit, fetch the data
   const onSubmit = () => {
     if (!startDate || !endDate) {
@@ -213,7 +231,7 @@ const Trips = () => {
             {/* Start datetime */}
             <DatePicker
               selected={startDate}
-              onChange={(date: Date) => setStartDate(date)}
+              onChange={onStartDatePickerChange}
               timeInputLabel="Time:"
               dateFormat="MM/dd/yyyy h:mm aa"
               showTimeInput
@@ -224,7 +242,7 @@ const Trips = () => {
             {/* End datetime */}
             <DatePicker
               selected={endDate}
-              onChange={(date: Date) => setEndDate(date)}
+              onChange={onEndDatePickerChange}
               timeInputLabel="Time:"
               dateFormat="MM/dd/yyyy h:mm aa"
               showTimeInput
