@@ -102,11 +102,11 @@ const Trips = () => {
   const onQuickDateRangeChange = (e: any) => {
     const value = e.target.value;
 
-    setSelectedQuickDateRange(value);
-
     if (!value) {
       return;
     }
+
+    setSelectedQuickDateRange(value);
 
     let start_date = "";
     let end_date = "";
@@ -117,6 +117,21 @@ const Trips = () => {
           new Date().setDate(new Date().getDate() - 1)
         ).toISOString();
         end_date = new Date().toISOString();
+        break;
+      case "today":
+        start_date = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+        end_date = new Date().toISOString();
+        break;
+      case "yesterday":
+        start_date = new Date(
+          new Date(new Date().setDate(new Date().getDate() - 1)).setHours(
+            0,
+            0,
+            0,
+            0
+          )
+        ).toISOString();
+        end_date = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
         break;
       case "last_week":
         start_date = new Date(
@@ -227,6 +242,8 @@ const Trips = () => {
               value={selectedQuickDateRange}
             >
               <option value="last_24h">Last 24h</option>
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
               <option value="last_week">Last Week</option>
               <option value="last_month">Last Month</option>
               <option value="last_year">Last Year</option>
