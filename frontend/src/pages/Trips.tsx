@@ -39,6 +39,10 @@ const Trips = () => {
     new Date(new Date().setDate(new Date().getDate() - 1))
   );
   const [endDate, setEndDate] = useState<Date>(new Date());
+  const [minDate, setMinDate] = useState<Date>(
+    new Date(new Date().setDate(new Date().getDate() - 1))
+  );
+  const [maxDate, setMaxDate] = useState<Date>(new Date());
 
   // Set other parameters
   const [showVisits, setShowVisits] = useState<boolean>(false);
@@ -151,10 +155,19 @@ const Trips = () => {
     getTripsPlot();
   };
 
-  // Create a use effect to set the default date range
+  // Use effect for initial plot
   useEffect(() => {
     getTripsPlot();
   }, []);
+
+  // Use effect for date change
+  useEffect(() => {
+    // Set the min date to the start date
+    setMinDate(startDate);
+
+    // Set the max date to the end date
+    setMaxDate(endDate);
+  }, [startDate, endDate]);
 
   return (
     <Box w={"100%"} h={"100vh"} justifyContent="center" alignItems="center">
@@ -183,24 +196,29 @@ const Trips = () => {
           <VStack>
             <Text>Select Datetime Range</Text>
             {/* Start datetime */}
-
             <DatePicker
               selected={startDate}
               onChange={(date: Date) => setStartDate(date)}
               timeInputLabel="Time:"
               dateFormat="MM/dd/yyyy h:mm aa"
               showTimeInput
+              maxDate={maxDate}
             />
             <Text>to</Text>
+
+            {/* End datetime */}
             <DatePicker
               selected={endDate}
               onChange={(date: Date) => setEndDate(date)}
               timeInputLabel="Time:"
               dateFormat="MM/dd/yyyy h:mm aa"
               showTimeInput
+              minDate={minDate}
             />
             <Divider />
             <Text>OR</Text>
+
+            {/* Quick range selector */}
             <Select
               placeholder="Quick Date Range"
               onChange={(e) => {
