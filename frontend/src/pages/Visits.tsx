@@ -176,7 +176,10 @@ const Visits = () => {
                 // Reset the quick date range
                 setSelectedQuickDateRange("");
               }}
-              withPortal
+              showMonthDropdown
+              showYearDropdown
+              dropdownMode="select"
+              maxDate={new Date()}
             />
             <Text>OR</Text>
             <Select
