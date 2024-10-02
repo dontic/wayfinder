@@ -5,7 +5,7 @@
 
 Wayfinder is a self-hosted web app for [Overland-iOS](https://github.com/aaronpk/Overland-iOS).
 
-<img src="assets/mockup.png" height="200">
+<img src="assets/mockup.png" height="300">
 
 ---
 
