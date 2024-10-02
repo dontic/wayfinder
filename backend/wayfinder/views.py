@@ -154,8 +154,18 @@ class OverlandView(APIView):
                 if visit_serializer.is_valid():
                     visits_to_create.append(Visit(**visit_serializer.validated_data))
                 else:
-                    log.error(f"Visit validation error: {visit_serializer.errors}")
-                    log.info(f"Visit data: {item}")
+                    # Check if the error is due to a duplicate visit
+                    if "time" in visit_serializer.errors and any(
+                        error.code == "unique"
+                        for error in visit_serializer.errors["time"]
+                    ):
+                        log.debug(
+                            f"Skipping duplicate visit: {item.get('time', 'unknown time')}"
+                        )
+                    else:
+                        log.error(f"Visit validation error: {visit_serializer.errors}")
+                        log.info(f"Visit data: {item}")
+
             else:
                 location_serializer = LocationSerializer(data=item)
                 if location_serializer.is_valid():
@@ -163,10 +173,19 @@ class OverlandView(APIView):
                         Location(**location_serializer.validated_data)
                     )
                 else:
-                    log.error(
-                        f"Location validation error: {location_serializer.errors}"
-                    )
-                    log.info(f"Location data: {item}")
+                    # Check if the error is due to a duplicate location
+                    if "time" in location_serializer.errors and any(
+                        error.code == "unique"
+                        for error in location_serializer.errors["time"]
+                    ):
+                        log.debug(
+                            f"Skipping duplicate location: {item.get('time', 'unknown time')}"
+                        )
+                    else:
+                        log.error(
+                            f"Location validation error: {location_serializer.errors}"
+                        )
+                        log.info(f"Location data: {item}")
 
         log.info(f"Parsed {len(locations_to_create)} locations")
         log.info(f"Parsed {len(visits_to_create)} visits")
