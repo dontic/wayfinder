@@ -12,7 +12,7 @@ class TimescaleModel(models.Model):
     be inheritted by another class for use.
     """
 
-    time = TimescaleDateTimeField(interval="1 day")
+    time = TimescaleDateTimeField(interval="1 day", unique=True)
 
     objects = TimescaleManager()
 
