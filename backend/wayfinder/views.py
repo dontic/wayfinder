@@ -138,6 +138,10 @@ class OverlandView(APIView):
         locations_to_create = []
         visits_to_create = []
 
+        # Use sets to keep track of unique timestamps
+        unique_location_timestamps = set()
+        unique_visit_timestamps = set()
+
         for item in locations_data:
             if "arrival_date" in item.get("properties", {}):
 
@@ -152,7 +156,16 @@ class OverlandView(APIView):
                 visit_serializer = VisitSerializer(data=item)
 
                 if visit_serializer.is_valid():
-                    visits_to_create.append(Visit(**visit_serializer.validated_data))
+                    visit_timestamp = visit_serializer.validated_data.get("time")
+                    if visit_timestamp not in unique_visit_timestamps:
+                        unique_visit_timestamps.add(visit_timestamp)
+                        visits_to_create.append(
+                            Visit(**visit_serializer.validated_data)
+                        )
+                    else:
+                        log.debug(
+                            f"Skipping duplicate visit with time: {visit_timestamp}"
+                        )
                 else:
                     # Check if the error is due to a duplicate visit
                     if "time" in visit_serializer.errors and any(
@@ -165,13 +178,19 @@ class OverlandView(APIView):
                     else:
                         log.error(f"Visit validation error: {visit_serializer.errors}")
                         log.info(f"Visit data: {item}")
-
             else:
                 location_serializer = LocationSerializer(data=item)
                 if location_serializer.is_valid():
-                    locations_to_create.append(
-                        Location(**location_serializer.validated_data)
-                    )
+                    location_timestamp = location_serializer.validated_data.get("time")
+                    if location_timestamp not in unique_location_timestamps:
+                        unique_location_timestamps.add(location_timestamp)
+                        locations_to_create.append(
+                            Location(**location_serializer.validated_data)
+                        )
+                    else:
+                        log.debug(
+                            f"Skipping duplicate location with time: {location_timestamp}"
+                        )
                 else:
                     # Check if the error is due to a duplicate location
                     if "time" in location_serializer.errors and any(
