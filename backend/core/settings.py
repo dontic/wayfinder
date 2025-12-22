@@ -18,35 +18,8 @@ import logging.config
 # Load environment variables
 load_dotenv()
 
-# ---------------------------------------------------------------------------- #
-#                                     PATHS                                    #
-# ---------------------------------------------------------------------------- #
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-if "BASE_URL" not in os.environ:
-    raise ValueError("BASE_URL environment variable not set.")
-
-# I.e.: http://localhost:8000, https://example.com
-BASE_URL = os.getenv("BASE_URL")
-
-BASE_URL_PROTOCOL = BASE_URL.split("://")[0]
-BASE_URL_HOST = BASE_URL.split("://")[1].split(":")[0]
-BASE_URL_PORT = (
-    BASE_URL.split("://")[1].split(":")[1] if ":" in BASE_URL.split("://")[1] else ""
-)
-
-PARSED_ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", BASE_URL_HOST).split(",")
-PARSED_ALLOWED_ORIGINS = os.getenv("DJANGO_ALLOWED_ORIGINS", BASE_URL).split(",")
-PARSED_CORS_ORIGIN_WHITELIST = os.getenv(
-    "DJANGO_CORS_ORIGIN_WHITELIST", BASE_URL
-).split(",")
-PARSED_DJANGO_CSRF_COOKIE_DOMAIN = os.getenv("DJANGO_CSRF_COOKIE_DOMAIN", BASE_URL_HOST)
-PARSED_DJANGO_SESSION_COOKIE_DOMAIN = os.getenv(
-    "DJANGO_SESSION_COOKIE_DOMAIN", BASE_URL_HOST
-)
-
 
 # ---------------------------------------------------------------------------- #
 #                                   DEBUGGING                                  #
@@ -54,7 +27,7 @@ PARSED_DJANGO_SESSION_COOKIE_DOMAIN = os.getenv(
 
 # Optional environment variable, if not set, default to True
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
+DEBUG = os.getenv("DEBUG", "True") == "True"
 
 # Logging
 LOGGING_CONFIG = None  # Avoid Django logging setup
@@ -81,8 +54,8 @@ LOGGING = {
     "loggers": {
         # Consistent logger for the application
         # Use `log = logging.getLogger("app_logger")` in your code
-        "app_logger": {
-            "level": os.getenv("LOGGING_LOG_LEVEL", "INFO"),
+        "wayfinder": {
+            "level": "DEBUG" if DEBUG else "INFO",
             "handlers": ["console"],
             "propagate": False,
         },
@@ -110,32 +83,58 @@ logging.config.dictConfig(LOGGING)
 
 
 # ---------------------------------------------------------------------------- #
+#                               REQUIRED ENV VARS                              #
+# ---------------------------------------------------------------------------- #
+
+# Environment variables existance production check
+# Prevents django from starting if the environment variables are not set
+if not DEBUG:
+    required_env_vars = [
+        "BASE_URL",
+        "SECRET_KEY",
+    ]
+
+    for env_var in required_env_vars:
+        if env_var not in os.environ:
+            raise ValueError(f"{env_var} environment variable not set.")
+
+
+# ---------------------------------------------------------------------------- #
 #                                  CONNECTIONS                                 #
 # ---------------------------------------------------------------------------- #
 
-FORCE_SCRIPT_NAME = "/api" if os.getenv("FORCE_SCRIPT_NAME", "/api") == "/api" else None
+if not DEBUG:
+    # I.e.: http://localhost:8000, https://example.com
+    BASE_URL = os.getenv("BASE_URL")
+
+    BASE_URL_PROTOCOL = BASE_URL.split("://")[0]
+    BASE_URL_HOST = BASE_URL.split("://")[1].split(":")[0]
+    BASE_URL_PORT = (
+        BASE_URL.split("://")[1].split(":")[1] if ":" in BASE_URL.split("://")[1] else ""
+    )
+
+# Serve the api in the /api path in production
+# Serve the api in the root path in development
+FORCE_SCRIPT_NAME = "/api" if not DEBUG else None
 
 # SECURITY WARNING: keep the secret key used in production secret!
-if "DJANGO_SECRET_KEY" not in os.environ:
-    raise ValueError("DJANGO_SECRET_KEY environment variable not set.")
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY", "super_secret_key")
 
 # Hosts
-
-ALLOWED_HOSTS = PARSED_ALLOWED_HOSTS
+DJANGO_ALLOWED_HOSTS = ["localhost", "127.0.0.1"] if DEBUG else [BASE_URL_HOST]
 
 # CSRF
-CSRF_TRUSTED_ORIGINS = PARSED_ALLOWED_ORIGINS
+CSRF_TRUSTED_ORIGINS = ["http://localhost:5173"] if DEBUG else [BASE_URL]
 
 CSRF_COOKIE_NAME = "csrftoken"
 
-CSRF_COOKIE_DOMAIN = PARSED_DJANGO_CSRF_COOKIE_DOMAIN
+CSRF_COOKIE_DOMAIN = "localhost" if DEBUG else BASE_URL_HOST
 
 CSRF_COOKIE_SAMESITE = "None"
 CSRF_COOKIE_SECURE = True
 
 # CORS settings
-CORS_ORIGIN_WHITELIST = PARSED_CORS_ORIGIN_WHITELIST
+CORS_ORIGIN_WHITELIST = ["http://localhost:5173"] if DEBUG else [BASE_URL]
 
 CORS_ALLOW_METHODS = ["DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"]
 
@@ -154,7 +153,7 @@ CORS_ALLOW_HEADERS = [
 CORS_ALLOW_CREDENTIALS = True
 
 # Sessions
-SESSION_COOKIE_DOMAIN = PARSED_DJANGO_SESSION_COOKIE_DOMAIN
+SESSION_COOKIE_DOMAIN = "localhost" if DEBUG else BASE_URL_HOST
 
 SESSION_COOKIE_SAMESITE = "None"
 SESSION_COOKIE_SECURE = True
