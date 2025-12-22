@@ -170,3 +170,6 @@ data/
 
 # Media
 media/
+
+# Devcontainer
+.devcontainer/postgresdata/

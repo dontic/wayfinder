@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: django
     user: root
     volumes:
-      - timescaledb_data:/home/postgres/pgdata/data
+      - ./postgresdata:/home/postgres/pgdata/data
 
   django:
     build:
@@ -25,6 +25,3 @@ services:
     command: /bin/sh -c "while sleep 1000; do :; done"
     depends_on:
       - timescaledb
-
-volumes:
-  timescaledb_data:
