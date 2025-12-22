@@ -50,7 +50,7 @@ class Location(TimescaleModel):
     course_accuracy = models.DecimalField(max_digits=5, decimal_places=2)
 
     # The device id set in Overland settings or an empty string if not set
-    device_id = models.CharField(max_length=50, blank=True)
+    device_id = models.CharField(max_length=50, blank=True, default="")
 
     # The accuracy of the position in meters
     horizontal_accuracy = models.IntegerField()
@@ -110,7 +110,7 @@ class Visit(TimescaleModel):
     departure_date = models.DateTimeField()
 
     # The device id set in Overland settings or an empty string if not set
-    device_id = models.CharField(max_length=50, blank=True)
+    device_id = models.CharField(max_length=50, blank=True, default="")
 
     # The accuracy of the position in meters
     horizontal_accuracy = models.IntegerField()
