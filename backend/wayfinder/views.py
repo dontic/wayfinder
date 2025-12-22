@@ -45,7 +45,7 @@ import plotly.graph_objects as go
 from plotly.utils import PlotlyJSONEncoder
 
 
-log = logging.getLogger("app_logger")
+log = logging.getLogger(__name__)
 
 
 # Subclassing TokenAuthentication to accept Bearer instead of Token as the keyword

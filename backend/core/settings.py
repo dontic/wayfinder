@@ -53,7 +53,6 @@ LOGGING = {
     # "root": {"level": "WARNING", "handlers": ["console"]},
     "loggers": {
         # Consistent logger for the application
-        # Use `log = logging.getLogger("app_logger")` in your code
         "wayfinder": {
             "level": "DEBUG" if DEBUG else "INFO",
             "handlers": ["console"],
