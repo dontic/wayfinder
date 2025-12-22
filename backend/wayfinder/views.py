@@ -226,32 +226,6 @@ class OverlandView(APIView):
         return Response({"result": "ok"}, status=status.HTTP_200_OK)
 
 
-# This viewset is not necessary
-class LocationViewSet(
-    viewsets.GenericViewSet,
-    mixins.ListModelMixin,
-):
-    authentication_classes = [BearerTokenAuthentication]
-
-    queryset = Location.objects.all()
-    serializer_class = LocationSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = LocationFilterSet
-
-
-# This viewset is not necessary
-class VisitViewSet(
-    viewsets.GenericViewSet,
-    mixins.ListModelMixin,
-):
-    authentication_classes = [SessionAuthentication]
-
-    queryset = Visit.objects.all()
-    serializer_class = VisitSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = VisitFilterSet
-
-
 class TokenView(APIView):
     authentication_classes = [SessionAuthentication]
 
