@@ -36,7 +36,6 @@ from .serializers import (
     VisitPlotlyResponseSerializer,
     VisitSerializer,
 )
-from .filters import LocationFilterSet, VisitFilterSet
 
 # Plotly
 # Plotly imports
