@@ -65,18 +65,6 @@ LOGGING = {
             "handlers": ["console"],
             "propagate": False,
         },
-        # Celery logger
-        "celery": {
-            "level": "INFO",
-            "handlers": ["console"],
-            "propagate": False,
-        },
-        # Celery beat logger
-        "celery.beat": {
-            "level": "WARNING",
-            "handlers": ["console"],
-            "propagate": False,
-        },
     },
 }
 logging.config.dictConfig(LOGGING)
