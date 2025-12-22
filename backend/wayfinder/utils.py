@@ -3,7 +3,7 @@ import colorsys
 import logging
 
 
-log = logging.getLogger("app_logger")
+log = logging.getLogger(__name__)
 
 
 def remove_locations_during_visit(locations_df, visits_df):

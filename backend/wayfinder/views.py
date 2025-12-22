@@ -36,7 +36,6 @@ from .serializers import (
     VisitPlotlyResponseSerializer,
     VisitSerializer,
 )
-from .filters import LocationFilterSet, VisitFilterSet
 
 # Plotly
 # Plotly imports
@@ -45,7 +44,7 @@ import plotly.graph_objects as go
 from plotly.utils import PlotlyJSONEncoder
 
 
-log = logging.getLogger("app_logger")
+log = logging.getLogger(__name__)
 
 
 # Subclassing TokenAuthentication to accept Bearer instead of Token as the keyword
@@ -224,32 +223,6 @@ class OverlandView(APIView):
 
         log.info("Data saved successfully")
         return Response({"result": "ok"}, status=status.HTTP_200_OK)
-
-
-# This viewset is not necessary
-class LocationViewSet(
-    viewsets.GenericViewSet,
-    mixins.ListModelMixin,
-):
-    authentication_classes = [BearerTokenAuthentication]
-
-    queryset = Location.objects.all()
-    serializer_class = LocationSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = LocationFilterSet
-
-
-# This viewset is not necessary
-class VisitViewSet(
-    viewsets.GenericViewSet,
-    mixins.ListModelMixin,
-):
-    authentication_classes = [SessionAuthentication]
-
-    queryset = Visit.objects.all()
-    serializer_class = VisitSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = VisitFilterSet
 
 
 class TokenView(APIView):
