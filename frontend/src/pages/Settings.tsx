@@ -4,6 +4,7 @@ import { useUserStore } from "@/stores/UserStore";
 import ProfileInfo from "@/components/settings/ProfileInfo";
 import PasswordChange from "@/components/settings/PasswordChange";
 import UsernameChange from "@/components/settings/UsernameChange";
+import OverlandToken from "@/components/settings/OverlandToken";
 
 const Settings = () => {
   const { user } = useUserStore();
@@ -24,7 +25,9 @@ const Settings = () => {
               <UsernameChange />
               <PasswordChange />
             </TabsContent>
-            <TabsContent value="team" className="mt-6"></TabsContent>
+            <TabsContent value="team" className="mt-6 space-y-6">
+              <OverlandToken />
+            </TabsContent>
           </Tabs>
         </div>
       </div>
