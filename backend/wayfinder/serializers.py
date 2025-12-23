@@ -418,3 +418,26 @@ class TripPlotResponseSerializer(serializers.Serializer):
         help_text="GeoJSON FeatureCollection containing visit Point features"
     )
     meta = TripPlotMetaSerializer(help_text="Metadata about the query and results")
+
+
+# ------------------------- Activity History serializers --------------------- #
+class DailyActivitySerializer(serializers.Serializer):
+    date = serializers.DateField(help_text="Date in YYYY-MM-DD format")
+    location_count = serializers.IntegerField(help_text="Number of locations recorded on this date")
+    visit_count = serializers.IntegerField(help_text="Number of visits recorded on this date")
+
+
+class ActivityHistoryMetaSerializer(serializers.Serializer):
+    start_date = serializers.DateField(help_text="Start date of the data range")
+    end_date = serializers.DateField(help_text="End date of the data range")
+    days = serializers.IntegerField(help_text="Number of days in the range")
+    total_locations = serializers.IntegerField(help_text="Total number of locations in the range")
+    total_visits = serializers.IntegerField(help_text="Total number of visits in the range")
+
+
+class ActivityHistoryResponseSerializer(serializers.Serializer):
+    data = serializers.ListField(
+        child=DailyActivitySerializer(),
+        help_text="Array of daily activity data"
+    )
+    meta = ActivityHistoryMetaSerializer(help_text="Metadata about the activity history")
