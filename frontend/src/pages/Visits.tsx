@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import SideBarLayout from "@/layouts/SideBarLayout";
 import VisitsFilterCard from "@/components/visits/VisitsFilterCard";
+import VisitsHeatmap from "@/components/visits/VisitsHeatmap";
 import { wayfinderVisitsPlotRetrieve } from "@/api/django/wayfinder/wayfinder";
 import type { VisitPlotResponse } from "@/api/django/api.schemas";
 import { toast } from "sonner";
@@ -89,23 +90,8 @@ const Visits = () => {
   return (
     <SideBarLayout title="Visits" defaultOpen={false}>
       <div className="relative flex flex-col h-full w-full">
-        <div className="flex-1 p-4">
-          {isLoading && (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-lg text-gray-500">Loading visits...</p>
-            </div>
-          )}
-          {!isLoading && visitData && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold">
-                {visitData.visits?.features?.length || 0} visits found
-              </h2>
-              {/* TODO: Add visits visualization (map or list) here */}
-              <pre className="bg-gray-100 p-4 rounded-lg overflow-auto max-h-96">
-                {JSON.stringify(visitData, null, 2)}
-              </pre>
-            </div>
-          )}
+        <div className="flex-1">
+          <VisitsHeatmap data={visitData} isLoading={isLoading} />
         </div>
         <VisitsFilterCard onSubmit={handleFilterSubmit} />
       </div>
