@@ -1,0 +1,66 @@
+// devcontainer.json
+{
+    "name": "React Frontend", // Name of the development container
+    "shutdownAction": "stopContainer", // Container behavior on VSCode close: none, stopContainer (default for image or Dockerfile), and stopCompose (default for Docker Compose)
+    "build": {
+      "dockerfile": "Dockerfile",
+      "context": ".."
+    },
+    // "appPort": ["5173:5173"], // Port forwarding
+    // Extensions and settings
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          // Comment or uncomment the extensions you want to use
+          "esbenp.prettier-vscode",
+          "mhutchie.git-graph",
+          "stackbreak.comment-divider",
+          "stuart.unique-window-colors"
+        ],
+        "settings": {
+          // Prettier settings
+          "prettier.enable": true,
+          "editor.formatOnSave": true, // Format files on save
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "[typescript]": {
+            // TypeScript settings
+            "editor.defaultFormatter": "esbenp.prettier-vscode"
+          },
+          "[typescriptreact]": {
+            // TypeScript React settings
+            "editor.defaultFormatter": "esbenp.prettier-vscode"
+          },
+          "[json]": {
+            // JSON settings
+            "editor.defaultFormatter": "esbenp.prettier-vscode",
+            "editor.quickSuggestions": {
+              "strings": true
+            },
+            "editor.suggest.insertMode": "replace"
+          },
+          "prettier.semi": true,
+          "prettier.trailingComma": "none",
+          "prettier.singleQuote": false,
+          "prettier.printWidth": 80,
+          // Window colors
+          "workbench.colorCustomizations": {
+            "activityBar.background": "#298dff",
+            "titleBar.activeBackground": "#298dff",
+            "titleBar.activeForeground": "#FBFBF6"
+          },
+          // Prevent json schema warnings
+          "json.schemas": [
+            {
+              "fileMatch": ["/package.json"],
+              "url": "https://json.schemastore.org/package",
+              "schema": true
+            }
+          ]
+        }
+      }
+    },
+    "mounts": [
+      "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,consistency=cached"
+    ]
+  }
+  
