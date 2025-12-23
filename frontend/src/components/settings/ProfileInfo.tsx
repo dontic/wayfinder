@@ -78,7 +78,7 @@ const ProfileInfo = () => {
   };
 
   return (
-    <Card className="max-w-lg">
+    <Card>
       <CardHeader>
         <CardTitle>Profile Information</CardTitle>
         <CardDescription>Update your personal information.</CardDescription>

@@ -13,11 +13,7 @@ const Settings = () => {
       <div className="flex w-full justify-center overflow-y-auto">
         <div id="settings-container" className="flex flex-col gap-6 py-6">
           <Tabs defaultValue="user" className="w-full">
-            <TabsList
-              className={`grid w-full max-w-md ${
-                user?.first_name !== "user" ? "grid-cols-2" : "grid-cols-1"
-              }`}
-            >
+            <TabsList className="grid w-full md:min-w-md max-w-md grid-cols-2 gap-4">
               <TabsTrigger value="user">User</TabsTrigger>
               {user?.first_name !== "user" && (
                 <TabsTrigger value="team">Overland</TabsTrigger>
