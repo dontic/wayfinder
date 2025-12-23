@@ -126,24 +126,6 @@ export function CalendarHeatmap({
   return (
     <div className={cn("w-full overflow-x-auto", className)}>
       <div className="inline-block min-w-max p-4">
-        {/* Month labels */}
-        <div
-          className="flex mb-2 text-xs text-muted-foreground"
-          style={{ marginLeft: 32 }}
-        >
-          {monthLabels.map((monthLabel, i) => (
-            <div
-              key={`${monthLabel.label}-${i}`}
-              className="absolute"
-              style={{
-                left: 32 + monthLabel.weekIndex * (CELL_SIZE + CELL_GAP) + 16
-              }}
-            >
-              {monthLabel.label}
-            </div>
-          ))}
-        </div>
-
         {/* Grid container */}
         <div className="relative pt-6">
           {/* Month labels row - absolutely positioned */}
