@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUserStore } from "@/stores/UserStore";
 import ProfileInfo from "@/components/settings/ProfileInfo";
 import PasswordChange from "@/components/settings/PasswordChange";
+import UsernameChange from "@/components/settings/UsernameChange";
 
 const Settings = () => {
   const { user } = useUserStore();
@@ -24,6 +25,7 @@ const Settings = () => {
             </TabsList>
             <TabsContent value="user" className="mt-6 space-y-6">
               <ProfileInfo />
+              <UsernameChange />
               <PasswordChange />
             </TabsContent>
             <TabsContent value="team" className="mt-6"></TabsContent>
