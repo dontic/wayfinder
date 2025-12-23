@@ -6,11 +6,11 @@ export function NavHeader() {
   const { state } = useSidebar();
 
   return (
-    <div className="flex items-center justify-center h-[40px] py-2">
+    <div className="flex items-center justify-center py-2">
       {state === "collapsed" ? (
-        <Icon className="h-full" />
+        <Icon className="h-[40px]" />
       ) : (
-        <Logo className="h-full" />
+        <Logo className="h-[50px]" />
       )}
     </div>
   );
