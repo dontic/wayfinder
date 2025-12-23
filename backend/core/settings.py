@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Optional environment variable, if not set, default to True
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "True") == "True"
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # Logging
 LOGGING_CONFIG = None  # Avoid Django logging setup
@@ -108,7 +108,7 @@ FORCE_SCRIPT_NAME = "/api" if not DEBUG else None
 SECRET_KEY = os.getenv("SECRET_KEY", "super_secret_key")
 
 # Hosts
-DJANGO_ALLOWED_HOSTS = ["localhost", "127.0.0.1"] if DEBUG else [BASE_URL_HOST]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"] if DEBUG else [BASE_URL_HOST]
 
 # CSRF
 CSRF_TRUSTED_ORIGINS = ["http://localhost:5173"] if DEBUG else [BASE_URL]
