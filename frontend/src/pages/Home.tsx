@@ -61,7 +61,7 @@ const Home = () => {
 
   return (
     <SideBarLayout title="Dashboard">
-      <div className="flex flex-col gap-6 p-6">
+      <div className="flex flex-col gap-6 p-6 w-full items-center">
         <div className="grid gap-6">
           {/* Locations Heatmap */}
           <Card>
