@@ -185,28 +185,6 @@ const VisitsHeatmap = ({ data, isLoading }: VisitsHeatmapProps) => {
           </div>
         </div>
       )}
-
-      {/* Legend */}
-      {visitPoints.length > 0 && (
-        <div className="absolute bottom-4 right-4 bg-zinc-900/90 border border-zinc-700 rounded-lg p-3 z-10">
-          <p className="text-xs font-medium text-zinc-300 mb-2">
-            Visit Density
-          </p>
-          <div className="flex items-center gap-1">
-            <div
-              className="w-20 h-3 rounded"
-              style={{
-                background:
-                  "linear-gradient(to right, #ffffb2, #fed976, #feb24c, #fd8d3c, #f03b20, #bd0026)"
-              }}
-            />
-          </div>
-          <div className="flex justify-between text-[10px] text-zinc-400 mt-1">
-            <span>Low</span>
-            <span>High</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
