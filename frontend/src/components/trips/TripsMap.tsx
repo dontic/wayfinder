@@ -18,25 +18,49 @@ const INITIAL_VIEW_STATE = {
 };
 
 // Generate a distinct color for each trip
-const generateTripColor = (index: number, total: number): [number, number, number, number] => {
+const generateTripColor = (
+  index: number,
+  total: number
+): [number, number, number, number] => {
   // Use HSL color space for better color distribution
   const hue = (index * 360) / Math.max(total, 1);
   const saturation = 0.7;
   const lightness = 0.5;
-  
+
   // Convert HSL to RGB
   const c = (1 - Math.abs(2 * lightness - 1)) * saturation;
-  const x = c * (1 - Math.abs((hue / 60) % 2 - 1));
+  const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
   const m = lightness - c / 2;
-  
-  let r = 0, g = 0, b = 0;
-  if (hue < 60) { r = c; g = x; b = 0; }
-  else if (hue < 120) { r = x; g = c; b = 0; }
-  else if (hue < 180) { r = 0; g = c; b = x; }
-  else if (hue < 240) { r = 0; g = x; b = c; }
-  else if (hue < 300) { r = x; g = 0; b = c; }
-  else { r = c; g = 0; b = x; }
-  
+
+  let r = 0,
+    g = 0,
+    b = 0;
+  if (hue < 60) {
+    r = c;
+    g = x;
+    b = 0;
+  } else if (hue < 120) {
+    r = x;
+    g = c;
+    b = 0;
+  } else if (hue < 180) {
+    r = 0;
+    g = c;
+    b = x;
+  } else if (hue < 240) {
+    r = 0;
+    g = x;
+    b = c;
+  } else if (hue < 300) {
+    r = x;
+    g = 0;
+    b = c;
+  } else {
+    r = c;
+    g = 0;
+    b = x;
+  }
+
   return [
     Math.round((r + m) * 255),
     Math.round((g + m) * 255),
@@ -84,9 +108,6 @@ const TripsMap = ({ data, isLoading }: TripsMapProps) => {
       if (data.visits?.features) {
         data.visits.features.forEach(processFeature);
       }
-      if (data.stationary?.features) {
-        data.stationary.features.forEach(processFeature);
-      }
 
       if (
         isFinite(minLng) &&
@@ -130,16 +151,16 @@ const TripsMap = ({ data, isLoading }: TripsMapProps) => {
         filled: false,
         lineWidthScale: 2,
         lineWidthMinPixels: 2,
-        getLineColor: (feature: any, info: any) => {
+        getLineColor: (_feature: any, info: any) => {
           // Use the index provided by deck.gl
           const featureIndex = info?.index ?? 0;
           const totalFeatures = data.trips?.features?.length ?? 1;
-          
+
           // If there's only one trip, use the default blue color
           if (totalFeatures === 1) {
             return [0, 120, 255, 200];
           }
-          
+
           // Otherwise, generate a unique color for each trip
           return generateTripColor(featureIndex, totalFeatures);
         },
@@ -156,20 +177,6 @@ const TripsMap = ({ data, isLoading }: TripsMapProps) => {
         pointRadiusScale: 1,
         getPointRadius: 8,
         getFillColor: [255, 140, 0, 180],
-        getLineColor: [255, 255, 255, 255],
-        getLineWidth: 2
-      }),
-    data?.stationary &&
-      new GeoJsonLayer({
-        id: "stationary-layer",
-        data: data.stationary as any,
-        pickable: true,
-        stroked: true,
-        filled: true,
-        pointRadiusMinPixels: 5,
-        pointRadiusScale: 1,
-        getPointRadius: 6,
-        getFillColor: [255, 0, 0, 160],
         getLineColor: [255, 255, 255, 255],
         getLineWidth: 2
       })

@@ -9,7 +9,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
@@ -18,7 +18,6 @@ interface TripsFilterCardProps {
     startDateTime: string,
     endDateTime: string,
     showVisits: boolean,
-    showStationary: boolean,
     separateTrips: boolean,
     desiredAccuracy: number
   ) => void;
@@ -45,7 +44,6 @@ const TripsFilterCard = ({ onSubmit }: TripsFilterCardProps) => {
   );
   const [endDateTime, setEndDateTime] = useState(formatDateTimeLocal(now));
   const [showVisits, setShowVisits] = useState(false);
-  const [showStationary, setShowStationary] = useState(false);
   const [separateTrips, setSeparateTrips] = useState(false);
   const [desiredAccuracy, setDesiredAccuracy] = useState(0);
   const [quickSelect, setQuickSelect] = useState<string>("last24h");
@@ -92,7 +90,15 @@ const TripsFilterCard = ({ onSubmit }: TripsFilterCardProps) => {
         break;
       case "lastMonth":
         start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
-        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        const lastMonthEnd = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          0,
+          23,
+          59,
+          59,
+          999
+        );
         setStartDateTime(formatDateTimeLocal(start));
         setEndDateTime(formatDateTimeLocal(lastMonthEnd));
         return;
@@ -110,7 +116,6 @@ const TripsFilterCard = ({ onSubmit }: TripsFilterCardProps) => {
         startDateTime,
         endDateTime,
         showVisits,
-        showStationary,
         separateTrips,
         desiredAccuracy
       );
@@ -211,17 +216,6 @@ const TripsFilterCard = ({ onSubmit }: TripsFilterCardProps) => {
               </div>
 
               <div className="flex items-center justify-between">
-                <Label htmlFor="show-stationary" className="text-sm font-medium">
-                  Show Stationary
-                </Label>
-                <Switch
-                  id="show-stationary"
-                  checked={showStationary}
-                  onCheckedChange={setShowStationary}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
                 <Label htmlFor="separate-trips" className="text-sm font-medium">
                   Separate Trips
                 </Label>
@@ -233,7 +227,10 @@ const TripsFilterCard = ({ onSubmit }: TripsFilterCardProps) => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="desired-accuracy" className="text-sm font-medium">
+                <Label
+                  htmlFor="desired-accuracy"
+                  className="text-sm font-medium"
+                >
                   Desired Accuracy (meters, 0 = no filter)
                 </Label>
                 <Input

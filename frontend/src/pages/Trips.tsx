@@ -46,7 +46,6 @@ const Trips = () => {
     startDateTime: string,
     endDateTime: string,
     showVisits: boolean,
-    showStationary: boolean,
     separateTrips: boolean,
     desiredAccuracy: number
   ) => {
@@ -61,7 +60,6 @@ const Trips = () => {
         start_datetime: startDate,
         end_datetime: endDate,
         show_visits: showVisits,
-        show_stationary: showStationary,
         separate_trips: separateTrips,
         desired_accuracy: desiredAccuracy
       });
@@ -70,8 +68,7 @@ const Trips = () => {
 
       const totalFeatures =
         (response.trips?.features?.length || 0) +
-        (response.visits?.features?.length || 0) +
-        (response.stationary?.features?.length || 0);
+        (response.visits?.features?.length || 0);
 
       if (totalFeatures === 0) {
         toast.info("No trips found for the selected date range");
@@ -96,7 +93,6 @@ const Trips = () => {
       formatDateTimeLocal(twentyFourHoursAgo),
       formatDateTimeLocal(now),
       false, // showVisits
-      false, // showStationary
       false, // separateTrips
       0 // desiredAccuracy
     );
