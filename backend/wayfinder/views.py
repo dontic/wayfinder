@@ -2,9 +2,12 @@
 
 import logging
 import pandas as pd
+from datetime import datetime, timedelta
 
 # Django
 from django.db import transaction
+from django.db.models import Count
+from django.db.models.functions import TruncDate
 
 
 # REST Framework
@@ -31,6 +34,7 @@ from wayfinder.utils import (
 # Local App
 from .models import Location, Visit
 from .serializers import (
+    ActivityHistoryResponseSerializer,
     ErrorResponseSerializer,
     LocationSerializer,
     TripPlotResponseSerializer,
@@ -519,5 +523,98 @@ class TripPlotView(APIView):
                 "show_visits": SHOW_VISITS,
             },
         }
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+class ActivityHistoryView(APIView):
+    authentication_classes = [SessionAuthentication]
+
+    @extend_schema(
+        responses={
+            200: ActivityHistoryResponseSerializer,
+            404: ErrorResponseSerializer,
+        },
+        description="Endpoint for retrieving the count of locations and visits per day for the past 365 days.",
+    )
+    def get(self, request):
+        log.debug("Received request to get activity history")
+
+        # Calculate date range: past 365 days from today
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=365)
+
+        log.debug(f"Querying data from {start_date} to {end_date}")
+
+        # Query locations grouped by date
+        locations_by_date = (
+            Location.objects.filter(time__date__gte=start_date, time__date__lte=end_date)
+            .annotate(date=TruncDate("time"))
+            .values("date")
+            .annotate(count=Count("id"))
+            .order_by("date")
+        )
+
+        # Query visits grouped by date
+        visits_by_date = (
+            Visit.objects.filter(time__date__gte=start_date, time__date__lte=end_date)
+            .annotate(date=TruncDate("time"))
+            .values("date")
+            .annotate(count=Count("id"))
+            .order_by("date")
+        )
+
+        # Convert to dictionaries for easy lookup
+        locations_dict = {item["date"]: item["count"] for item in locations_by_date}
+        visits_dict = {item["date"]: item["count"] for item in visits_by_date}
+
+        log.debug(f"Found data for {len(locations_dict)} days with locations")
+        log.debug(f"Found data for {len(visits_dict)} days with visits")
+
+        # Build the data array with all dates in the range
+        data = []
+        current_date = start_date
+        total_locations = 0
+        total_visits = 0
+
+        while current_date <= end_date:
+            location_count = locations_dict.get(current_date, 0)
+            visit_count = visits_dict.get(current_date, 0)
+            
+            total_locations += location_count
+            total_visits += visit_count
+
+            data.append({
+                "date": current_date.isoformat(),
+                "location_count": location_count,
+                "visit_count": visit_count,
+            })
+
+            current_date += timedelta(days=1)
+
+        # Check if there's any data at all
+        if total_locations == 0 and total_visits == 0:
+            log.debug("No activity data found in the past 365 days")
+            return Response(
+                {"message": "No activity data found in the past 365 days"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Build response
+        response_data = {
+            "data": data,
+            "meta": {
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+                "days": len(data),
+                "total_locations": total_locations,
+                "total_visits": total_visits,
+            },
+        }
+
+        log.info(
+            f"Returning activity history: {len(data)} days, "
+            f"{total_locations} locations, {total_visits} visits"
+        )
 
         return Response(response_data, status=status.HTTP_200_OK)
