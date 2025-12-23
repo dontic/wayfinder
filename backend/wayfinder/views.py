@@ -41,6 +41,7 @@ from .models import Location, Visit
 from .serializers import (
     ErrorResponseSerializer,
     LocationSerializer,
+    TripPlotResponseSerializer,
     VisitPlotlyResponseSerializer,
     VisitSerializer,
 )
@@ -403,9 +404,9 @@ class TripPlotView(APIView):
             ),
         ],
         responses={
-            200: OpenApiTypes.OBJECT,
+            200: TripPlotResponseSerializer,
             400: ErrorResponseSerializer,
-            404: OpenApiTypes.OBJECT,
+            404: ErrorResponseSerializer,
         },
         description="Endpoint for retrieving trip data as GeoJSON within a specified date range.",
     )
