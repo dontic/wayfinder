@@ -53,10 +53,10 @@ const Trips = () => {
 
   return (
     <SideBarLayout title="Trips" defaultOpen={false}>
-      <div className="flex flex-col h-full w-full">
+      <div className="relative flex flex-col h-full w-full">
         <TripsMap data={tripData} isLoading={isLoading} />
+        <TripsFilterCard onSubmit={handleFilterSubmit} />
       </div>
-      <TripsFilterCard onSubmit={handleFilterSubmit} />
     </SideBarLayout>
   );
 };
