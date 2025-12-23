@@ -216,50 +216,6 @@ const TripsMap = ({ data, isLoading }: TripsMapProps) => {
           </div>
         </div>
       )}
-
-      {data && (
-        <div className="absolute top-4 left-4 bg-white p-3 rounded-lg shadow-lg text-sm z-10 max-h-[80vh] overflow-y-auto">
-          <div className="space-y-1">
-            {/* Show individual trip colors if there are multiple trips */}
-            {data.trips?.features && data.trips.features.length > 1 ? (
-              <>
-                <div className="font-medium mb-2">Trips ({data.trips.features.length}):</div>
-                {data.trips.features.map((feature: any, index: number) => {
-                  const color = generateTripColor(index, data.trips.features.length);
-                  return (
-                    <div key={index} className="flex items-center gap-2 pl-2">
-                      <div 
-                        className="w-4 h-0.5" 
-                        style={{ backgroundColor: `rgb(${color[0]},${color[1]},${color[2]})` }}
-                      ></div>
-                      <span className="text-xs">Trip {index + 1}</span>
-                    </div>
-                  );
-                })}
-              </>
-            ) : (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-0.5 bg-[rgb(0,120,255)]"></div>
-                <span>Trips: {data.trips?.features?.length || 0}</span>
-              </div>
-            )}
-            {data.visits && (
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[rgb(255,140,0)]"></div>
-                <span>Visits: {data.visits?.features?.length || 0}</span>
-              </div>
-            )}
-            {data.stationary && (
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[rgb(255,0,0)]"></div>
-                <span>
-                  Stationary: {data.stationary?.features?.length || 0}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
