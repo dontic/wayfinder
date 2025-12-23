@@ -29,7 +29,6 @@ from drf_spectacular.types import OpenApiTypes
 from wayfinder.utils import (
     build_trips_feature_collection,
     build_visits_feature_collection,
-    build_stationary_feature_collection,
 )
 
 # Plotly imports (used by VisitPlotView)
@@ -382,13 +381,6 @@ class TripPlotView(APIView):
                 required=False,
             ),
             OpenApiParameter(
-                name="show_stationary",
-                type=OpenApiTypes.BOOL,
-                location=OpenApiParameter.QUERY,
-                description="Flag to indicate if stationary locations should be included in the response",
-                required=False,
-            ),
-            OpenApiParameter(
                 name="separate_trips",
                 type=OpenApiTypes.BOOL,
                 location=OpenApiParameter.QUERY,
@@ -412,7 +404,6 @@ class TripPlotView(APIView):
     )
     def get(self, request):
 
-        SHOW_STATIONARY = False
         SHOW_VISITS = False
         SEPARATE_TRIPS = False
         DESIRED_ACCURACY = 0
@@ -435,10 +426,6 @@ class TripPlotView(APIView):
         # Get the optional parameters
         if "show_visits" in request.query_params:
             SHOW_VISITS = request.query_params.get("show_visits").lower() == "true"
-        if "show_stationary" in request.query_params:
-            SHOW_STATIONARY = (
-                request.query_params.get("show_stationary").lower() == "true"
-            )
         if "separate_trips" in request.query_params:
             SEPARATE_TRIPS = (
                 request.query_params.get("separate_trips").lower() == "true"
@@ -520,17 +507,11 @@ class TripPlotView(APIView):
             if SHOW_VISITS
             else {"type": "FeatureCollection", "features": []}
         )
-        stationary_collection = (
-            build_stationary_feature_collection(all_locations_df)
-            if SHOW_STATIONARY
-            else {"type": "FeatureCollection", "features": []}
-        )
 
         # Build response
         response_data = {
             "trips": trips_collection,
             "visits": visits_collection,
-            "stationary": stationary_collection,
             "meta": {
                 "start_datetime": start_date,
                 "end_datetime": end_date,
@@ -539,11 +520,9 @@ class TripPlotView(APIView):
                     len(trip_locations_df) if not trip_locations_df.empty else 0
                 ),
                 "visits_count": len(visits_df) if not visits_df.empty else 0,
-                "stationary_count": len(stationary_collection["features"]),
                 "trips_count": len(trips_collection["features"]),
                 "separate_trips": SEPARATE_TRIPS,
                 "show_visits": SHOW_VISITS,
-                "show_stationary": SHOW_STATIONARY,
             },
         }
 

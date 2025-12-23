@@ -134,29 +134,6 @@ def visit_to_geojson_point(visit, visit_id):
     }
 
 
-def stationary_location_to_geojson_point(location, stationary_id):
-    """
-    Convert a stationary location row to a GeoJSON Point Feature.
-    """
-    time = location["time"]
-    
-    return {
-        "type": "Feature",
-        "id": stationary_id,
-        "geometry": {
-            "type": "Point",
-            "coordinates": [float(location["longitude"]), float(location["latitude"])]
-        },
-        "properties": {
-            "stationary_id": stationary_id,
-            "start": time.isoformat() if hasattr(time, 'isoformat') else str(time),
-            "end": time.isoformat() if hasattr(time, 'isoformat') else str(time),
-            "duration_s": 0,
-            "source": "location_samples"
-        }
-    }
-
-
 def build_trips_feature_collection(locations_df, visits_df, separate_trips=False):
     """
     Build a GeoJSON FeatureCollection for trips.
@@ -197,30 +174,6 @@ def build_visits_feature_collection(visits_df):
     for idx, (_, visit) in enumerate(visits_df.iterrows(), start=1):
         visit_id = f"visit_{idx:03d}"
         feature = visit_to_geojson_point(visit, visit_id)
-        features.append(feature)
-    
-    return {"type": "FeatureCollection", "features": features}
-
-
-def build_stationary_feature_collection(locations_df):
-    """
-    Build a GeoJSON FeatureCollection for stationary locations.
-    Filters for locations where motion contains only "stationary".
-    """
-    features = []
-    
-    if locations_df.empty:
-        return {"type": "FeatureCollection", "features": features}
-    
-    # Filter for stationary locations (motion == ["stationary"])
-    stationary_mask = locations_df["motion"].apply(
-        lambda m: m == ["stationary"] if isinstance(m, list) else False
-    )
-    stationary_df = locations_df[stationary_mask]
-    
-    for idx, (_, location) in enumerate(stationary_df.iterrows(), start=1):
-        stationary_id = f"stationary_{idx:03d}"
-        feature = stationary_location_to_geojson_point(location, stationary_id)
         features.append(feature)
     
     return {"type": "FeatureCollection", "features": features}

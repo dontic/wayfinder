@@ -392,11 +392,9 @@ class TripPlotMetaSerializer(serializers.Serializer):
     total_locations = serializers.IntegerField(help_text="Total number of locations in range")
     trip_locations = serializers.IntegerField(help_text="Number of non-stationary locations")
     visits_count = serializers.IntegerField(help_text="Number of visits in range")
-    stationary_count = serializers.IntegerField(help_text="Number of stationary points")
     trips_count = serializers.IntegerField(help_text="Number of trip segments")
     separate_trips = serializers.BooleanField(help_text="Whether trips were separated by visits")
     show_visits = serializers.BooleanField(help_text="Whether visits are included")
-    show_stationary = serializers.BooleanField(help_text="Whether stationary points are included")
 
 
 class TripPlotResponseSerializer(serializers.Serializer):
@@ -405,8 +403,5 @@ class TripPlotResponseSerializer(serializers.Serializer):
     )
     visits = GeoJSONFeatureCollectionSerializer(
         help_text="GeoJSON FeatureCollection containing visit Point features"
-    )
-    stationary = GeoJSONFeatureCollectionSerializer(
-        help_text="GeoJSON FeatureCollection containing stationary Point features"
     )
     meta = TripPlotMetaSerializer(help_text="Metadata about the query and results")
