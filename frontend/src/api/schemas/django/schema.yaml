@@ -431,7 +431,7 @@ paths:
   /wayfinder/visits/plot/:
     get:
       operationId: wayfinder_visits_plot_retrieve
-      description: Endpoint for generating a density map of visits within a specified
+      description: Endpoint for retrieving visit data as GeoJSON within a specified
         date range.
       parameters:
       - in: query
@@ -457,9 +457,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VisitPlotlyResponse'
+                $ref: '#/components/schemas/VisitPlotResponse'
           description: ''
         '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
           content:
             application/json:
               schema:
@@ -686,85 +692,36 @@ components:
       - email
       - pk
       - username
-    VisitPlotlyData:
+    VisitPlotMeta:
       type: object
       properties:
-        coloraxis:
+        start_datetime:
           type: string
-        customdata:
-          type: array
-          items:
-            type: array
-            items:
-              type: string
-        hovertemplate:
+          description: Start datetime of the query range
+        end_datetime:
           type: string
-        lat:
-          type: array
-          items:
-            type: number
-            format: double
-        lon:
-          type: array
-          items:
-            type: number
-            format: double
-        name:
-          type: string
-        subplot:
-          type: string
-        z:
-          type: array
-          items:
-            type: integer
-        type:
-          type: string
+          description: End datetime of the query range
+        visits_count:
+          type: integer
+          description: Number of visits in range
       required:
-      - coloraxis
-      - customdata
-      - hovertemplate
-      - lat
-      - lon
-      - name
-      - subplot
-      - type
-      - z
-    VisitPlotlyLayout:
+      - end_datetime
+      - start_datetime
+      - visits_count
+    VisitPlotResponse:
       type: object
       properties:
-        mapbox:
-          type: object
-          additionalProperties: {}
-        coloraxis:
-          type: object
-          additionalProperties: {}
-        legend:
-          type: object
-          additionalProperties: {}
-        margin:
-          type: object
-          additionalProperties: {}
-        template:
-          type: object
-          additionalProperties: {}
+        visits:
+          allOf:
+          - $ref: '#/components/schemas/GeoJSONFeatureCollection'
+          description: GeoJSON FeatureCollection containing visit Point features
+        meta:
+          allOf:
+          - $ref: '#/components/schemas/VisitPlotMeta'
+          description: Metadata about the query and results
       required:
-      - coloraxis
-      - legend
-      - mapbox
-      - margin
-      - template
-    VisitPlotlyResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/VisitPlotlyData'
-        layout:
-          $ref: '#/components/schemas/VisitPlotlyLayout'
-      required:
-      - data
-      - layout
+      - meta
+      - visits
   securitySchemes:
     cookieAuth:
       type: apiKey

@@ -1,7 +1,7 @@
 // @ts-nocheck
 import type {
   TripPlotResponse,
-  VisitPlotlyResponse,
+  VisitPlotResponse,
   WayfinderOverlandCreate200,
   WayfinderOverlandCreateBodyOne,
   WayfinderOverlandCreateBodyThree,
@@ -65,13 +65,13 @@ export const wayfinderTripsPlotRetrieve = (
   );
 };
 /**
- * Endpoint for generating a density map of visits within a specified date range.
+ * Endpoint for retrieving visit data as GeoJSON within a specified date range.
  */
 export const wayfinderVisitsPlotRetrieve = (
   params: WayfinderVisitsPlotRetrieveParams,
-  options?: SecondParameter<typeof customAxiosInstance<VisitPlotlyResponse>>,
+  options?: SecondParameter<typeof customAxiosInstance<VisitPlotResponse>>,
 ) => {
-  return customAxiosInstance<VisitPlotlyResponse>(
+  return customAxiosInstance<VisitPlotResponse>(
     { url: `/wayfinder/visits/plot/`, method: "GET", params },
     options,
   );
