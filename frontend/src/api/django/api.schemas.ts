@@ -130,39 +130,20 @@ export interface UserDetails {
   last_name?: string;
 }
 
-export interface VisitPlotlyData {
-  coloraxis: string;
-  customdata: string[][];
-  hovertemplate: string;
-  lat: number[];
-  lon: number[];
-  name: string;
-  subplot: string;
-  z: number[];
-  type: string;
+export interface VisitPlotMeta {
+  /** Start datetime of the query range */
+  start_datetime: string;
+  /** End datetime of the query range */
+  end_datetime: string;
+  /** Number of visits in range */
+  visits_count: number;
 }
 
-export type VisitPlotlyLayoutMapbox = { [key: string]: unknown };
-
-export type VisitPlotlyLayoutColoraxis = { [key: string]: unknown };
-
-export type VisitPlotlyLayoutLegend = { [key: string]: unknown };
-
-export type VisitPlotlyLayoutMargin = { [key: string]: unknown };
-
-export type VisitPlotlyLayoutTemplate = { [key: string]: unknown };
-
-export interface VisitPlotlyLayout {
-  mapbox: VisitPlotlyLayoutMapbox;
-  coloraxis: VisitPlotlyLayoutColoraxis;
-  legend: VisitPlotlyLayoutLegend;
-  margin: VisitPlotlyLayoutMargin;
-  template: VisitPlotlyLayoutTemplate;
-}
-
-export interface VisitPlotlyResponse {
-  data: VisitPlotlyData[];
-  layout: VisitPlotlyLayout;
+export interface VisitPlotResponse {
+  /** GeoJSON FeatureCollection containing visit Point features */
+  visits: GeoJSONFeatureCollection;
+  /** Metadata about the query and results */
+  meta: VisitPlotMeta;
 }
 
 export type WayfinderOverlandCreateBodyOne = { [key: string]: unknown };

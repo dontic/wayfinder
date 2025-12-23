@@ -3,9 +3,16 @@
 import axios from "axios";
 import type { AxiosRequestConfig } from "axios";
 
+const getBaseURL = () => {
+  if (import.meta.env.DEV) {
+    return "http://localhost:8000";
+  }
+  return `${window.location.origin}/api`;
+};
+
 export const customAxios = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: import.meta.env.VITE_API_TIMEOUT,
+  baseURL: getBaseURL(),
+  timeout: 30000,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
   withXSRFToken: true,

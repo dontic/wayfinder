@@ -11,6 +11,7 @@
     "orvalDjango": "orval --config ./orvalDjango.config.ts"
   },
   "dependencies": {
+    "@deck.gl/aggregation-layers": "^9.2.5",
     "@deck.gl/geo-layers": "^9.2.5",
     "@deck.gl/layers": "^9.2.5",
     "@deck.gl/mapbox": "^9.2.5",

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { HomeIcon, MapIcon } from "lucide-react";
+import { HomeIcon, MapIcon, MapPin } from "lucide-react";
 
 import { NavMain } from "@/components/sidebar/nav-main";
 import { NavUser } from "@/components/sidebar/nav-user";
@@ -24,6 +24,11 @@ export const navData = [
     title: "Trips",
     url: "/trips",
     icon: MapIcon
+  },
+  {
+    title: "Visits",
+    url: "/visits",
+    icon: MapPin
   }
 ];
 
