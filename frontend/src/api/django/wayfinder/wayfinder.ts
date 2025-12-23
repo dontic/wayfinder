@@ -1,5 +1,6 @@
 // @ts-nocheck
 import type {
+  TripPlotResponse,
   VisitPlotlyResponse,
   WayfinderOverlandCreate200,
   WayfinderOverlandCreateBodyOne,
@@ -52,13 +53,13 @@ export const wayfinderTokenRetrieve = (
   );
 };
 /**
- * Endpoint for generating a path plot of trips within a specified date range.
+ * Endpoint for retrieving trip data as GeoJSON within a specified date range.
  */
 export const wayfinderTripsPlotRetrieve = (
   params: WayfinderTripsPlotRetrieveParams,
-  options?: SecondParameter<typeof customAxiosInstance<VisitPlotlyResponse>>,
+  options?: SecondParameter<typeof customAxiosInstance<TripPlotResponse>>,
 ) => {
-  return customAxiosInstance<VisitPlotlyResponse>(
+  return customAxiosInstance<TripPlotResponse>(
     { url: `/wayfinder/trips/plot/`, method: "GET", params },
     options,
   );

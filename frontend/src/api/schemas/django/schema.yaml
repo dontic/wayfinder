@@ -373,14 +373,9 @@ paths:
   /wayfinder/trips/plot/:
     get:
       operationId: wayfinder_trips_plot_retrieve
-      description: Endpoint for generating a path plot of trips within a specified
+      description: Endpoint for retrieving trip data as GeoJSON within a specified
         date range.
       parameters:
-      - in: query
-        name: color_trips
-        schema:
-          type: boolean
-        description: Flag to indicate if trips should be colored
       - in: query
         name: desired_accuracy
         schema:
@@ -394,21 +389,15 @@ paths:
         description: End date for the date range filter (inclusive)
         required: true
       - in: query
-        name: locations_during_visits
+        name: separate_trips
         schema:
           type: boolean
-        description: Flag to indicate if locations during visits should be removed
-      - in: query
-        name: show_stationary
-        schema:
-          type: boolean
-        description: Flag to indicate if stationary locations should be shown on the
-          plot
+        description: Flag to indicate if trips should be segmented by visit midtimes
       - in: query
         name: show_visits
         schema:
           type: boolean
-        description: Flag to indicate if visits should be shown on the plot
+        description: Flag to indicate if visits should be included in the response
       - in: query
         name: start_datetime
         schema:
@@ -425,9 +414,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VisitPlotlyResponse'
+                $ref: '#/components/schemas/TripPlotResponse'
           description: ''
         '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
           content:
             application/json:
               schema:
@@ -479,6 +474,49 @@ components:
           type: string
       required:
       - message
+    GeoJSONFeature:
+      type: object
+      properties:
+        type:
+          type: string
+          default: Feature
+          description: Always 'Feature'
+        geometry:
+          $ref: '#/components/schemas/GeoJSONGeometry'
+        properties:
+          type: object
+          additionalProperties: {}
+          description: Feature properties (varies by feature type)
+      required:
+      - geometry
+      - properties
+    GeoJSONFeatureCollection:
+      type: object
+      properties:
+        type:
+          type: string
+          default: FeatureCollection
+          description: Always 'FeatureCollection'
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeoJSONFeature'
+          description: Array of GeoJSON Feature objects
+      required:
+      - features
+    GeoJSONGeometry:
+      type: object
+      properties:
+        type:
+          type: string
+          description: GeoJSON geometry type (e.g., 'Point', 'LineString')
+        coordinates:
+          type: array
+          items: {}
+          description: Coordinates array - format depends on geometry type
+      required:
+      - coordinates
+      - type
     Login:
       type: object
       properties:
@@ -564,6 +602,61 @@ components:
           readOnly: true
       required:
       - detail
+    TripPlotMeta:
+      type: object
+      properties:
+        start_datetime:
+          type: string
+          description: Start datetime of the query range
+        end_datetime:
+          type: string
+          description: End datetime of the query range
+        total_locations:
+          type: integer
+          description: Total number of locations in range
+        trip_locations:
+          type: integer
+          description: Number of non-stationary locations
+        visits_count:
+          type: integer
+          description: Number of visits in range
+        trips_count:
+          type: integer
+          description: Number of trip segments
+        separate_trips:
+          type: boolean
+          description: Whether trips were separated by visits
+        show_visits:
+          type: boolean
+          description: Whether visits are included
+      required:
+      - end_datetime
+      - separate_trips
+      - show_visits
+      - start_datetime
+      - total_locations
+      - trip_locations
+      - trips_count
+      - visits_count
+    TripPlotResponse:
+      type: object
+      properties:
+        trips:
+          allOf:
+          - $ref: '#/components/schemas/GeoJSONFeatureCollection'
+          description: GeoJSON FeatureCollection containing trip LineString features
+        visits:
+          allOf:
+          - $ref: '#/components/schemas/GeoJSONFeatureCollection'
+          description: GeoJSON FeatureCollection containing visit Point features
+        meta:
+          allOf:
+          - $ref: '#/components/schemas/TripPlotMeta'
+          description: Metadata about the query and results
+      required:
+      - meta
+      - trips
+      - visits
     UserDetails:
       type: object
       description: User model w/o password

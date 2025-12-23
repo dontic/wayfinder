@@ -358,3 +358,50 @@ class VisitPlotlyResponseSerializer(serializers.Serializer):
 
 class ErrorResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
+
+
+# ------------------------- Trip Plot serializers ---------------------------- #
+class GeoJSONGeometrySerializer(serializers.Serializer):
+    type = serializers.CharField(help_text="GeoJSON geometry type (e.g., 'Point', 'LineString')")
+    coordinates = serializers.ListField(
+        help_text="Coordinates array - format depends on geometry type"
+    )
+
+
+class GeoJSONFeatureSerializer(serializers.Serializer):
+    type = serializers.CharField(default="Feature", help_text="Always 'Feature'")
+    geometry = GeoJSONGeometrySerializer()
+    properties = serializers.DictField(
+        help_text="Feature properties (varies by feature type)"
+    )
+
+
+class GeoJSONFeatureCollectionSerializer(serializers.Serializer):
+    type = serializers.CharField(
+        default="FeatureCollection", help_text="Always 'FeatureCollection'"
+    )
+    features = serializers.ListField(
+        child=GeoJSONFeatureSerializer(),
+        help_text="Array of GeoJSON Feature objects",
+    )
+
+
+class TripPlotMetaSerializer(serializers.Serializer):
+    start_datetime = serializers.CharField(help_text="Start datetime of the query range")
+    end_datetime = serializers.CharField(help_text="End datetime of the query range")
+    total_locations = serializers.IntegerField(help_text="Total number of locations in range")
+    trip_locations = serializers.IntegerField(help_text="Number of non-stationary locations")
+    visits_count = serializers.IntegerField(help_text="Number of visits in range")
+    trips_count = serializers.IntegerField(help_text="Number of trip segments")
+    separate_trips = serializers.BooleanField(help_text="Whether trips were separated by visits")
+    show_visits = serializers.BooleanField(help_text="Whether visits are included")
+
+
+class TripPlotResponseSerializer(serializers.Serializer):
+    trips = GeoJSONFeatureCollectionSerializer(
+        help_text="GeoJSON FeatureCollection containing trip LineString features"
+    )
+    visits = GeoJSONFeatureCollectionSerializer(
+        help_text="GeoJSON FeatureCollection containing visit Point features"
+    )
+    meta = TripPlotMetaSerializer(help_text="Metadata about the query and results")

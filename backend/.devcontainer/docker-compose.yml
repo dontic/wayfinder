@@ -10,6 +10,8 @@ services:
       POSTGRES_USER: django
       POSTGRES_PASSWORD: django
     user: root
+    ports:
+      - "5432:5432"
     volumes:
       - ./postgresdata:/home/postgres/pgdata/data
 

@@ -10,14 +10,16 @@ import {
 const SideBarLayout = ({
   children,
   title,
-  actions
+  actions,
+  defaultOpen = true
 }: {
   children: React.ReactNode;
   title: string;
   actions?: React.ReactNode;
+  defaultOpen?: boolean;
 }) => {
   return (
-    <SidebarProvider id="mainbox">
+    <SidebarProvider id="mainbox" defaultOpen={defaultOpen}>
       <AppSidebar />
       <SidebarInset>
         <div className="flex flex-col h-[100vh] overflow-hidden">

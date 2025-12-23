@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 // Styles
 import "./index.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 // Layouts
 import ProtectedLayout from "@/layouts/ProtectedLayout";
@@ -17,6 +18,7 @@ const Home = lazy(() => import("@/pages/Home"));
 const Login = lazy(() => import("@/pages/Login"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Settings = lazy(() => import("@/pages/Settings"));
+const Trips = lazy(() => import("@/pages/Trips"));
 
 const router = createBrowserRouter([
   {
@@ -36,6 +38,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<LoadingFallback />}>
             <Settings />
+          </Suspense>
+        )
+      },
+      {
+        path: "/trips",
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <Trips />
           </Suspense>
         )
       }
