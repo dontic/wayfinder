@@ -4,6 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface TripsFilterCardProps {
@@ -41,6 +48,61 @@ const TripsFilterCard = ({ onSubmit }: TripsFilterCardProps) => {
   const [showStationary, setShowStationary] = useState(false);
   const [separateTrips, setSeparateTrips] = useState(false);
   const [desiredAccuracy, setDesiredAccuracy] = useState(0);
+  const [quickSelect, setQuickSelect] = useState<string>("last24h");
+
+  // Quick select time frame handlers
+  const handleQuickSelect = (type: string) => {
+    setQuickSelect(type);
+    const now = new Date();
+    let start = new Date();
+
+    switch (type) {
+      case "last24h":
+        start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        break;
+      case "today":
+        start = new Date(now);
+        start.setHours(0, 0, 0, 0);
+        break;
+      case "yesterday":
+        start = new Date(now);
+        start.setDate(start.getDate() - 1);
+        start.setHours(0, 0, 0, 0);
+        const yesterdayEnd = new Date(now);
+        yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
+        yesterdayEnd.setHours(23, 59, 59, 999);
+        setStartDateTime(formatDateTimeLocal(start));
+        setEndDateTime(formatDateTimeLocal(yesterdayEnd));
+        return;
+      case "thisWeek":
+        start = new Date(now);
+        const dayOfWeek = start.getDay();
+        const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday as first day
+        start.setDate(start.getDate() - diff);
+        start.setHours(0, 0, 0, 0);
+        break;
+      case "past7d":
+        start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case "past30d":
+        start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case "thisMonth":
+        start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+        break;
+      case "lastMonth":
+        start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        setStartDateTime(formatDateTimeLocal(start));
+        setEndDateTime(formatDateTimeLocal(lastMonthEnd));
+        return;
+      default:
+        return;
+    }
+
+    setStartDateTime(formatDateTimeLocal(start));
+    setEndDateTime(formatDateTimeLocal(now));
+  };
 
   const handleSubmit = () => {
     if (onSubmit) {
@@ -115,6 +177,25 @@ const TripsFilterCard = ({ onSubmit }: TripsFilterCardProps) => {
                 onChange={(e) => setEndDateTime(e.target.value)}
                 className="w-full"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Quick Select</Label>
+              <Select value={quickSelect} onValueChange={handleQuickSelect}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select time range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="last24h">Last 24 hours</SelectItem>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="yesterday">Yesterday</SelectItem>
+                  <SelectItem value="thisWeek">This Week</SelectItem>
+                  <SelectItem value="past7d">Past 7 days</SelectItem>
+                  <SelectItem value="past30d">Past 30 days</SelectItem>
+                  <SelectItem value="thisMonth">This Month</SelectItem>
+                  <SelectItem value="lastMonth">Last Month</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-3 pt-2">
