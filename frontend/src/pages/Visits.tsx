@@ -79,10 +79,10 @@ const Visits = () => {
   // Automatically query with default filters on component mount
   useEffect(() => {
     const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     handleFilterSubmit(
-      formatDateTimeLocal(twentyFourHoursAgo),
+      formatDateTimeLocal(thirtyDaysAgo),
       formatDateTimeLocal(now)
     );
   }, []); // Empty dependency array ensures this runs only once on mount

@@ -27,16 +27,16 @@ const formatDateTimeLocal = (date: Date): string => {
 };
 
 const VisitsFilterCard = ({ onSubmit }: VisitsFilterCardProps) => {
-  // Default to last 24 hours
+  // Default to last 30 days
   const now = new Date();
-  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   const [isOpen, setIsOpen] = useState(true);
   const [startDateTime, setStartDateTime] = useState(
-    formatDateTimeLocal(twentyFourHoursAgo)
+    formatDateTimeLocal(thirtyDaysAgo)
   );
   const [endDateTime, setEndDateTime] = useState(formatDateTimeLocal(now));
-  const [quickSelect, setQuickSelect] = useState<string>("last24h");
+  const [quickSelect, setQuickSelect] = useState<string>("past30d");
 
   // Quick select time frame handlers
   const handleQuickSelect = (type: string) => {
