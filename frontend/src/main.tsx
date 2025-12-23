@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 // Styles
 import "./index.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 // Layouts
 import ProtectedLayout from "@/layouts/ProtectedLayout";
