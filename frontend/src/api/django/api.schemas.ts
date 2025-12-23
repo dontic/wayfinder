@@ -3,6 +3,33 @@ export interface ErrorResponse {
   message: string;
 }
 
+/**
+ * Feature properties (varies by feature type)
+ */
+export type GeoJSONFeatureProperties = { [key: string]: unknown };
+
+export interface GeoJSONFeature {
+  /** Always 'Feature' */
+  type?: string;
+  geometry: GeoJSONGeometry;
+  /** Feature properties (varies by feature type) */
+  properties: GeoJSONFeatureProperties;
+}
+
+export interface GeoJSONFeatureCollection {
+  /** Always 'FeatureCollection' */
+  type?: string;
+  /** Array of GeoJSON Feature objects */
+  features: GeoJSONFeature[];
+}
+
+export interface GeoJSONGeometry {
+  /** GeoJSON geometry type (e.g., 'Point', 'LineString') */
+  type: string;
+  /** Coordinates array - format depends on geometry type */
+  coordinates: unknown[];
+}
+
 export interface Login {
   username?: string;
   email?: string;
@@ -55,6 +82,40 @@ export interface PatchedUserDetails {
 
 export interface RestAuthDetail {
   readonly detail: string;
+}
+
+export interface TripPlotMeta {
+  /** Start datetime of the query range */
+  start_datetime: string;
+  /** End datetime of the query range */
+  end_datetime: string;
+  /** Total number of locations in range */
+  total_locations: number;
+  /** Number of non-stationary locations */
+  trip_locations: number;
+  /** Number of visits in range */
+  visits_count: number;
+  /** Number of stationary points */
+  stationary_count: number;
+  /** Number of trip segments */
+  trips_count: number;
+  /** Whether trips were separated by visits */
+  separate_trips: boolean;
+  /** Whether visits are included */
+  show_visits: boolean;
+  /** Whether stationary points are included */
+  show_stationary: boolean;
+}
+
+export interface TripPlotResponse {
+  /** GeoJSON FeatureCollection containing trip LineString features */
+  trips: GeoJSONFeatureCollection;
+  /** GeoJSON FeatureCollection containing visit Point features */
+  visits: GeoJSONFeatureCollection;
+  /** GeoJSON FeatureCollection containing stationary Point features */
+  stationary: GeoJSONFeatureCollection;
+  /** Metadata about the query and results */
+  meta: TripPlotMeta;
 }
 
 /**
@@ -133,10 +194,6 @@ export type WayfinderTokenRetrieve200 = {
 
 export type WayfinderTripsPlotRetrieveParams = {
   /**
-   * Flag to indicate if trips should be colored
-   */
-  color_trips?: boolean;
-  /**
    * Desired accuracy in meters. 0 means no filtering
    */
   desired_accuracy?: number;
@@ -145,15 +202,15 @@ export type WayfinderTripsPlotRetrieveParams = {
    */
   end_datetime: string;
   /**
-   * Flag to indicate if locations during visits should be removed
+   * Flag to indicate if trips should be segmented by visit midtimes
    */
-  locations_during_visits?: boolean;
+  separate_trips?: boolean;
   /**
-   * Flag to indicate if stationary locations should be shown on the plot
+   * Flag to indicate if stationary locations should be included in the response
    */
   show_stationary?: boolean;
   /**
-   * Flag to indicate if visits should be shown on the plot
+   * Flag to indicate if visits should be included in the response
    */
   show_visits?: boolean;
   /**
