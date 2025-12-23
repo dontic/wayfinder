@@ -16,6 +16,28 @@ const formatDateTimeLocal = (date: Date): string => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
+// Helper function to convert datetime-local string to timezone-aware ISO string
+const toTimezoneAwareISO = (datetimeLocal: string): string => {
+  // Create a date object from the datetime-local value
+  const date = new Date(datetimeLocal);
+
+  // Get timezone offset in minutes and convert to hours and minutes
+  const offset = -date.getTimezoneOffset();
+  const offsetHours = Math.floor(Math.abs(offset) / 60);
+  const offsetMinutes = Math.abs(offset) % 60;
+  const offsetSign = offset >= 0 ? "+" : "-";
+
+  // Format: YYYY-MM-DDTHH:mm:ss±HH:MM
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${offsetSign}${String(offsetHours).padStart(2, "0")}:${String(offsetMinutes).padStart(2, "0")}`;
+};
+
 const Trips = () => {
   const [tripData, setTripData] = useState<TripPlotResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,9 +53,9 @@ const Trips = () => {
     setIsLoading(true);
 
     try {
-      // Convert datetime-local format to ISO string
-      const startDate = new Date(startDateTime).toISOString();
-      const endDate = new Date(endDateTime).toISOString();
+      // Convert datetime-local format to timezone-aware ISO string
+      const startDate = toTimezoneAwareISO(startDateTime);
+      const endDate = toTimezoneAwareISO(endDateTime);
 
       const response = await wayfinderTripsPlotRetrieve({
         start_datetime: startDate,
