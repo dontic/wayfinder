@@ -2,10 +2,19 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface TripsFilterCardProps {
-  onSubmit?: (startDateTime: string, endDateTime: string) => void;
+  onSubmit?: (
+    startDateTime: string,
+    endDateTime: string,
+    showVisits: boolean,
+    showStationary: boolean,
+    separateTrips: boolean,
+    desiredAccuracy: number
+  ) => void;
 }
 
 // Helper function to format date for datetime-local input
@@ -28,10 +37,21 @@ const TripsFilterCard = ({ onSubmit }: TripsFilterCardProps) => {
     formatDateTimeLocal(twentyFourHoursAgo)
   );
   const [endDateTime, setEndDateTime] = useState(formatDateTimeLocal(now));
+  const [showVisits, setShowVisits] = useState(false);
+  const [showStationary, setShowStationary] = useState(false);
+  const [separateTrips, setSeparateTrips] = useState(false);
+  const [desiredAccuracy, setDesiredAccuracy] = useState(0);
 
   const handleSubmit = () => {
     if (onSubmit) {
-      onSubmit(startDateTime, endDateTime);
+      onSubmit(
+        startDateTime,
+        endDateTime,
+        showVisits,
+        showStationary,
+        separateTrips,
+        desiredAccuracy
+      );
     }
   };
 
@@ -95,6 +115,56 @@ const TripsFilterCard = ({ onSubmit }: TripsFilterCardProps) => {
                 onChange={(e) => setEndDateTime(e.target.value)}
                 className="w-full"
               />
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="show-visits" className="text-sm font-medium">
+                  Show Visits
+                </Label>
+                <Switch
+                  id="show-visits"
+                  checked={showVisits}
+                  onCheckedChange={setShowVisits}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="show-stationary" className="text-sm font-medium">
+                  Show Stationary
+                </Label>
+                <Switch
+                  id="show-stationary"
+                  checked={showStationary}
+                  onCheckedChange={setShowStationary}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="separate-trips" className="text-sm font-medium">
+                  Separate Trips
+                </Label>
+                <Switch
+                  id="separate-trips"
+                  checked={separateTrips}
+                  onCheckedChange={setSeparateTrips}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="desired-accuracy" className="text-sm font-medium">
+                  Desired Accuracy (meters, 0 = no filter)
+                </Label>
+                <Input
+                  id="desired-accuracy"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={desiredAccuracy}
+                  onChange={(e) => setDesiredAccuracy(Number(e.target.value))}
+                  className="w-full"
+                />
+              </div>
             </div>
 
             <Button

@@ -12,7 +12,11 @@ const Trips = () => {
 
   const handleFilterSubmit = async (
     startDateTime: string,
-    endDateTime: string
+    endDateTime: string,
+    showVisits: boolean,
+    showStationary: boolean,
+    separateTrips: boolean,
+    desiredAccuracy: number
   ) => {
     setIsLoading(true);
 
@@ -24,10 +28,10 @@ const Trips = () => {
       const response = await wayfinderTripsPlotRetrieve({
         start_datetime: startDate,
         end_datetime: endDate,
-        show_visits: true,
-        show_stationary: true,
-        separate_trips: false,
-        desired_accuracy: 0
+        show_visits: showVisits,
+        show_stationary: showStationary,
+        separate_trips: separateTrips,
+        desired_accuracy: desiredAccuracy
       });
 
       setTripData(response);
