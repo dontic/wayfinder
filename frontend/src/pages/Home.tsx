@@ -60,17 +60,8 @@ const Home = () => {
   }, [activityData]);
 
   return (
-    <SideBarLayout title="Home">
+    <SideBarLayout title="Dashboard">
       <div className="flex flex-col gap-6 p-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Activity Dashboard
-          </h1>
-          <p className="text-muted-foreground">
-            Your location tracking activity over the past year
-          </p>
-        </div>
-
         <div className="grid gap-6">
           {/* Locations Heatmap */}
           <Card>
