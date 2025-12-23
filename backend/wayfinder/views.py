@@ -578,8 +578,6 @@ class TripPlotView(APIView):
         if bucket_size:
             trip_locations = trip_query.time_bucket(
                 "time", bucket_size
-            ).only(
-                'time', 'longitude', 'latitude'
             ).values(
                 'time', 'longitude', 'latitude'
             ).order_by('time')[:page_size + 1]  # Fetch one extra to check for more
