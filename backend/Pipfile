@@ -15,7 +15,6 @@ psycopg2 = "*"
 gunicorn = "*"
 whitenoise = "*"
 dj-rest-auth = "*"
-plotly = "*"
 pandas = "*"
 django = "*"
 
