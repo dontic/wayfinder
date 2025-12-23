@@ -394,12 +394,6 @@ paths:
           type: boolean
         description: Flag to indicate if trips should be segmented by visit midtimes
       - in: query
-        name: show_stationary
-        schema:
-          type: boolean
-        description: Flag to indicate if stationary locations should be included in
-          the response
-      - in: query
         name: show_visits
         schema:
           type: boolean
@@ -626,9 +620,6 @@ components:
         visits_count:
           type: integer
           description: Number of visits in range
-        stationary_count:
-          type: integer
-          description: Number of stationary points
         trips_count:
           type: integer
           description: Number of trip segments
@@ -638,16 +629,11 @@ components:
         show_visits:
           type: boolean
           description: Whether visits are included
-        show_stationary:
-          type: boolean
-          description: Whether stationary points are included
       required:
       - end_datetime
       - separate_trips
-      - show_stationary
       - show_visits
       - start_datetime
-      - stationary_count
       - total_locations
       - trip_locations
       - trips_count
@@ -663,17 +649,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/GeoJSONFeatureCollection'
           description: GeoJSON FeatureCollection containing visit Point features
-        stationary:
-          allOf:
-          - $ref: '#/components/schemas/GeoJSONFeatureCollection'
-          description: GeoJSON FeatureCollection containing stationary Point features
         meta:
           allOf:
           - $ref: '#/components/schemas/TripPlotMeta'
           description: Metadata about the query and results
       required:
       - meta
-      - stationary
       - trips
       - visits
     UserDetails:

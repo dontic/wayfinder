@@ -95,16 +95,12 @@ export interface TripPlotMeta {
   trip_locations: number;
   /** Number of visits in range */
   visits_count: number;
-  /** Number of stationary points */
-  stationary_count: number;
   /** Number of trip segments */
   trips_count: number;
   /** Whether trips were separated by visits */
   separate_trips: boolean;
   /** Whether visits are included */
   show_visits: boolean;
-  /** Whether stationary points are included */
-  show_stationary: boolean;
 }
 
 export interface TripPlotResponse {
@@ -112,8 +108,6 @@ export interface TripPlotResponse {
   trips: GeoJSONFeatureCollection;
   /** GeoJSON FeatureCollection containing visit Point features */
   visits: GeoJSONFeatureCollection;
-  /** GeoJSON FeatureCollection containing stationary Point features */
-  stationary: GeoJSONFeatureCollection;
   /** Metadata about the query and results */
   meta: TripPlotMeta;
 }
@@ -205,10 +199,6 @@ export type WayfinderTripsPlotRetrieveParams = {
    * Flag to indicate if trips should be segmented by visit midtimes
    */
   separate_trips?: boolean;
-  /**
-   * Flag to indicate if stationary locations should be included in the response
-   */
-  show_stationary?: boolean;
   /**
    * Flag to indicate if visits should be included in the response
    */
