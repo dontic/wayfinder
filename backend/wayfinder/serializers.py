@@ -386,6 +386,19 @@ class GeoJSONFeatureCollectionSerializer(serializers.Serializer):
     )
 
 
+class VisitPlotMetaSerializer(serializers.Serializer):
+    start_datetime = serializers.CharField(help_text="Start datetime of the query range")
+    end_datetime = serializers.CharField(help_text="End datetime of the query range")
+    visits_count = serializers.IntegerField(help_text="Number of visits in range")
+
+
+class VisitPlotResponseSerializer(serializers.Serializer):
+    visits = GeoJSONFeatureCollectionSerializer(
+        help_text="GeoJSON FeatureCollection containing visit Point features"
+    )
+    meta = VisitPlotMetaSerializer(help_text="Metadata about the query and results")
+
+
 class TripPlotMetaSerializer(serializers.Serializer):
     start_datetime = serializers.CharField(help_text="Start datetime of the query range")
     end_datetime = serializers.CharField(help_text="End datetime of the query range")

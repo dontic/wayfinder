@@ -1,19 +1,16 @@
 # views.py
 
 import logging
-import json
 import pandas as pd
 
 # Django
 from django.db import transaction
-from django_filters.rest_framework import DjangoFilterBackend
 
 
 # REST Framework
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import viewsets, mixins
 from rest_framework.authentication import (
     SessionAuthentication,
     TokenAuthentication,
@@ -31,17 +28,13 @@ from wayfinder.utils import (
     build_visits_feature_collection,
 )
 
-# Plotly imports (used by VisitPlotView)
-import plotly.express as px
-from plotly.utils import PlotlyJSONEncoder
-
 # Local App
 from .models import Location, Visit
 from .serializers import (
     ErrorResponseSerializer,
     LocationSerializer,
     TripPlotResponseSerializer,
-    VisitPlotlyResponseSerializer,
+    VisitPlotResponseSerializer,
     VisitSerializer,
 )
 
@@ -297,11 +290,15 @@ class VisitPlotView(APIView):
                 required=True,
             ),
         ],
-        responses={200: VisitPlotlyResponseSerializer, 400: ErrorResponseSerializer},
-        description="Endpoint for generating a density map of visits within a specified date range.",
+        responses={
+            200: VisitPlotResponseSerializer,
+            400: ErrorResponseSerializer,
+            404: ErrorResponseSerializer,
+        },
+        description="Endpoint for retrieving visit data as GeoJSON within a specified date range.",
     )
     def get(self, request):
-        log.debug("Received request to plot visits")
+        log.debug("Received request to get visits")
 
         # The request should always receive a date range
         # Otherwise, return an error
@@ -324,34 +321,31 @@ class VisitPlotView(APIView):
 
         log.debug(f"Found {visits_count} visits in the date range")
 
-        # If visists is empty, return an empty response
+        # If visits is empty, return 404
         if visits_count == 0:
             log.debug("No visits found in the date range")
-            return Response({}, status=status.HTTP_200_OK)
+            return Response(
+                {"message": "No visits found in the selected date range"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         # Convert the visits to a pandas dataframe
-        visits = pd.DataFrame(list(visits.values()))
+        visits_df = pd.DataFrame(list(visits.values()))
 
-        # Plot the visits
-        fig = px.density_mapbox(
-            visits,
-            lat="latitude",
-            lon="longitude",
-            z="duration",
-            hover_data=["arrival_date", "departure_date"],
-            zoom=1,
-        )
-        fig.update_layout(mapbox_style="open-street-map")
-        fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-        fig.update_layout(coloraxis_showscale=False)
+        # Build GeoJSON feature collection
+        visits_collection = build_visits_feature_collection(visits_df)
 
-        graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
+        # Build response
+        response_data = {
+            "visits": visits_collection,
+            "meta": {
+                "start_datetime": start_date,
+                "end_datetime": end_date,
+                "visits_count": visits_count,
+            },
+        }
 
-        # GraphJSON is a json string, so you have to parse it into a json object
-        # in order to return it
-        parsed_graphJSON = json.loads(graphJSON)
-
-        return Response(parsed_graphJSON, status=status.HTTP_200_OK)
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class TripPlotView(APIView):
