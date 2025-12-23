@@ -41,8 +41,9 @@ def segment_trips_by_visits(locations_df, visits_df):
     
     visits_df = visits_df.sort_values("arrival_date").copy()
     
-    # Calculate midtimes for all visits
-    midtimes = [get_visit_midtime(row) for _, row in visits_df.iterrows()]
+    # Calculate midtimes for all visits using to_dict (faster than iterrows)
+    visits_records = visits_df.to_dict('records')
+    midtimes = [get_visit_midtime(visit) for visit in visits_records]
     
     segments = []
     trip_counter = 1
@@ -78,16 +79,19 @@ def locations_to_geojson_linestring(trip_id, locations_df):
     # Sort by time
     locations_df = locations_df.sort_values("time")
     
+    # Convert to list of dicts once (much faster than iterrows)
+    locations_records = locations_df.to_dict('records')
+    
     # Build coordinates array [lon, lat]
     coordinates = [
-        [float(row["longitude"]), float(row["latitude"])]
-        for _, row in locations_df.iterrows()
+        [float(loc["longitude"]), float(loc["latitude"])]
+        for loc in locations_records
     ]
     
     # Build times array
     times = [
-        row["time"].isoformat() if hasattr(row["time"], 'isoformat') else str(row["time"])
-        for _, row in locations_df.iterrows()
+        loc["time"].isoformat() if hasattr(loc["time"], 'isoformat') else str(loc["time"])
+        for loc in locations_records
     ]
     
     return {
@@ -171,7 +175,10 @@ def build_visits_feature_collection(visits_df):
     if visits_df.empty:
         return {"type": "FeatureCollection", "features": features}
     
-    for idx, (_, visit) in enumerate(visits_df.iterrows(), start=1):
+    # Convert to list of dicts once (much faster than iterrows)
+    visits_records = visits_df.to_dict('records')
+    
+    for idx, visit in enumerate(visits_records, start=1):
         visit_id = f"visit_{idx:03d}"
         feature = visit_to_geojson_point(visit, visit_id)
         features.append(feature)
