@@ -1,17 +1,12 @@
-import { Flex, Text } from "@chakra-ui/react";
+import SideBarLayout from "@/layouts/SideBarLayout";
 
 const Home = () => {
   return (
-    <Flex
-      flexDir={"column"}
-      h={"full"}
-      w={"full"}
-      bg={"gray.100"}
-      alignItems={"center"}
-      justify={"center"}
-    >
-      <Text fontSize={"2xl"}>Home</Text>
-    </Flex>
+    <SideBarLayout title="Home">
+      <div className="flex flex-col gap-4">
+        <h1>Home</h1>
+      </div>
+    </SideBarLayout>
   );
 };
 

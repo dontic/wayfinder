@@ -1,0 +1,684 @@
+openapi: 3.0.3
+info:
+  title: API
+  version: 1.0.0
+  description: Description placeholder
+paths:
+  /auth/login/:
+    post:
+      operationId: auth_login_create
+      description: |-
+        Check the credentials and return the REST Token
+        if the credentials are valid and authenticated.
+        Calls Django Auth login method to register User ID
+        in Django session framework
+
+        Accept the following POST parameters: username, password
+        Return the REST Framework Token Object's key.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Login'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Login'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /auth/logout/:
+    post:
+      operationId: auth_logout_create
+      description: |-
+        Calls Django logout method and delete the Token object
+        assigned to the current User object.
+
+        Accepts/Returns nothing.
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestAuthDetail'
+          description: ''
+  /auth/password/change/:
+    post:
+      operationId: auth_password_change_create
+      description: |-
+        Calls Django Auth SetPasswordForm save method.
+
+        Accepts the following POST parameters: new_password1, new_password2
+        Returns the success/fail message.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChange'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordChange'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordChange'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestAuthDetail'
+          description: ''
+  /auth/password/reset/:
+    post:
+      operationId: auth_password_reset_create
+      description: |-
+        Calls Django Auth PasswordResetForm save method.
+
+        Accepts the following POST parameters: email
+        Returns the success/fail message.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordReset'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordReset'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordReset'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestAuthDetail'
+          description: ''
+  /auth/password/reset/confirm/:
+    post:
+      operationId: auth_password_reset_confirm_create
+      description: |-
+        Password reset e-mail link is confirmed, therefore
+        this resets the user's password.
+
+        Accepts the following POST parameters: token, uid,
+            new_password1, new_password2
+        Returns the success/fail message.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirm'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirm'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirm'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestAuthDetail'
+          description: ''
+  /auth/user/:
+    get:
+      operationId: auth_user_retrieve
+      description: |-
+        Reads and updates UserModel fields
+        Accepts GET, PUT, PATCH methods.
+
+        Default accepted fields: username, first_name, last_name
+        Default display fields: pk, username, email, first_name, last_name
+        Read-only fields: pk, email
+
+        Returns UserModel fields.
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetails'
+          description: ''
+    put:
+      operationId: auth_user_update
+      description: |-
+        Reads and updates UserModel fields
+        Accepts GET, PUT, PATCH methods.
+
+        Default accepted fields: username, first_name, last_name
+        Default display fields: pk, username, email, first_name, last_name
+        Read-only fields: pk, email
+
+        Returns UserModel fields.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDetails'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserDetails'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserDetails'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetails'
+          description: ''
+    patch:
+      operationId: auth_user_partial_update
+      description: |-
+        Reads and updates UserModel fields
+        Accepts GET, PUT, PATCH methods.
+
+        Default accepted fields: username, first_name, last_name
+        Default display fields: pk, username, email, first_name, last_name
+        Read-only fields: pk, email
+
+        Returns UserModel fields.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserDetails'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserDetails'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserDetails'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetails'
+          description: ''
+  /wayfinder/overland/:
+    post:
+      operationId: wayfinder_overland_create
+      description: Endpoint for receiving and storing location and visit data from
+        Overland app.
+      tags:
+      - wayfinder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: {}
+            examples:
+              RequestExample:
+                value:
+                  locations:
+                  - type: Feature
+                    geometry:
+                      type: Point
+                      coordinates:
+                      - -4.2838405
+                      - 38.665856
+                    properties:
+                      speed: -1
+                      battery_state: unplugged
+                      motion:
+                      - stationary
+                      timestamp: '2024-09-13T11:33:33Z'
+                      horizontal_accuracy: 3000
+                      speed_accuracy: -1
+                      vertical_accuracy: 30
+                      battery_level: 0.75
+                      wifi: ''
+                      course: -1
+                      device_id: iphone
+                      altitude: 8
+                      course_accuracy: -1
+                  - type: Feature
+                    geometry:
+                      type: Point
+                      coordinates:
+                      - -4.2702682
+                      - 38.6637597
+                    properties:
+                      arrival_date: '2024-09-13T11:33:35Z'
+                      departure_date: ''
+                      battery_state: unplugged
+                      timestamp: '2024-09-13T11:33:35Z'
+                      horizontal_accuracy: 3000
+                      vertical_accuracy: 30
+                      battery_level: 0.75
+                      wifi: ''
+                      device_id: iphone
+                      altitude: 8
+                summary: Request Example
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: {}
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+              examples:
+                SuccessResponse:
+                  value:
+                    result: ok
+                  summary: Success Response
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+              examples:
+                ErrorResponse:
+                  value:
+                    result: not_ok
+                  summary: Error Response
+          description: ''
+  /wayfinder/token/:
+    get:
+      operationId: wayfinder_token_retrieve
+      description: This endpoint gets or creates a new token for the authenticated
+        user or regenerates an existing one if requested.
+      summary: Get or regenerate authentication token
+      parameters:
+      - in: query
+        name: recreate
+        schema:
+          type: boolean
+        description: Boolean flag to indicate if the token should be regenerated
+      tags:
+      - wayfinder
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b
+          description: ''
+        '401':
+          description: No response body
+  /wayfinder/trips/plot/:
+    get:
+      operationId: wayfinder_trips_plot_retrieve
+      description: Endpoint for generating a path plot of trips within a specified
+        date range.
+      parameters:
+      - in: query
+        name: color_trips
+        schema:
+          type: boolean
+        description: Flag to indicate if trips should be colored
+      - in: query
+        name: desired_accuracy
+        schema:
+          type: number
+        description: Desired accuracy in meters. 0 means no filtering
+      - in: query
+        name: end_datetime
+        schema:
+          type: string
+          format: date-time
+        description: End date for the date range filter (inclusive)
+        required: true
+      - in: query
+        name: locations_during_visits
+        schema:
+          type: boolean
+        description: Flag to indicate if locations during visits should be removed
+      - in: query
+        name: show_stationary
+        schema:
+          type: boolean
+        description: Flag to indicate if stationary locations should be shown on the
+          plot
+      - in: query
+        name: show_visits
+        schema:
+          type: boolean
+        description: Flag to indicate if visits should be shown on the plot
+      - in: query
+        name: start_datetime
+        schema:
+          type: string
+          format: date-time
+        description: Start date for the date range filter (inclusive)
+        required: true
+      tags:
+      - wayfinder
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitPlotlyResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /wayfinder/visits/plot/:
+    get:
+      operationId: wayfinder_visits_plot_retrieve
+      description: Endpoint for generating a density map of visits within a specified
+        date range.
+      parameters:
+      - in: query
+        name: end_datetime
+        schema:
+          type: string
+          format: date-time
+        description: End date for the date range filter (inclusive)
+        required: true
+      - in: query
+        name: start_datetime
+        schema:
+          type: string
+          format: date-time
+        description: Start date for the date range filter (inclusive)
+        required: true
+      tags:
+      - wayfinder
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitPlotlyResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
+    Login:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+      - password
+    PasswordChange:
+      type: object
+      properties:
+        new_password1:
+          type: string
+          maxLength: 128
+        new_password2:
+          type: string
+          maxLength: 128
+      required:
+      - new_password1
+      - new_password2
+    PasswordReset:
+      type: object
+      description: Serializer for requesting a password reset e-mail.
+      properties:
+        email:
+          type: string
+          format: email
+      required:
+      - email
+    PasswordResetConfirm:
+      type: object
+      description: Serializer for confirming a password reset attempt.
+      properties:
+        new_password1:
+          type: string
+          maxLength: 128
+        new_password2:
+          type: string
+          maxLength: 128
+        uid:
+          type: string
+        token:
+          type: string
+      required:
+      - new_password1
+      - new_password2
+      - token
+      - uid
+    PatchedUserDetails:
+      type: object
+      description: User model w/o password
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          readOnly: true
+          title: Email address
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+    RestAuthDetail:
+      type: object
+      properties:
+        detail:
+          type: string
+          readOnly: true
+      required:
+      - detail
+    UserDetails:
+      type: object
+      description: User model w/o password
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          readOnly: true
+          title: Email address
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+      required:
+      - email
+      - pk
+      - username
+    VisitPlotlyData:
+      type: object
+      properties:
+        coloraxis:
+          type: string
+        customdata:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        hovertemplate:
+          type: string
+        lat:
+          type: array
+          items:
+            type: number
+            format: double
+        lon:
+          type: array
+          items:
+            type: number
+            format: double
+        name:
+          type: string
+        subplot:
+          type: string
+        z:
+          type: array
+          items:
+            type: integer
+        type:
+          type: string
+      required:
+      - coloraxis
+      - customdata
+      - hovertemplate
+      - lat
+      - lon
+      - name
+      - subplot
+      - type
+      - z
+    VisitPlotlyLayout:
+      type: object
+      properties:
+        mapbox:
+          type: object
+          additionalProperties: {}
+        coloraxis:
+          type: object
+          additionalProperties: {}
+        legend:
+          type: object
+          additionalProperties: {}
+        margin:
+          type: object
+          additionalProperties: {}
+        template:
+          type: object
+          additionalProperties: {}
+      required:
+      - coloraxis
+      - legend
+      - mapbox
+      - margin
+      - template
+    VisitPlotlyResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisitPlotlyData'
+        layout:
+          $ref: '#/components/schemas/VisitPlotlyLayout'
+      required:
+      - data
+      - layout
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Token-based authentication with required prefix "Token"

@@ -1,17 +1,11 @@
 // Custom instance of axios
 
-import axios, { AxiosRequestConfig } from "axios";
+import axios from "axios";
+import type { AxiosRequestConfig } from "axios";
 
 export const customAxios = axios.create({
-  // Match the origin of the window to determine if we are in development or production
-  baseURL: window.location.origin.match(
-    /(http:\/\/localhost|http:\/\/127\.0\.0\.1)/
-  )
-    ? "http://localhost:8000"
-    : "/api",
-  timeout: import.meta.env.VITE_API_TIMEOUT
-    ? import.meta.env.VITE_API_TIMEOUT
-    : 10000,
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  timeout: import.meta.env.VITE_API_TIMEOUT,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
   withXSRFToken: true,
@@ -27,6 +21,9 @@ export const customAxiosInstance = <T>(
   const promise = customAxios({
     ...config,
     ...options,
+    paramsSerializer: {
+      indexes: null
+    },
     cancelToken: source.token
   }).then(({ data }) => data);
 

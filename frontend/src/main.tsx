@@ -1,50 +1,67 @@
-import { StrictMode } from "react";
+import { StrictMode, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { ChakraProvider } from "@chakra-ui/react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
-import ProtectedLayout from "./layouts/ProtectedLayout";
-import Home from "./pages/Home";
-import Visits from "./pages/Visits";
-import Trips from "./pages/Trips";
-import Settings from "./pages/Settings";
+
+// Styles
+import "./index.css";
+
+// Layouts
+import ProtectedLayout from "@/layouts/ProtectedLayout";
+
+// Components
+import { Toaster } from "sonner";
+import LoadingFallback from "@/components/LoadingFallback";
+
+// Pages - Lazy loaded for code splitting
+const Home = lazy(() => import("@/pages/Home"));
+const Login = lazy(() => import("@/pages/Login"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const Settings = lazy(() => import("@/pages/Settings"));
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <ProtectedLayout />,
-    errorElement: <NotFound />,
     children: [
       {
         path: "/",
-        element: <Home />
-      },
-      {
-        path: "/visits",
-        element: <Visits />
-      },
-      {
-        path: "/trips",
-        element: <Trips />
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <Home />
+          </Suspense>
+        )
       },
       {
         path: "/settings",
-        element: <Settings />
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <Settings />
+          </Suspense>
+        )
       }
     ]
   },
   {
     path: "/login",
-    element: <Login />,
-    errorElement: <NotFound />
+    element: (
+      <Suspense fallback={<LoadingFallback />}>
+        <Login />
+      </Suspense>
+    )
+  },
+  {
+    path: "*",
+    element: (
+      <Suspense fallback={<LoadingFallback />}>
+        <NotFound />
+      </Suspense>
+    )
   }
 ]);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ChakraProvider>
-      <RouterProvider router={router} />
-    </ChakraProvider>
+    <RouterProvider router={router} />
+    <Toaster richColors />
   </StrictMode>
 );

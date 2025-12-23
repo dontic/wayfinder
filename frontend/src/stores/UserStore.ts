@@ -1,21 +1,25 @@
 import { create } from "zustand";
 
-interface User {
-  pk: number;
-  username: string;
-  email?: string;
-  first_name?: string;
-  last_name?: string;
-}
+import type { UserDetails } from "@/api/django/api.schemas";
 
 interface UserStore {
-  user: User | undefined;
-  setUser: (user: User) => void;
+  user: (UserDetails & { full_name?: string }) | undefined;
+  setUser: (user: UserDetails & { full_name?: string }) => void;
+
   clearUser: () => void;
 }
 
-export const useUserStore = create<UserStore>((set) => ({
+export const useUserStore = create<UserStore>((set, get) => ({
   user: undefined,
-  setUser: (user) => set({ user }),
+  setUser: (user) =>
+    set({
+      user: {
+        ...user,
+        full_name:
+          user.full_name ??
+          ([user.first_name, user.last_name].filter(Boolean).join(" ").trim() ||
+            undefined)
+      }
+    }),
   clearUser: () => set({ user: undefined })
 }));
