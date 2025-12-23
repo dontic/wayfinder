@@ -328,34 +328,6 @@ class VisitSerializer(serializers.ModelSerializer):
         return data
 
 
-# ------------------------- Visits Plotly serializers ------------------------ #
-class VisitPlotlyDataSerializer(serializers.Serializer):
-    coloraxis = serializers.CharField()
-    customdata = serializers.ListField(
-        child=serializers.ListField(child=serializers.CharField())
-    )
-    hovertemplate = serializers.CharField()
-    lat = serializers.ListField(child=serializers.FloatField())
-    lon = serializers.ListField(child=serializers.FloatField())
-    name = serializers.CharField()
-    subplot = serializers.CharField()
-    z = serializers.ListField(child=serializers.IntegerField())
-    type = serializers.CharField()
-
-
-class VisitPlotlyLayoutSerializer(serializers.Serializer):
-    mapbox = serializers.DictField()
-    coloraxis = serializers.DictField()
-    legend = serializers.DictField()
-    margin = serializers.DictField()
-    template = serializers.DictField()
-
-
-class VisitPlotlyResponseSerializer(serializers.Serializer):
-    data = serializers.ListField(child=VisitPlotlyDataSerializer())
-    layout = VisitPlotlyLayoutSerializer()
-
-
 class ErrorResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
 
