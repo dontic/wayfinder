@@ -17,6 +17,34 @@ const INITIAL_VIEW_STATE = {
   bearing: 0
 };
 
+// Generate a distinct color for each trip
+const generateTripColor = (index: number, total: number): [number, number, number, number] => {
+  // Use HSL color space for better color distribution
+  const hue = (index * 360) / Math.max(total, 1);
+  const saturation = 0.7;
+  const lightness = 0.5;
+  
+  // Convert HSL to RGB
+  const c = (1 - Math.abs(2 * lightness - 1)) * saturation;
+  const x = c * (1 - Math.abs((hue / 60) % 2 - 1));
+  const m = lightness - c / 2;
+  
+  let r = 0, g = 0, b = 0;
+  if (hue < 60) { r = c; g = x; b = 0; }
+  else if (hue < 120) { r = x; g = c; b = 0; }
+  else if (hue < 180) { r = 0; g = c; b = x; }
+  else if (hue < 240) { r = 0; g = x; b = c; }
+  else if (hue < 300) { r = x; g = 0; b = c; }
+  else { r = c; g = 0; b = x; }
+  
+  return [
+    Math.round((r + m) * 255),
+    Math.round((g + m) * 255),
+    Math.round((b + m) * 255),
+    200
+  ];
+};
+
 // DeckGL overlay component
 function DeckGLOverlay(props: { layers: any[] }) {
   const overlay = useControl(() => new MapboxOverlay({ interleaved: true }));
@@ -102,7 +130,19 @@ const TripsMap = ({ data, isLoading }: TripsMapProps) => {
         filled: false,
         lineWidthScale: 2,
         lineWidthMinPixels: 2,
-        getLineColor: [0, 120, 255, 200],
+        getLineColor: (feature: any, info: any) => {
+          // Use the index provided by deck.gl
+          const featureIndex = info?.index ?? 0;
+          const totalFeatures = data.trips?.features?.length ?? 1;
+          
+          // If there's only one trip, use the default blue color
+          if (totalFeatures === 1) {
+            return [0, 120, 255, 200];
+          }
+          
+          // Otherwise, generate a unique color for each trip
+          return generateTripColor(featureIndex, totalFeatures);
+        },
         getLineWidth: 3
       }),
     data?.visits &&
@@ -178,12 +218,31 @@ const TripsMap = ({ data, isLoading }: TripsMapProps) => {
       )}
 
       {data && (
-        <div className="absolute top-4 left-4 bg-white p-3 rounded-lg shadow-lg text-sm z-10">
+        <div className="absolute top-4 left-4 bg-white p-3 rounded-lg shadow-lg text-sm z-10 max-h-[80vh] overflow-y-auto">
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-0.5 bg-[rgb(0,120,255)]"></div>
-              <span>Trips: {data.trips?.features?.length || 0}</span>
-            </div>
+            {/* Show individual trip colors if there are multiple trips */}
+            {data.trips?.features && data.trips.features.length > 1 ? (
+              <>
+                <div className="font-medium mb-2">Trips ({data.trips.features.length}):</div>
+                {data.trips.features.map((feature: any, index: number) => {
+                  const color = generateTripColor(index, data.trips.features.length);
+                  return (
+                    <div key={index} className="flex items-center gap-2 pl-2">
+                      <div 
+                        className="w-4 h-0.5" 
+                        style={{ backgroundColor: `rgb(${color[0]},${color[1]},${color[2]})` }}
+                      ></div>
+                      <span className="text-xs">Trip {index + 1}</span>
+                    </div>
+                  );
+                })}
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-0.5 bg-[rgb(0,120,255)]"></div>
+                <span>Trips: {data.trips?.features?.length || 0}</span>
+              </div>
+            )}
             {data.visits && (
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-[rgb(255,140,0)]"></div>
