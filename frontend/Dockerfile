@@ -1,58 +1,35 @@
-# Use an official Node runtime as a parent image
-FROM node:20-bullseye AS builder
+# ------------------------------ 1. Build Stage ------------------------------ #
 
-# Set the working directory to /app
-WORKDIR /app
-
-# Copy package files first (these change less frequently)
-COPY package*.json ./
-
-# Install dependencies (this layer will be cached unless package.json changes)
-RUN npm ci && npm cache clean --force
-
-# Copy configuration files needed for build
-COPY tsconfig*.json ./
-COPY vite.config.ts ./
-COPY eslint.config.js ./
-COPY orval*.config.ts ./
-
-# Copy source code and static files
-COPY src/ ./src/
-COPY public/ ./public/
-COPY index.html ./
-
-# Build args that can be passed during build time
-ARG VITE_API_BASE_URL=https://api.example.com
-ARG VITE_API_TIMEOUT=30000
-ARG VITE_BUILD_VERSION=0.0.0
-ARG VITE_BUILD_DATE=2025-01-01T00:00:00.000Z
-
-# Build the app
-RUN npm run build
-
-# Production stage
-FROM node:20-bullseye-slim AS production
-
-# Install serve package globally
-RUN npm install -g serve
-
-# Create non-root user for security
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# Get the node 20 bullseye image
+FROM node:20.2.0-bullseye AS build
 
 # Set the working directory
 WORKDIR /app
 
-# Copy built application from builder stage
-COPY --from=builder /app/dist ./dist
+# Copy the package.json and package-lock.json files over to the frontend directory
+COPY package*.json ./
 
-# Change ownership to non-root user
-RUN chown -R appuser:appuser /app
+# Install dependencies
+RUN npm install
 
-# Switch to non-root user
-USER appuser
+# Copy all the code over to the frontend directory
+COPY ./ ./
 
-# Expose port 3000
-EXPOSE 3000
+# Build the app
+RUN npm run build
 
-# Start the app using serve
-CMD ["serve", "-s", "dist", "-p", "3000"]
+# ---------------------------- 2. Production Stage --------------------------- #
+# Copy React static files and start nginx
+FROM nginx:stable-bullseye
+
+# Copy the built app files to the nginx container
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Copy the nginx configuration file to the nginx container
+COPY default-nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 80 to the Docker host
+EXPOSE 80
+
+# Run nginx
+CMD ["nginx", "-g", "daemon off;"]
