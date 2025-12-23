@@ -1,10 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SideBarLayout from "@/layouts/SideBarLayout";
 import TripsFilterCard from "@/components/trips/TripsFilterCard";
 import TripsMap from "@/components/trips/TripsMap";
 import { wayfinderTripsPlotRetrieve } from "@/api/django/wayfinder/wayfinder";
 import type { TripPlotResponse } from "@/api/django/api.schemas";
 import { toast } from "sonner";
+
+// Helper function to format date for datetime-local input
+const formatDateTimeLocal = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
 
 const Trips = () => {
   const [tripData, setTripData] = useState<TripPlotResponse | null>(null);
@@ -54,6 +64,21 @@ const Trips = () => {
       setIsLoading(false);
     }
   };
+
+  // Automatically query with default filters on component mount
+  useEffect(() => {
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    handleFilterSubmit(
+      formatDateTimeLocal(twentyFourHoursAgo),
+      formatDateTimeLocal(now),
+      false, // showVisits
+      false, // showStationary
+      false, // separateTrips
+      0 // desiredAccuracy
+    );
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
     <SideBarLayout title="Trips" defaultOpen={false}>
