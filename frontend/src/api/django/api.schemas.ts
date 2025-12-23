@@ -1,4 +1,33 @@
 // @ts-nocheck
+export interface ActivityHistoryMeta {
+  /** Start date of the data range */
+  start_date: string;
+  /** End date of the data range */
+  end_date: string;
+  /** Number of days in the range */
+  days: number;
+  /** Total number of locations in the range */
+  total_locations: number;
+  /** Total number of visits in the range */
+  total_visits: number;
+}
+
+export interface ActivityHistoryResponse {
+  /** Array of daily activity data */
+  data: DailyActivity[];
+  /** Metadata about the activity history */
+  meta: ActivityHistoryMeta;
+}
+
+export interface DailyActivity {
+  /** Date in YYYY-MM-DD format */
+  date: string;
+  /** Number of locations recorded on this date */
+  location_count: number;
+  /** Number of visits recorded on this date */
+  visit_count: number;
+}
+
 export interface ErrorResponse {
   message: string;
 }

@@ -1,5 +1,6 @@
 // @ts-nocheck
 import type {
+  ActivityHistoryResponse,
   TripPlotResponse,
   VisitPlotResponse,
   WayfinderOverlandCreate200,
@@ -16,6 +17,19 @@ import { customAxiosInstance } from "../../axios";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+/**
+ * Endpoint for retrieving the count of locations and visits per day for the past 365 days.
+ */
+export const wayfinderActivityHistoryRetrieve = (
+  options?: SecondParameter<
+    typeof customAxiosInstance<ActivityHistoryResponse>
+  >,
+) => {
+  return customAxiosInstance<ActivityHistoryResponse>(
+    { url: `/wayfinder/activity/history/`, method: "GET" },
+    options,
+  );
+};
 /**
  * Endpoint for receiving and storing location and visit data from Overland app.
  */
@@ -76,6 +90,9 @@ export const wayfinderVisitsPlotRetrieve = (
     options,
   );
 };
+export type WayfinderActivityHistoryRetrieveResult = NonNullable<
+  Awaited<ReturnType<typeof wayfinderActivityHistoryRetrieve>>
+>;
 export type WayfinderOverlandCreateResult = NonNullable<
   Awaited<ReturnType<typeof wayfinderOverlandCreate>>
 >;
