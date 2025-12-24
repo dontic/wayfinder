@@ -77,6 +77,13 @@ export interface Pagination {
   next_cursor: string | null;
   /** Whether this is the first page */
   is_first_page: boolean;
+  /** Whether the page was truncated at a trip boundary to avoid splitting trips (only when separate_trips=true) */
+  trip_boundary_aligned: boolean;
+  /**
+   * Starting trip ID number for the next page. Use this in the 'trip_id_offset' query parameter to maintain sequential trip IDs across pages.
+   * @nullable
+   */
+  next_trip_offset: number | null;
 }
 
 export interface PasswordChange {
@@ -254,6 +261,10 @@ export type WayfinderTripsPlotRetrieveParams = {
    * Start date for the date range filter (inclusive)
    */
   start_datetime: string;
+  /**
+   * Starting number for trip IDs (default: 1). Use 'next_trip_offset' from previous response for sequential IDs across pages.
+   */
+  trip_id_offset?: number;
 };
 
 export type WayfinderVisitsPlotRetrieveParams = {

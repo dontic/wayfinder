@@ -445,6 +445,12 @@ paths:
           format: date-time
         description: Start date for the date range filter (inclusive)
         required: true
+      - in: query
+        name: trip_id_offset
+        schema:
+          type: integer
+        description: 'Starting number for trip IDs (default: 1). Use ''next_trip_offset''
+          from previous response for sequential IDs across pages.'
       tags:
       - wayfinder
       security:
@@ -650,11 +656,23 @@ components:
         is_first_page:
           type: boolean
           description: Whether this is the first page
+        trip_boundary_aligned:
+          type: boolean
+          description: Whether the page was truncated at a trip boundary to avoid
+            splitting trips (only when separate_trips=true)
+        next_trip_offset:
+          type: integer
+          nullable: true
+          description: Starting trip ID number for the next page. Use this in the
+            'trip_id_offset' query parameter to maintain sequential trip IDs across
+            pages.
       required:
       - has_more
       - is_first_page
       - next_cursor
+      - next_trip_offset
       - page_size
+      - trip_boundary_aligned
     PasswordChange:
       type: object
       properties:
