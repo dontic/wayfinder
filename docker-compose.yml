@@ -29,6 +29,11 @@ services:
       # Base URL of the application
       - BASE_URL="https://wayfinder.mydomain.com"
 
+      # The secret key for the Django application.
+      # This is used to sign the session cookies.
+      # Generate yours at https://djecrety.ir/
+      - SECRET_KEY="super_secret_key"
+
       # Location points in the trips map are queried in chuncks of this size.
       # Depending on your server's resources, you may want to increase or decrease this number.
       # For reference, 10,000 is a good value for a 2 cpu, 4gb ram server.
