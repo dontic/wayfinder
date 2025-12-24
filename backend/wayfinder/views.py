@@ -762,10 +762,12 @@ class ActivityHistoryView(APIView):
         log.debug(f"Querying data from {start_date} to {end_date}")
 
         # Query locations grouped by date
+        # Optimized: only select 'id' and 'time' fields before aggregation
         locations_by_date = (
             Location.objects.filter(
                 time__date__gte=start_date, time__date__lte=end_date
             )
+            .values("time")  # Only fetch time field for aggregation
             .annotate(date=TruncDate("time"))
             .values("date")
             .annotate(count=Count("id"))
@@ -773,20 +775,26 @@ class ActivityHistoryView(APIView):
         )
 
         # Query visits grouped by date
+        # Optimized: only select 'id' and 'time' fields before aggregation
         visits_by_date = (
             Visit.objects.filter(time__date__gte=start_date, time__date__lte=end_date)
+            .values("time")  # Only fetch time field for aggregation
             .annotate(date=TruncDate("time"))
             .values("date")
             .annotate(count=Count("id"))
             .order_by("date")
         )
 
-        # Convert to dictionaries for easy lookup
-        locations_dict = {item["date"]: item["count"] for item in locations_by_date}
-        visits_dict = {item["date"]: item["count"] for item in visits_by_date}
+        # Convert to lists first (more efficient than iterating querysets multiple times)
+        locations_list = list(locations_by_date)
+        visits_list = list(visits_by_date)
 
-        log.debug(f"Found data for {len(locations_dict)} days with locations")
-        log.debug(f"Found data for {len(visits_dict)} days with visits")
+        log.debug(f"Found data for {len(locations_list)} days with locations")
+        log.debug(f"Found data for {len(visits_list)} days with visits")
+
+        # Convert to dictionaries for easy lookup
+        locations_dict = {item["date"]: item["count"] for item in locations_list}
+        visits_dict = {item["date"]: item["count"] for item in visits_list}
 
         # Build the data array with all dates in the range
         data = []
