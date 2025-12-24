@@ -25,10 +25,10 @@ def get_optimal_bucket_size(start_date, end_date, max_points=MAX_POINTS):
     Returns a TimescaleDB-compatible interval string.
     """
     date_range_seconds = (end_date - start_date).total_seconds()
-    
+
     # Calculate bucket size in seconds to get approximately max_points
     bucket_seconds = date_range_seconds / max_points
-    
+
     # Round to sensible intervals
     if bucket_seconds <= 1:
         return "1 second"  # No aggregation needed
@@ -73,6 +73,8 @@ from drf_spectacular.types import OpenApiTypes
 from wayfinder.utils import (
     build_trips_feature_collection,
     build_visits_feature_collection,
+    find_last_complete_trip_boundary,
+    get_sorted_visit_midtimes,
 )
 
 # Local App
@@ -539,7 +541,9 @@ class TripPlotView(APIView):
 
         # Apply accuracy filter at database level (more efficient)
         if DESIRED_ACCURACY > 0:
-            full_range_query = full_range_query.filter(horizontal_accuracy__lte=DESIRED_ACCURACY)
+            full_range_query = full_range_query.filter(
+                horizontal_accuracy__lte=DESIRED_ACCURACY
+            )
 
         # Get total count for metadata (quick count query) - always for full range
         all_locations_count = full_range_query.count()
@@ -551,9 +555,9 @@ class TripPlotView(APIView):
             return Response({}, status=status.HTTP_404_NOT_FOUND)
 
         # Get non-stationary locations count for trip data (full range)
-        full_trip_query = full_range_query.exclude(motion__contains="stationary").exclude(
-            motion=[]
-        )
+        full_trip_query = full_range_query.exclude(
+            motion__contains="stationary"
+        ).exclude(motion=[])
         trip_locations_count = full_trip_query.count()
         log.debug(f"Found {trip_locations_count} trip locations")
 
@@ -566,28 +570,32 @@ class TripPlotView(APIView):
         # Calculate optimal bucket size based on data volume (skip if pagination with raw data)
         if NO_BUCKET:
             bucket_size = None
-            log.info(f"Time bucketing disabled, returning raw points (page_size={page_size})")
+            log.info(
+                f"Time bucketing disabled, returning raw points (page_size={page_size})"
+            )
         else:
             bucket_size = get_optimal_bucket_size(
                 start_date_parsed, end_date_parsed, page_size
             )
-            log.info(f"Using time bucket: {bucket_size} for {trip_locations_count} points")
+            log.info(
+                f"Using time bucket: {bucket_size} for {trip_locations_count} points"
+            )
 
         # Apply time_bucket aggregation for efficient data retrieval (if enabled)
         # Only fetch required fields: time, longitude, latitude
         if bucket_size:
-            trip_locations = trip_query.time_bucket(
-                "time", bucket_size
-            ).values(
-                'time', 'longitude', 'latitude'
-            ).order_by('time')[:page_size + 1]  # Fetch one extra to check for more
+            trip_locations = (
+                trip_query.time_bucket("time", bucket_size)
+                .values("time", "longitude", "latitude")
+                .order_by("time")[: page_size + 1]
+            )  # Fetch one extra to check for more
         else:
             # No bucketing - return raw points with pagination
-            trip_locations = trip_query.only(
-                'time', 'longitude', 'latitude'
-            ).values(
-                'time', 'longitude', 'latitude'
-            ).order_by('time')[:page_size + 1]  # Fetch one extra to check for more
+            trip_locations = trip_query.values(
+                "time", "longitude", "latitude"
+            ).order_by("time")[
+                : page_size + 1
+            ]  # Fetch one extra to check for more
 
         # Convert to list efficiently (avoid pandas overhead for simple case)
         trip_locations_list = list(trip_locations)
@@ -595,29 +603,25 @@ class TripPlotView(APIView):
         # Check if there are more results beyond this page
         has_more = len(trip_locations_list) > page_size
         if has_more:
-            trip_locations_list = trip_locations_list[:page_size]  # Remove the extra item
-
-        # Get the next cursor (timestamp of the last point)
-        next_cursor = None
-        if has_more and trip_locations_list:
-            last_point = trip_locations_list[-1]
-            next_cursor = last_point['time'].isoformat() if hasattr(last_point['time'], 'isoformat') else str(last_point['time'])
-        
-        # Convert to DataFrame only if needed for SEPARATE_TRIPS
-        trip_locations_df = pd.DataFrame(trip_locations_list) if trip_locations_list else pd.DataFrame()
+            trip_locations_list = trip_locations_list[
+                :page_size
+            ]  # Remove the extra item
 
         def get_visits_df():
             log.debug("Getting visits dataframe")
 
             # Only fetch required fields for visits
-            visits = Visit.objects.filter(
-                time__range=[start_date_str, end_date_str]
-            ).time_bucket("time", "1 day").only(
-                'time', 'longitude', 'latitude', 'arrival_date', 
-                'departure_date', 'horizontal_accuracy'
-            ).values(
-                'time', 'longitude', 'latitude', 'arrival_date',
-                'departure_date', 'horizontal_accuracy'
+            visits = (
+                Visit.objects.filter(time__range=[start_date_str, end_date_str])
+                .time_bucket("time", "1 day")
+                .values(
+                    "time",
+                    "longitude",
+                    "latitude",
+                    "arrival_date",
+                    "departure_date",
+                    "horizontal_accuracy",
+                )
             )
             visits_list = list(visits)
             visits_df = pd.DataFrame(visits_list) if visits_list else pd.DataFrame()
@@ -633,6 +637,38 @@ class TripPlotView(APIView):
         # Get visits if needed (for SHOW_VISITS or SEPARATE_TRIPS)
         if SHOW_VISITS or SEPARATE_TRIPS:
             visits_df = get_visits_df()
+
+        # Visit-aware pagination: when separating trips and there are more pages,
+        # truncate at trip boundaries to avoid splitting a single trip across pages
+        truncation_applied = False
+        if SEPARATE_TRIPS and has_more and not visits_df.empty and trip_locations_list:
+            midtimes = get_sorted_visit_midtimes(visits_df)
+            if midtimes:
+                original_count = len(trip_locations_list)
+                trip_locations_list, truncation_midtime = (
+                    find_last_complete_trip_boundary(trip_locations_list, midtimes)
+                )
+                if truncation_midtime is not None:
+                    truncation_applied = True
+                    log.debug(
+                        f"Visit-aware pagination: truncated from {original_count} to "
+                        f"{len(trip_locations_list)} points at midtime {truncation_midtime}"
+                    )
+
+        # Get the next cursor (timestamp of the last point)
+        next_cursor = None
+        if has_more and trip_locations_list:
+            last_point = trip_locations_list[-1]
+            next_cursor = (
+                last_point["time"].isoformat()
+                if hasattr(last_point["time"], "isoformat")
+                else str(last_point["time"])
+            )
+
+        # Convert to DataFrame only if needed for SEPARATE_TRIPS
+        trip_locations_df = (
+            pd.DataFrame(trip_locations_list) if trip_locations_list else pd.DataFrame()
+        )
 
         # Build GeoJSON feature collections
         trips_collection = build_trips_feature_collection(
@@ -661,13 +697,15 @@ class TripPlotView(APIView):
                 "separate_trips": SEPARATE_TRIPS,
                 "show_visits": SHOW_VISITS,
                 "bucket_size": bucket_size,
-                "downsampled": bucket_size is not None and trip_locations_count > page_size,
+                "downsampled": bucket_size is not None
+                and trip_locations_count > page_size,
             },
             "pagination": {
                 "page_size": page_size,
                 "has_more": has_more,
                 "next_cursor": next_cursor,
                 "is_first_page": cursor_datetime is None,
+                "trip_boundary_aligned": truncation_applied,
             },
         }
 
@@ -695,7 +733,9 @@ class ActivityHistoryView(APIView):
 
         # Query locations grouped by date
         locations_by_date = (
-            Location.objects.filter(time__date__gte=start_date, time__date__lte=end_date)
+            Location.objects.filter(
+                time__date__gte=start_date, time__date__lte=end_date
+            )
             .annotate(date=TruncDate("time"))
             .values("date")
             .annotate(count=Count("id"))
@@ -727,15 +767,17 @@ class ActivityHistoryView(APIView):
         while current_date <= end_date:
             location_count = locations_dict.get(current_date, 0)
             visit_count = visits_dict.get(current_date, 0)
-            
+
             total_locations += location_count
             total_visits += visit_count
 
-            data.append({
-                "date": current_date.isoformat(),
-                "location_count": location_count,
-                "visit_count": visit_count,
-            })
+            data.append(
+                {
+                    "date": current_date.isoformat(),
+                    "location_count": location_count,
+                    "visit_count": visit_count,
+                }
+            )
 
             current_date += timedelta(days=1)
 

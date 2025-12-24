@@ -22,6 +22,72 @@ def get_visit_midtime(visit):
     return datetime.fromtimestamp(mid_ts, tz=arrival.tzinfo)
 
 
+def get_sorted_visit_midtimes(visits_df):
+    """
+    Get a sorted list of visit midtimes from a visits DataFrame.
+    
+    Returns an empty list if visits_df is empty.
+    """
+    if visits_df.empty:
+        return []
+    
+    visits_df = visits_df.sort_values("arrival_date").copy()
+    visits_records = visits_df.to_dict('records')
+    return [get_visit_midtime(visit) for visit in visits_records]
+
+
+def find_last_complete_trip_boundary(locations_list, midtimes):
+    """
+    Find the index where we should truncate locations to avoid splitting a trip.
+    
+    When paginating with separate_trips=True, we want to ensure the last trip
+    in the current page is complete. A trip is "complete" if it ends at a visit
+    midtime (i.e., the next point would be >= a midtime).
+    
+    Args:
+        locations_list: List of location dicts with 'time' field, sorted by time
+        midtimes: Sorted list of visit midtimes (datetime objects)
+    
+    Returns:
+        tuple: (truncated_locations_list, truncation_midtime or None)
+        - truncated_locations_list: Locations up to (but not including) the last trip
+          that might continue beyond this page
+        - truncation_midtime: The midtime used for truncation, or None if no truncation
+    """
+    if not locations_list or not midtimes:
+        return locations_list, None
+    
+    last_point_time = locations_list[-1]['time']
+    
+    # Find the largest midtime that is <= last_point_time
+    # This is the start of the trip that the last point belongs to
+    trip_start_midtime = None
+    for m in reversed(midtimes):
+        if m <= last_point_time:
+            trip_start_midtime = m
+            break
+    
+    if trip_start_midtime is None:
+        # All locations are before the first visit midtime - this is one trip
+        # that might continue, so we can't safely include any of it
+        # But we need to return something, so check if there's a midtime we can use
+        if midtimes and midtimes[0] > last_point_time:
+            # The first midtime is after all our points - the entire page is one 
+            # potentially incomplete trip. We must include it to make progress.
+            return locations_list, None
+        return locations_list, None
+    
+    # Truncate: keep only locations with time < trip_start_midtime
+    truncated = [loc for loc in locations_list if loc['time'] < trip_start_midtime]
+    
+    # If truncation would remove ALL locations, don't truncate
+    # (this happens when all locations belong to one trip that's larger than page_size)
+    if not truncated:
+        return locations_list, None
+    
+    return truncated, trip_start_midtime
+
+
 def segment_trips_by_visits(locations_df, visits_df):
     """
     Segment trips based on visit midtimes.

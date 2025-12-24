@@ -396,6 +396,9 @@ class PaginationSerializer(serializers.Serializer):
         help_text="Cursor for the next page (ISO datetime). Use this in the 'cursor' query parameter."
     )
     is_first_page = serializers.BooleanField(help_text="Whether this is the first page")
+    trip_boundary_aligned = serializers.BooleanField(
+        help_text="Whether the page was truncated at a trip boundary to avoid splitting trips (only when separate_trips=true)"
+    )
 
 
 class TripPlotResponseSerializer(serializers.Serializer):
