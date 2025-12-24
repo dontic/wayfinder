@@ -9,7 +9,7 @@ echo "Collecting static files..."
 python manage.py collectstatic --no-input
 
 echo "Checking for existing superuser..."
-if python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); exit(User.objects.filter(is_superuser=True).exists())"
+if python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); exit(0 if User.objects.filter(is_superuser=True).exists() else 1)"
 then
     echo "Superuser already exists. Skipping creation."
 else
