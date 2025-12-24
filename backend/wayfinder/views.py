@@ -459,6 +459,13 @@ class TripPlotView(APIView):
                 description="Disable time bucketing to get raw points (use with pagination for full data)",
                 required=False,
             ),
+            OpenApiParameter(
+                name="trip_id_offset",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Starting number for trip IDs (default: 1). Use 'next_trip_offset' from previous response for sequential IDs across pages.",
+                required=False,
+            ),
         ],
         responses={
             200: TripPlotResponseSerializer,
@@ -533,6 +540,14 @@ class TripPlotView(APIView):
 
         # Whether to disable time bucketing (for pagination with raw data)
         NO_BUCKET = request.query_params.get("no_bucket", "").lower() == "true"
+
+        # Trip ID offset for sequential trip numbering across paginated requests
+        trip_id_offset = 1
+        if "trip_id_offset" in request.query_params:
+            try:
+                trip_id_offset = max(1, int(request.query_params.get("trip_id_offset")))
+            except ValueError:
+                trip_id_offset = 1
 
         # Build full range query for counting (always use full date range for counts)
         full_range_query = Location.objects.filter(
@@ -675,6 +690,7 @@ class TripPlotView(APIView):
             trip_locations_df,
             visits_df if SEPARATE_TRIPS else pd.DataFrame(),
             separate_trips=SEPARATE_TRIPS,
+            trip_id_offset=trip_id_offset,
         )
         visits_collection = (
             build_visits_feature_collection(visits_df)
@@ -706,6 +722,11 @@ class TripPlotView(APIView):
                 "next_cursor": next_cursor,
                 "is_first_page": cursor_datetime is None,
                 "trip_boundary_aligned": truncation_applied,
+                "next_trip_offset": (
+                    trip_id_offset + len(trips_collection["features"])
+                    if has_more
+                    else None
+                ),
             },
         }
 

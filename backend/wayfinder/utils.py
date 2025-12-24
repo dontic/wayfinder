@@ -88,9 +88,14 @@ def find_last_complete_trip_boundary(locations_list, midtimes):
     return truncated, trip_start_midtime
 
 
-def segment_trips_by_visits(locations_df, visits_df):
+def segment_trips_by_visits(locations_df, visits_df, trip_id_offset=1):
     """
     Segment trips based on visit midtimes.
+    
+    Args:
+        locations_df: DataFrame of locations with 'time' column
+        visits_df: DataFrame of visits with 'arrival_date' and 'departure_date' columns
+        trip_id_offset: Starting number for trip IDs (default 1, so first trip is trip_001)
     
     Returns a list of tuples: (trip_id, locations_df_segment)
     Each segment represents a trip between visit midpoints.
@@ -103,7 +108,7 @@ def segment_trips_by_visits(locations_df, visits_df):
     
     if visits_df.empty:
         # No visits, return single trip
-        return [("trip_001", locations_df)]
+        return [(f"trip_{trip_id_offset:03d}", locations_df)]
     
     visits_df = visits_df.sort_values("arrival_date").copy()
     
@@ -112,7 +117,7 @@ def segment_trips_by_visits(locations_df, visits_df):
     midtimes = [get_visit_midtime(visit) for visit in visits_records]
     
     segments = []
-    trip_counter = 1
+    trip_counter = trip_id_offset
     
     # First segment: before first visit midtime
     mask = locations_df["time"] < midtimes[0]
@@ -204,12 +209,19 @@ def visit_to_geojson_point(visit, visit_id):
     }
 
 
-def build_trips_feature_collection(locations_df, visits_df, separate_trips=False):
+def build_trips_feature_collection(locations_df, visits_df, separate_trips=False, trip_id_offset=1):
     """
     Build a GeoJSON FeatureCollection for trips.
     
-    If separate_trips is False, returns a single trip.
-    If separate_trips is True, segments trips by visit midtimes.
+    Args:
+        locations_df: DataFrame of locations
+        visits_df: DataFrame of visits
+        separate_trips: If False, returns a single trip. If True, segments trips by visit midtimes.
+        trip_id_offset: Starting number for trip IDs (default 1, so first trip is trip_001).
+                        Used for pagination to continue trip numbering across pages.
+    
+    Returns:
+        dict: GeoJSON FeatureCollection with trip features
     """
     features = []
     
@@ -218,12 +230,13 @@ def build_trips_feature_collection(locations_df, visits_df, separate_trips=False
     
     if not separate_trips or visits_df.empty:
         # Single trip
-        feature = locations_to_geojson_linestring("trip_001", locations_df)
+        trip_id = f"trip_{trip_id_offset:03d}"
+        feature = locations_to_geojson_linestring(trip_id, locations_df)
         if feature:
             features.append(feature)
     else:
         # Segment trips by visit midtimes
-        segments = segment_trips_by_visits(locations_df, visits_df)
+        segments = segment_trips_by_visits(locations_df, visits_df, trip_id_offset=trip_id_offset)
         for trip_id, segment_df in segments:
             feature = locations_to_geojson_linestring(trip_id, segment_df)
             if feature:

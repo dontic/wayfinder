@@ -399,6 +399,10 @@ class PaginationSerializer(serializers.Serializer):
     trip_boundary_aligned = serializers.BooleanField(
         help_text="Whether the page was truncated at a trip boundary to avoid splitting trips (only when separate_trips=true)"
     )
+    next_trip_offset = serializers.IntegerField(
+        allow_null=True,
+        help_text="Starting trip ID number for the next page. Use this in the 'trip_id_offset' query parameter to maintain sequential trip IDs across pages."
+    )
 
 
 class TripPlotResponseSerializer(serializers.Serializer):
