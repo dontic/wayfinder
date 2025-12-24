@@ -140,6 +140,7 @@ const Trips = () => {
       const endDate = toTimezoneAwareISO(endDateTime);
 
       let cursor: string | undefined = undefined;
+      let tripIdOffset: number | undefined = undefined;
       let accumulatedTrips: GeoJSONFeature[] = [];
       let accumulatedVisits: GeoJSONFeature[] = [];
       let latestResponse: TripPlotResponse | null = null;
@@ -160,7 +161,9 @@ const Trips = () => {
           separate_trips: separateTrips,
           desired_accuracy: desiredAccuracy,
           no_bucket: true, // Get raw points for pagination
-          cursor
+          cursor,
+          ...(separateTrips &&
+            tripIdOffset !== undefined && { trip_id_offset: tripIdOffset })
         });
 
         // Check if aborted after fetch
@@ -210,10 +213,14 @@ const Trips = () => {
           }
         });
 
-        // Get next cursor
+        // Get next cursor and trip offset for pagination
         cursor = response.pagination.has_more
           ? (response.pagination.next_cursor ?? undefined)
           : undefined;
+        tripIdOffset =
+          separateTrips && response.pagination.has_more
+            ? (response.pagination.next_trip_offset ?? undefined)
+            : undefined;
       } while (cursor);
 
       // Final update
