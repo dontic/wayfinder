@@ -320,7 +320,7 @@ class TokenView(APIView):
         return Response({"token": token.key})
 
 
-class VisitPlotView(APIView):
+class VisitsView(APIView):
     authentication_classes = [SessionAuthentication]
 
     @extend_schema(
@@ -398,7 +398,7 @@ class VisitPlotView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class TripPlotView(APIView):
+class TripsView(APIView):
     authentication_classes = [SessionAuthentication]
 
     @extend_schema(
