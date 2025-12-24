@@ -32,7 +32,7 @@ jobs:
         include:
           - name: wayfinder-backend
             context: ./backend
-            dockerfile: ./backend/docker/Dockerfile
+            dockerfile: ./backend/Dockerfile
             build-args: ""
           - name: wayfinder-frontend
             context: ./frontend
