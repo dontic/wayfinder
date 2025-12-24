@@ -14,10 +14,9 @@ then
     echo "Superuser already exists. Skipping creation."
 else
     echo "Creating superuser..."
-    python manage.py createsuperuser \
+    DJANGO_SUPERUSER_PASSWORD=admin python manage.py createsuperuser \
         --noinput \
         --username admin \
-        --password admin
         --email admin@example.com
     echo "Default user created successfully!"
 fi
