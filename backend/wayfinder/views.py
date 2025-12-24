@@ -362,13 +362,22 @@ class VisitsView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Get the visits in the date range
-        visits = Visit.objects.filter(time__range=[start_date, end_date]).time_bucket(
-            "time", "1 day"
+        # Get the visits in the date range - only fetch required fields
+        # No time_bucket needed for visits (they're already sparse, unlike locations)
+        visits_list = list(
+            Visit.objects.filter(time__range=[start_date, end_date])
+            .values(
+                "time",
+                "longitude",
+                "latitude",
+                "arrival_date",
+                "departure_date",
+                "horizontal_accuracy",
+            )
+            .order_by("time")
         )
 
-        visits_count = visits.count()
-
+        visits_count = len(visits_list)
         log.debug(f"Found {visits_count} visits in the date range")
 
         # If visits is empty, return 404
@@ -379,8 +388,8 @@ class VisitsView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Convert the visits to a pandas dataframe
-        visits_df = pd.DataFrame(list(visits.values()))
+        # Convert to DataFrame for GeoJSON building
+        visits_df = pd.DataFrame(visits_list)
 
         # Build GeoJSON feature collection
         visits_collection = build_visits_feature_collection(visits_df)
