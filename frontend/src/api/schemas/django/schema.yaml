@@ -396,8 +396,15 @@ paths:
     get:
       operationId: wayfinder_trips_plot_retrieve
       description: Endpoint for retrieving trip data as GeoJSON within a specified
-        date range.
+        date range. Supports pagination for large datasets.
       parameters:
+      - in: query
+        name: cursor
+        schema:
+          type: string
+          format: date-time
+        description: Pagination cursor (ISO datetime). Use the 'next_cursor' from
+          previous response to get next page.
       - in: query
         name: desired_accuracy
         schema:
@@ -410,6 +417,17 @@ paths:
           format: date-time
         description: End date for the date range filter (inclusive)
         required: true
+      - in: query
+        name: no_bucket
+        schema:
+          type: boolean
+        description: Disable time bucketing to get raw points (use with pagination
+          for full data)
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+        description: 'Number of points per page (default and max: 10000)'
       - in: query
         name: separate_trips
         schema:
@@ -615,6 +633,28 @@ components:
           type: string
       required:
       - password
+    Pagination:
+      type: object
+      properties:
+        page_size:
+          type: integer
+          description: Number of points per page
+        has_more:
+          type: boolean
+          description: Whether there are more pages available
+        next_cursor:
+          type: string
+          nullable: true
+          description: Cursor for the next page (ISO datetime). Use this in the 'cursor'
+            query parameter.
+        is_first_page:
+          type: boolean
+          description: Whether this is the first page
+      required:
+      - has_more
+      - is_first_page
+      - next_cursor
+      - page_size
     PasswordChange:
       type: object
       properties:
@@ -702,7 +742,10 @@ components:
           description: Total number of locations in range
         trip_locations:
           type: integer
-          description: Number of non-stationary locations
+          description: Number of non-stationary locations in current page
+        trip_locations_raw:
+          type: integer
+          description: Total number of trip locations without pagination
         visits_count:
           type: integer
           description: Number of visits in range
@@ -715,13 +758,24 @@ components:
         show_visits:
           type: boolean
           description: Whether visits are included
+        bucket_size:
+          type: string
+          nullable: true
+          description: Time bucket size used for downsampling (e.g., '1 hour', '15
+            minutes')
+        downsampled:
+          type: boolean
+          description: Whether the data was downsampled
       required:
+      - bucket_size
+      - downsampled
       - end_datetime
       - separate_trips
       - show_visits
       - start_datetime
       - total_locations
       - trip_locations
+      - trip_locations_raw
       - trips_count
       - visits_count
     TripPlotResponse:
@@ -739,8 +793,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/TripPlotMeta'
           description: Metadata about the query and results
+        pagination:
+          allOf:
+          - $ref: '#/components/schemas/Pagination'
+          description: Pagination information for navigating through large datasets
       required:
       - meta
+      - pagination
       - trips
       - visits
     UserDetails:

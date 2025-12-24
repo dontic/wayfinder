@@ -67,7 +67,7 @@ export const wayfinderTokenRetrieve = (
   );
 };
 /**
- * Endpoint for retrieving trip data as GeoJSON within a specified date range.
+ * Endpoint for retrieving trip data as GeoJSON within a specified date range. Supports pagination for large datasets.
  */
 export const wayfinderTripsPlotRetrieve = (
   params: WayfinderTripsPlotRetrieveParams,
