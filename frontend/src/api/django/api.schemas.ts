@@ -228,7 +228,7 @@ export type WayfinderTokenRetrieve200 = {
   token?: string;
 };
 
-export type WayfinderTripsPlotRetrieveParams = {
+export type WayfinderTripsRetrieveParams = {
   /**
    * Pagination cursor (ISO datetime). Use the 'next_cursor' from previous response to get next page.
    */
@@ -267,7 +267,7 @@ export type WayfinderTripsPlotRetrieveParams = {
   trip_id_offset?: number;
 };
 
-export type WayfinderVisitsPlotRetrieveParams = {
+export type WayfinderVisitsRetrieveParams = {
   /**
    * End date for the date range filter (inclusive)
    */

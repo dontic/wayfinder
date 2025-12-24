@@ -392,9 +392,9 @@ paths:
           description: ''
         '401':
           description: No response body
-  /wayfinder/trips/plot/:
+  /wayfinder/trips/:
     get:
-      operationId: wayfinder_trips_plot_retrieve
+      operationId: wayfinder_trips_retrieve
       description: Endpoint for retrieving trip data as GeoJSON within a specified
         date range. Supports pagination for large datasets.
       parameters:
@@ -474,9 +474,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
-  /wayfinder/visits/plot/:
+  /wayfinder/visits/:
     get:
-      operationId: wayfinder_visits_plot_retrieve
+      operationId: wayfinder_visits_retrieve
       description: Endpoint for retrieving visit data as GeoJSON within a specified
         date range.
       parameters:

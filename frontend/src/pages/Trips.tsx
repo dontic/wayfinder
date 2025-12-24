@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import SideBarLayout from "@/layouts/SideBarLayout";
 import TripsFilterCard from "@/components/trips/TripsFilterCard";
 import TripsMap from "@/components/trips/TripsMap";
-import { wayfinderTripsPlotRetrieve } from "@/api/django/wayfinder/wayfinder";
+import { wayfinderTripsRetrieve } from "@/api/django/wayfinder/wayfinder";
 import type {
   TripPlotResponse,
   GeoJSONFeature
@@ -154,7 +154,7 @@ const Trips = () => {
           return;
         }
 
-        const response = await wayfinderTripsPlotRetrieve({
+        const response = await wayfinderTripsRetrieve({
           start_datetime: startDate,
           end_datetime: endDate,
           show_visits: showVisits,

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import SideBarLayout from "@/layouts/SideBarLayout";
 import VisitsFilterCard from "@/components/visits/VisitsFilterCard";
 import VisitsHeatmap from "@/components/visits/VisitsHeatmap";
-import { wayfinderVisitsPlotRetrieve } from "@/api/django/wayfinder/wayfinder";
+import { wayfinderVisitsRetrieve } from "@/api/django/wayfinder/wayfinder";
 import type { VisitPlotResponse } from "@/api/django/api.schemas";
 import { toast } from "sonner";
 
@@ -53,7 +53,7 @@ const Visits = () => {
       const startDate = toTimezoneAwareISO(startDateTime);
       const endDate = toTimezoneAwareISO(endDateTime);
 
-      const response = await wayfinderVisitsPlotRetrieve({
+      const response = await wayfinderVisitsRetrieve({
         start_datetime: startDate,
         end_datetime: endDate
       });
