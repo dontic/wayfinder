@@ -4,9 +4,15 @@ import { MapboxOverlay } from "@deck.gl/mapbox";
 import { GeoJsonLayer } from "@deck.gl/layers";
 import type { TripPlotResponse } from "@/api/django/api.schemas";
 
+interface LoadingProgress {
+  loaded: number;
+  total: number;
+}
+
 interface TripsMapProps {
   data: TripPlotResponse | null;
   isLoading?: boolean;
+  loadingProgress?: LoadingProgress | null;
 }
 
 const INITIAL_VIEW_STATE = {
@@ -76,7 +82,7 @@ function DeckGLOverlay(props: { layers: any[] }) {
   return null;
 }
 
-const TripsMap = ({ data, isLoading }: TripsMapProps) => {
+const TripsMap = ({ data, isLoading, loadingProgress }: TripsMapProps) => {
   const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
 
   // Auto-fit to data bounds when data loads
@@ -201,11 +207,29 @@ const TripsMap = ({ data, isLoading }: TripsMapProps) => {
       </Map>
 
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm z-10">
-          <div className="bg-white p-4 rounded-lg shadow-lg">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+          <div className="bg-white/95 backdrop-blur px-4 py-3 rounded-lg shadow-lg">
             <div className="flex items-center gap-3">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-              <span className="text-sm font-medium">Loading trips...</span>
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent"></div>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">Loading trips...</span>
+                {loadingProgress && loadingProgress.total > 0 && (
+                  <div className="flex flex-col gap-1 mt-1">
+                    <span className="text-xs text-muted-foreground">
+                      {loadingProgress.loaded.toLocaleString()} /{" "}
+                      {loadingProgress.total.toLocaleString()} points
+                    </span>
+                    <div className="w-48 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary transition-all duration-300 ease-out"
+                        style={{
+                          width: `${Math.min(100, (loadingProgress.loaded / loadingProgress.total) * 100)}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
