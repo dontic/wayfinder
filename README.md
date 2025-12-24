@@ -17,44 +17,40 @@ Wayfinder has 3 main components:
 2. A **django REST backend** to process incoming and outgoing datta.
 3. A desktop and mobile friendly **React client** to visualize the location data.
 
-## Get Started
+## Getting Started
 
-### Pre-requisites
-
-You will need:
-
-- Basic Docker knowledge
-- A custom domain or dyndns service
-- A reverse proxy or tunnel (nginx, cloudflared...)
-
-### Docker compose and config file
-
-#### 1. Just copy the `docker-compose.yml` file in the root of this repository to a directory:
-
-```bash
-mkdir wayfinder && cd wayfinder
-```
-
-```bash
-curl -O https://raw.githubusercontent.com/dontic/wayfinder/main/docker-compose.yml
-```
+> ℹ️ Pre-requisites:
+> - Basic Docker knowledge
+> - A custom domain or dyndns service
+> - A reverse proxy or tunnel (nginx, cloudflared...)
 
 
-#### 2. Modify the environment variables of the backend service as needed:
+1. Copy the `docker-compose.yml` file in the root of this repository to a directory:
 
-```bash
-nano docker-compose.yml
-```
+    ```bash
+    mkdir wayfinder && cd wayfinder
+    ```
 
-##### 3. Run it!
+    ```bash
+    curl -O https://raw.githubusercontent.com/dontic/wayfinder/main/docker-compose.yml
+    ```
 
-```bash
-docker compose up -d
-```
 
-The web app should be accessible from `localhost:8080`
+2. Modify the environment variables of the backend service as needed:
 
-You can modify this port in `docker-compose.yml` under the `fronted` service.
+    ```bash
+    nano docker-compose.yml
+    ```
+
+3. Run it!
+
+    ```bash
+    docker compose up -d
+    ```
+
+4. Access the app at `localhost:8080`
+
+    You can modify this port in `docker-compose.yml` under the `fronted` service.
 
 ### Configuration
 
@@ -62,7 +58,7 @@ By default you will log in with user and password `admin:admin`.
 
 Then go to your user (bottom left) -> **settings**:
 
-1. Copy the Overland token (you can regenerate it when needed)
+1. Copy the **Overland token** (you can regenerate it when needed)
 
 2. Paste the Token 'as is' into the Overland App token field
 
@@ -70,7 +66,7 @@ Then go to your user (bottom left) -> **settings**:
 
 4. Back in Wayfinder settings modify your username and password if needed
 
-### Overland settings
+### Overland settings for Wayfinder
 
 These are the settings that work best with Wayfinder:
 
@@ -82,11 +78,25 @@ These are the settings that work best with Wayfinder:
 - **Loggin Mode**: `All Data`
 - **Locations per Batch**: Depends on where you host Wayfinder. Bigger servers will handle bigger batches easier. _I.e.: If you host on a raspberri pi keep it low to 50 or 100 per batch._
 
+## Updating Wayfinder
+
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+> ℹ️ **ALWAYS read the release notes!**
+> 
+> There are sometimes where breaking changes are introduced
+> 
+> In these cases, usually there is some kind of actions needed that will be specified in the release notes.
+
+
 ## Contributing
 
 Feel free to open issues, feature requests or pull requests to enhance Wayfinder!
 
-### How to develop locally
+### How to develop Wayfinder locally
 
 With either VSCode or Cursor:
 
