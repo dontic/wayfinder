@@ -1,6 +1,7 @@
 # views.py
 
 import logging
+import os
 import pandas as pd
 from datetime import datetime, timedelta
 from dateutil import parser as date_parser
@@ -16,7 +17,7 @@ from django.db.models.functions import TruncDate
 # ---------------------------------------------------------------------------- #
 
 # Maximum number of points to return in a single request
-MAX_POINTS = 10000
+MAX_POINTS = int(os.getenv("MAX_TRIP_POINTS", "10000"))
 
 
 def get_optimal_bucket_size(start_date, end_date, max_points=MAX_POINTS):
