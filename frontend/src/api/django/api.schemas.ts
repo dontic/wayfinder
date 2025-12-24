@@ -65,6 +65,27 @@ export interface Login {
   password: string;
 }
 
+export interface Pagination {
+  /** Number of points per page */
+  page_size: number;
+  /** Whether there are more pages available */
+  has_more: boolean;
+  /**
+   * Cursor for the next page (ISO datetime). Use this in the 'cursor' query parameter.
+   * @nullable
+   */
+  next_cursor: string | null;
+  /** Whether this is the first page */
+  is_first_page: boolean;
+  /** Whether the page was truncated at a trip boundary to avoid splitting trips (only when separate_trips=true) */
+  trip_boundary_aligned: boolean;
+  /**
+   * Starting trip ID number for the next page. Use this in the 'trip_id_offset' query parameter to maintain sequential trip IDs across pages.
+   * @nullable
+   */
+  next_trip_offset: number | null;
+}
+
 export interface PasswordChange {
   /** @maxLength 128 */
   new_password1: string;
@@ -120,8 +141,10 @@ export interface TripPlotMeta {
   end_datetime: string;
   /** Total number of locations in range */
   total_locations: number;
-  /** Number of non-stationary locations */
+  /** Number of non-stationary locations in current page */
   trip_locations: number;
+  /** Total number of trip locations without pagination */
+  trip_locations_raw: number;
   /** Number of visits in range */
   visits_count: number;
   /** Number of trip segments */
@@ -130,6 +153,13 @@ export interface TripPlotMeta {
   separate_trips: boolean;
   /** Whether visits are included */
   show_visits: boolean;
+  /**
+   * Time bucket size used for downsampling (e.g., '1 hour', '15 minutes')
+   * @nullable
+   */
+  bucket_size: string | null;
+  /** Whether the data was downsampled */
+  downsampled: boolean;
 }
 
 export interface TripPlotResponse {
@@ -139,6 +169,8 @@ export interface TripPlotResponse {
   visits: GeoJSONFeatureCollection;
   /** Metadata about the query and results */
   meta: TripPlotMeta;
+  /** Pagination information for navigating through large datasets */
+  pagination: Pagination;
 }
 
 /**
@@ -196,7 +228,11 @@ export type WayfinderTokenRetrieve200 = {
   token?: string;
 };
 
-export type WayfinderTripsPlotRetrieveParams = {
+export type WayfinderTripsRetrieveParams = {
+  /**
+   * Pagination cursor (ISO datetime). Use the 'next_cursor' from previous response to get next page.
+   */
+  cursor?: string;
   /**
    * Desired accuracy in meters. 0 means no filtering
    */
@@ -205,6 +241,14 @@ export type WayfinderTripsPlotRetrieveParams = {
    * End date for the date range filter (inclusive)
    */
   end_datetime: string;
+  /**
+   * Disable time bucketing to get raw points (use with pagination for full data)
+   */
+  no_bucket?: boolean;
+  /**
+   * Number of points per page (default and max: 10000)
+   */
+  page_size?: number;
   /**
    * Flag to indicate if trips should be segmented by visit midtimes
    */
@@ -217,9 +261,13 @@ export type WayfinderTripsPlotRetrieveParams = {
    * Start date for the date range filter (inclusive)
    */
   start_datetime: string;
+  /**
+   * Starting number for trip IDs (default: 1). Use 'next_trip_offset' from previous response for sequential IDs across pages.
+   */
+  trip_id_offset?: number;
 };
 
-export type WayfinderVisitsPlotRetrieveParams = {
+export type WayfinderVisitsRetrieveParams = {
   /**
    * End date for the date range filter (inclusive)
    */

@@ -375,11 +375,34 @@ class TripPlotMetaSerializer(serializers.Serializer):
     start_datetime = serializers.CharField(help_text="Start datetime of the query range")
     end_datetime = serializers.CharField(help_text="End datetime of the query range")
     total_locations = serializers.IntegerField(help_text="Total number of locations in range")
-    trip_locations = serializers.IntegerField(help_text="Number of non-stationary locations")
+    trip_locations = serializers.IntegerField(help_text="Number of non-stationary locations in current page")
+    trip_locations_raw = serializers.IntegerField(help_text="Total number of trip locations without pagination")
     visits_count = serializers.IntegerField(help_text="Number of visits in range")
     trips_count = serializers.IntegerField(help_text="Number of trip segments")
     separate_trips = serializers.BooleanField(help_text="Whether trips were separated by visits")
     show_visits = serializers.BooleanField(help_text="Whether visits are included")
+    bucket_size = serializers.CharField(
+        allow_null=True, 
+        help_text="Time bucket size used for downsampling (e.g., '1 hour', '15 minutes')"
+    )
+    downsampled = serializers.BooleanField(help_text="Whether the data was downsampled")
+
+
+class PaginationSerializer(serializers.Serializer):
+    page_size = serializers.IntegerField(help_text="Number of points per page")
+    has_more = serializers.BooleanField(help_text="Whether there are more pages available")
+    next_cursor = serializers.CharField(
+        allow_null=True,
+        help_text="Cursor for the next page (ISO datetime). Use this in the 'cursor' query parameter."
+    )
+    is_first_page = serializers.BooleanField(help_text="Whether this is the first page")
+    trip_boundary_aligned = serializers.BooleanField(
+        help_text="Whether the page was truncated at a trip boundary to avoid splitting trips (only when separate_trips=true)"
+    )
+    next_trip_offset = serializers.IntegerField(
+        allow_null=True,
+        help_text="Starting trip ID number for the next page. Use this in the 'trip_id_offset' query parameter to maintain sequential trip IDs across pages."
+    )
 
 
 class TripPlotResponseSerializer(serializers.Serializer):
@@ -390,6 +413,7 @@ class TripPlotResponseSerializer(serializers.Serializer):
         help_text="GeoJSON FeatureCollection containing visit Point features"
     )
     meta = TripPlotMetaSerializer(help_text="Metadata about the query and results")
+    pagination = PaginationSerializer(help_text="Pagination information for navigating through large datasets")
 
 
 # ------------------------- Activity History serializers --------------------- #

@@ -9,8 +9,8 @@ import type {
   WayfinderOverlandCreateBodyTwo,
   WayfinderTokenRetrieve200,
   WayfinderTokenRetrieveParams,
-  WayfinderTripsPlotRetrieveParams,
-  WayfinderVisitsPlotRetrieveParams,
+  WayfinderTripsRetrieveParams,
+  WayfinderVisitsRetrieveParams,
 } from "../api.schemas";
 
 import { customAxiosInstance } from "../../axios";
@@ -67,26 +67,26 @@ export const wayfinderTokenRetrieve = (
   );
 };
 /**
- * Endpoint for retrieving trip data as GeoJSON within a specified date range.
+ * Endpoint for retrieving trip data as GeoJSON within a specified date range. Supports pagination for large datasets.
  */
-export const wayfinderTripsPlotRetrieve = (
-  params: WayfinderTripsPlotRetrieveParams,
+export const wayfinderTripsRetrieve = (
+  params: WayfinderTripsRetrieveParams,
   options?: SecondParameter<typeof customAxiosInstance<TripPlotResponse>>,
 ) => {
   return customAxiosInstance<TripPlotResponse>(
-    { url: `/wayfinder/trips/plot/`, method: "GET", params },
+    { url: `/wayfinder/trips/`, method: "GET", params },
     options,
   );
 };
 /**
  * Endpoint for retrieving visit data as GeoJSON within a specified date range.
  */
-export const wayfinderVisitsPlotRetrieve = (
-  params: WayfinderVisitsPlotRetrieveParams,
+export const wayfinderVisitsRetrieve = (
+  params: WayfinderVisitsRetrieveParams,
   options?: SecondParameter<typeof customAxiosInstance<VisitPlotResponse>>,
 ) => {
   return customAxiosInstance<VisitPlotResponse>(
-    { url: `/wayfinder/visits/plot/`, method: "GET", params },
+    { url: `/wayfinder/visits/`, method: "GET", params },
     options,
   );
 };
@@ -99,9 +99,9 @@ export type WayfinderOverlandCreateResult = NonNullable<
 export type WayfinderTokenRetrieveResult = NonNullable<
   Awaited<ReturnType<typeof wayfinderTokenRetrieve>>
 >;
-export type WayfinderTripsPlotRetrieveResult = NonNullable<
-  Awaited<ReturnType<typeof wayfinderTripsPlotRetrieve>>
+export type WayfinderTripsRetrieveResult = NonNullable<
+  Awaited<ReturnType<typeof wayfinderTripsRetrieve>>
 >;
-export type WayfinderVisitsPlotRetrieveResult = NonNullable<
-  Awaited<ReturnType<typeof wayfinderVisitsPlotRetrieve>>
+export type WayfinderVisitsRetrieveResult = NonNullable<
+  Awaited<ReturnType<typeof wayfinderVisitsRetrieve>>
 >;

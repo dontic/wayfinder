@@ -102,6 +102,23 @@ const TripsFilterCard = ({ onSubmit }: TripsFilterCardProps) => {
         setStartDateTime(formatDateTimeLocal(start));
         setEndDateTime(formatDateTimeLocal(lastMonthEnd));
         return;
+      case "ytd":
+        start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+        break;
+      case "lastYear":
+        start = new Date(now.getFullYear() - 1, 0, 1, 0, 0, 0, 0);
+        const lastYearEnd = new Date(
+          now.getFullYear() - 1,
+          11,
+          31,
+          23,
+          59,
+          59,
+          999
+        );
+        setStartDateTime(formatDateTimeLocal(start));
+        setEndDateTime(formatDateTimeLocal(lastYearEnd));
+        return;
       default:
         return;
     }
@@ -199,6 +216,8 @@ const TripsFilterCard = ({ onSubmit }: TripsFilterCardProps) => {
                   <SelectItem value="past30d">Past 30 days</SelectItem>
                   <SelectItem value="thisMonth">This Month</SelectItem>
                   <SelectItem value="lastMonth">Last Month</SelectItem>
+                  <SelectItem value="ytd">Year to Date</SelectItem>
+                  <SelectItem value="lastYear">Last Year</SelectItem>
                 </SelectContent>
               </Select>
             </div>
