@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
-import { Map, useControl } from "react-map-gl/maplibre";
-import { MapboxOverlay } from "@deck.gl/mapbox";
+import { useEffect, useState } from "react";
+import { Map } from "react-map-gl/maplibre";
+import { DeckGL } from "@deck.gl/react";
 import { HeatmapLayer } from "@deck.gl/aggregation-layers";
 import type { VisitPlotResponse } from "@/api/django/api.schemas";
 
@@ -25,13 +25,6 @@ const INITIAL_VIEW_STATE = {
 // Dark map style for better heatmap visibility
 const DARK_MAP_STYLE =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
-
-// DeckGL overlay component
-function DeckGLOverlay(props: { layers: any[] }) {
-  const overlay = useControl(() => new MapboxOverlay({ interleaved: true }));
-  overlay.setProps(props);
-  return null;
-}
 
 const VisitsHeatmap = ({ data, isLoading }: VisitsHeatmapProps) => {
   const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
@@ -108,46 +101,42 @@ const VisitsHeatmap = ({ data, isLoading }: VisitsHeatmapProps) => {
     }
   }, [visitPoints]);
 
-  const layers = [
-    visitPoints.length > 0 &&
-      new HeatmapLayer({
-        id: "visits-heatmap",
-        data: visitPoints,
-        getPosition: (d: VisitPoint) => d.coordinates,
-        getWeight: (d: VisitPoint) => d.weight,
-        aggregation: "SUM",
-        radiusPixels: 15,
-        intensity: 1,
-        threshold: 0.1,
-        // Yellow to red color range for heatmap
-        colorRange: [
-          [255, 255, 178], // Light yellow
-          [254, 217, 118], // Yellow
-          [254, 178, 76], // Light orange
-          [253, 141, 60], // Orange
-          [240, 59, 32], // Red-orange
-          [189, 0, 38] // Dark red
+  const layers =
+    visitPoints.length > 0
+      ? [
+          new HeatmapLayer({
+            id: "visits-heatmap",
+            data: visitPoints,
+            getPosition: (d: VisitPoint) => d.coordinates,
+            getWeight: () => 1,
+            radiusPixels: 50,
+            intensity: 2,
+            threshold: 0.01
+          })
         ]
-      })
-  ].filter(Boolean);
-
-  const onMove = useCallback(
-    (evt: { viewState: typeof INITIAL_VIEW_STATE }) => {
-      setViewState(evt.viewState);
-    },
-    []
-  );
+      : [];
 
   return (
     <div className="relative w-full h-full">
-      <Map
-        {...viewState}
-        onMove={onMove}
-        mapStyle={DARK_MAP_STYLE}
-        style={{ width: "100%", height: "100%" }}
+      <DeckGL
+        initialViewState={viewState}
+        controller={true}
+        layers={layers}
+        style={{ position: "relative", width: "100%", height: "100%" }}
+        onViewStateChange={({ viewState: newViewState }) => {
+          if (newViewState && "longitude" in newViewState) {
+            setViewState({
+              longitude: newViewState.longitude,
+              latitude: newViewState.latitude,
+              zoom: newViewState.zoom,
+              pitch: newViewState.pitch || 0,
+              bearing: newViewState.bearing || 0
+            });
+          }
+        }}
       >
-        <DeckGLOverlay layers={layers} />
-      </Map>
+        <Map reuseMaps mapStyle={DARK_MAP_STYLE} />
+      </DeckGL>
 
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
