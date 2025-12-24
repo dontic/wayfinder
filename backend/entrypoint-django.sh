@@ -8,23 +8,18 @@ echo "Collecting static files..."
 
 python manage.py collectstatic --no-input
 
-# Check if superuser exists and create one if it doesn't
-if [ -n "$DEFAULT_USERNAME" ] && [ -n "$DEFAULT_PASSWORD" ]
+echo "Checking for existing superuser..."
+if python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); exit(User.objects.filter(is_superuser=True).exists())"
 then
-    echo "Checking for existing superuser..."
-    if python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); exit(User.objects.filter(is_superuser=True).exists())"
-    then
-        echo "Superuser already exists. Skipping creation."
-    else
-        echo "Creating superuser..."
-        python manage.py createsuperuser \
-            --noinput \
-            --username $DEFAULT_USERNAME \
-            --email $DEFAULT_USERNAME@example.com
-        echo "Default user created successfully!"
-    fi
+    echo "Superuser already exists. Skipping creation."
 else
-    echo "Default username and password environment variables not set. Skipping user creation."
+    echo "Creating superuser..."
+    python manage.py createsuperuser \
+        --noinput \
+        --username admin \
+        --password admin
+        --email admin@example.com
+    echo "Default user created successfully!"
 fi
 
 echo "Starting server..."
