@@ -1,0 +1,8 @@
+# docker-compose.yml
+name: frontend
+services:
+  app:
+    image: mydockerregistry.io/my-frontend-image:latest
+    ports:
+      - "3000:3000"
+    restart: unless-stopped

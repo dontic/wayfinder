@@ -1,67 +1,265 @@
-import numpy as np
-import colorsys
 import logging
+from datetime import datetime
 
 
-log = logging.getLogger("app_logger")
+log = logging.getLogger(__name__)
 
 
-def remove_locations_during_visit(locations_df, visits_df):
-    # Create a mask
-    mask = np.zeros(len(locations_df), dtype=bool)
+def get_visit_midtime(visit):
+    """Calculate the midpoint time of a visit."""
+    arrival = visit["arrival_date"]
+    departure = visit["departure_date"]
+    
+    # Handle pandas Timestamp or datetime objects
+    if hasattr(arrival, 'timestamp'):
+        arrival_ts = arrival.timestamp()
+        departure_ts = departure.timestamp()
+    else:
+        arrival_ts = arrival.timestamp()
+        departure_ts = departure.timestamp()
+    
+    mid_ts = (arrival_ts + departure_ts) / 2
+    return datetime.fromtimestamp(mid_ts, tz=arrival.tzinfo)
 
-    # Mark locations during visits
-    for _, visit in visits_df.iterrows():
-        mask |= (locations_df["time"] >= visit["arrival_date"]) & (
-            locations_df["time"] <= visit["departure_date"]
-        )
 
-    return locations_df[~mask]
+def get_sorted_visit_midtimes(visits_df):
+    """
+    Get a sorted list of visit midtimes from a visits DataFrame.
+    
+    Returns an empty list if visits_df is empty.
+    """
+    if visits_df.empty:
+        return []
+    
+    visits_df = visits_df.sort_values("arrival_date").copy()
+    visits_records = visits_df.to_dict('records')
+    return [get_visit_midtime(visit) for visit in visits_records]
 
 
-def color_trips(locations_df, visits_df):
+def find_last_complete_trip_boundary(locations_list, midtimes):
+    """
+    Find the index where we should truncate locations to avoid splitting a trip.
+    
+    When paginating with separate_trips=True, we want to ensure the last trip
+    in the current page is complete. A trip is "complete" if it ends at a visit
+    midtime (i.e., the next point would be >= a midtime).
+    
+    Args:
+        locations_list: List of location dicts with 'time' field, sorted by time
+        midtimes: Sorted list of visit midtimes (datetime objects)
+    
+    Returns:
+        tuple: (truncated_locations_list, truncation_midtime or None)
+        - truncated_locations_list: Locations up to (but not including) the last trip
+          that might continue beyond this page
+        - truncation_midtime: The midtime used for truncation, or None if no truncation
+    """
+    if not locations_list or not midtimes:
+        return locations_list, None
+    
+    last_point_time = locations_list[-1]['time']
+    
+    # Find the largest midtime that is <= last_point_time
+    # This is the start of the trip that the last point belongs to
+    trip_start_midtime = None
+    for m in reversed(midtimes):
+        if m <= last_point_time:
+            trip_start_midtime = m
+            break
+    
+    if trip_start_midtime is None:
+        # All locations are before the first visit midtime - this is one trip
+        # that might continue, so we can't safely include any of it
+        # But we need to return something, so check if there's a midtime we can use
+        if midtimes and midtimes[0] > last_point_time:
+            # The first midtime is after all our points - the entire page is one 
+            # potentially incomplete trip. We must include it to make progress.
+            return locations_list, None
+        return locations_list, None
+    
+    # Truncate: keep only locations with time < trip_start_midtime
+    truncated = [loc for loc in locations_list if loc['time'] < trip_start_midtime]
+    
+    # If truncation would remove ALL locations, don't truncate
+    # (this happens when all locations belong to one trip that's larger than page_size)
+    if not truncated:
+        return locations_list, None
+    
+    return truncated, trip_start_midtime
 
-    log.info("Coloring trips...")
 
+def segment_trips_by_visits(locations_df, visits_df, trip_id_offset=1):
+    """
+    Segment trips based on visit midtimes.
+    
+    Args:
+        locations_df: DataFrame of locations with 'time' column
+        visits_df: DataFrame of visits with 'arrival_date' and 'departure_date' columns
+        trip_id_offset: Starting number for trip IDs (default 1, so first trip is trip_001)
+    
+    Returns a list of tuples: (trip_id, locations_df_segment)
+    Each segment represents a trip between visit midpoints.
+    """
+    if locations_df.empty:
+        return []
+    
     # Sort dataframes by time
-    log.debug("Sorting dataframes by time...")
+    locations_df = locations_df.sort_values("time").copy()
+    
+    if visits_df.empty:
+        # No visits, return single trip
+        return [(f"trip_{trip_id_offset:03d}", locations_df)]
+    
+    visits_df = visits_df.sort_values("arrival_date").copy()
+    
+    # Calculate midtimes for all visits using to_dict (faster than iterrows)
+    visits_records = visits_df.to_dict('records')
+    midtimes = [get_visit_midtime(visit) for visit in visits_records]
+    
+    segments = []
+    trip_counter = trip_id_offset
+    
+    # First segment: before first visit midtime
+    mask = locations_df["time"] < midtimes[0]
+    if mask.any():
+        segments.append((f"trip_{trip_counter:03d}", locations_df[mask].copy()))
+        trip_counter += 1
+    
+    # Segments between visit midtimes
+    for i in range(len(midtimes) - 1):
+        mask = (locations_df["time"] >= midtimes[i]) & (locations_df["time"] < midtimes[i + 1])
+        if mask.any():
+            segments.append((f"trip_{trip_counter:03d}", locations_df[mask].copy()))
+            trip_counter += 1
+    
+    # Last segment: after last visit midtime
+    mask = locations_df["time"] >= midtimes[-1]
+    if mask.any():
+        segments.append((f"trip_{trip_counter:03d}", locations_df[mask].copy()))
+    
+    return segments
+
+
+def locations_to_geojson_linestring(trip_id, locations_df):
+    """
+    Convert a locations DataFrame to a GeoJSON LineString Feature.
+    """
+    if locations_df.empty:
+        return None
+    
+    # Sort by time
     locations_df = locations_df.sort_values("time")
-    visits_df = visits_df.sort_values("arrival_date")
-
-    # Initialize color column with NaN values
-    log.debug("Initializing color column with NaN values...")
-    locations_df["color"] = np.nan
-
-    # Calculate number of colors needed
-    log.debug("Calculating number of colors needed...")
-    n_colors = len(visits_df) + 1  # +1 for the initial trip segment
-
-    # Generate colors
-    log.debug("Generating colors...")
-    colors = [colorsys.hsv_to_rgb(i / n_colors, 0.8, 0.8) for i in range(n_colors)]
-    colors = [
-        "rgb({},{},{})".format(int(r * 255), int(g * 255), int(b * 255))
-        for r, g, b in colors
+    
+    # Convert to list of dicts once (much faster than iterrows)
+    locations_records = locations_df.to_dict('records')
+    
+    # Build coordinates array [lon, lat]
+    coordinates = [
+        [float(loc["longitude"]), float(loc["latitude"])]
+        for loc in locations_records
     ]
+    
+    # Build times array
+    times = [
+        loc["time"].isoformat() if hasattr(loc["time"], 'isoformat') else str(loc["time"])
+        for loc in locations_records
+    ]
+    
+    return {
+        "type": "Feature",
+        "id": trip_id,
+        "geometry": {
+            "type": "LineString",
+            "coordinates": coordinates
+        },
+        "properties": {
+            "trip_id": trip_id,
+            "times": times
+        }
+    }
 
-    # Color the initial segment (before the first visit)
-    log.debug("Coloring the initial segment...")
-    mask = locations_df["time"] < visits_df.iloc[0]["arrival_date"]
-    locations_df.loc[mask, "color"] = colors[0]
 
-    # Color segments between visits
-    log.debug("Coloring segments between visits...")
-    for i in range(len(visits_df) - 1):
-        departure = visits_df.iloc[i]["departure_date"]
-        next_arrival = visits_df.iloc[i + 1]["arrival_date"]
-        mask = (locations_df["time"] > departure) & (
-            locations_df["time"] < next_arrival
-        )
-        locations_df.loc[mask, "color"] = colors[i + 1]
+def visit_to_geojson_point(visit, visit_id):
+    """
+    Convert a visit row to a GeoJSON Point Feature.
+    """
+    arrival = visit["arrival_date"]
+    departure = visit["departure_date"]
+    
+    # Calculate duration in seconds
+    if hasattr(arrival, 'timestamp'):
+        duration_s = int(departure.timestamp() - arrival.timestamp())
+    else:
+        duration_s = int((departure - arrival).total_seconds())
+    
+    return {
+        "type": "Feature",
+        "id": visit_id,
+        "geometry": {
+            "type": "Point",
+            "coordinates": [float(visit["longitude"]), float(visit["latitude"])]
+        },
+        "properties": {
+            "visit_id": visit_id,
+            "start": arrival.isoformat() if hasattr(arrival, 'isoformat') else str(arrival),
+            "end": departure.isoformat() if hasattr(departure, 'isoformat') else str(departure),
+            "duration_s": duration_s,
+            "radius_m": int(visit.get("horizontal_accuracy", 0))
+        }
+    }
 
-    # Color the final segment (after the last visit)
-    log.debug("Coloring the final segment...")
-    mask = locations_df["time"] > visits_df.iloc[-1]["departure_date"]
-    locations_df.loc[mask, "color"] = colors[-1]
 
-    return locations_df
+def build_trips_feature_collection(locations_df, visits_df, separate_trips=False, trip_id_offset=1):
+    """
+    Build a GeoJSON FeatureCollection for trips.
+    
+    Args:
+        locations_df: DataFrame of locations
+        visits_df: DataFrame of visits
+        separate_trips: If False, returns a single trip. If True, segments trips by visit midtimes.
+        trip_id_offset: Starting number for trip IDs (default 1, so first trip is trip_001).
+                        Used for pagination to continue trip numbering across pages.
+    
+    Returns:
+        dict: GeoJSON FeatureCollection with trip features
+    """
+    features = []
+    
+    if locations_df.empty:
+        return {"type": "FeatureCollection", "features": features}
+    
+    if not separate_trips or visits_df.empty:
+        # Single trip
+        trip_id = f"trip_{trip_id_offset:03d}"
+        feature = locations_to_geojson_linestring(trip_id, locations_df)
+        if feature:
+            features.append(feature)
+    else:
+        # Segment trips by visit midtimes
+        segments = segment_trips_by_visits(locations_df, visits_df, trip_id_offset=trip_id_offset)
+        for trip_id, segment_df in segments:
+            feature = locations_to_geojson_linestring(trip_id, segment_df)
+            if feature:
+                features.append(feature)
+    
+    return {"type": "FeatureCollection", "features": features}
+
+
+def build_visits_feature_collection(visits_df):
+    """
+    Build a GeoJSON FeatureCollection for visits.
+    """
+    features = []
+    
+    if visits_df.empty:
+        return {"type": "FeatureCollection", "features": features}
+    
+    # Convert to list of dicts once (much faster than iterrows)
+    visits_records = visits_df.to_dict('records')
+    
+    for idx, visit in enumerate(visits_records, start=1):
+        visit_id = f"visit_{idx:03d}"
+        feature = visit_to_geojson_point(visit, visit_id)
+        features.append(feature)
+    
+    return {"type": "FeatureCollection", "features": features}

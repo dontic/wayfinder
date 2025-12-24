@@ -1,109 +1,52 @@
-// Login Page
-import { useEffect, useState } from "react";
+import { LoginForm } from "@/components/login/LoginForm";
+import type { LoginFormValues } from "@/components/login/LoginForm";
+import { toast } from "sonner";
+import RedirectIfAuthenticatedLayout from "@/layouts/RedirectIfAuthenticatedLayout";
+import { authLoginCreate } from "@/api/django/auth/auth";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-import LoginForm, { LoginFormValues } from "~/forms/LoginForm";
-
-import { Box, useToast, VStack } from "@chakra-ui/react";
-import CenteredLayout from "~/layouts/CenteredLayout";
-
-import {
-  authLoginCreate,
-  authUserRetrieve
-} from "~/api/endpoints/auth/auth.ts";
-import { AxiosError } from "axios";
-import { WayfinderLogo } from "~/components/Icons";
+import Icon from "@/assets/icon.svg?react";
 
 const Login = () => {
-  /* ---------------------------------- HOOKS --------------------------------- */
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const toast = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
-  // useEffect to check if user is already authenticated
-  useEffect(() => {
-    const controller = new AbortController();
-
-    // Function to check if user is authenticated
-    const checkAuth = async () => {
-      setIsLoading(true);
-      try {
-        // Fetch user data
-        await authUserRetrieve();
-
-        // The user is already logged in, redirect to home page
-        navigate("/");
-      } catch (error) {
-        // Don't do anything if the user is not authenticated
-        // The user will see the login page
-      }
-
-      setIsLoading(false);
-    };
-
-    checkAuth();
-
-    return () => {
-      // Cleanup
-      controller.abort();
-    };
-  }, []);
-
-  /* -------------------------------- FUNCTIONS ------------------------------- */
-  const handleLogin = async (data: LoginFormValues) => {
-    setIsSubmitting(true);
-
+  const handleLogin = async (formData: LoginFormValues) => {
     try {
-      // Fetch the login endpoint
-      await authLoginCreate(data);
-
-      // If successful, redirect to home page
+      setIsLoading(true);
+      await authLoginCreate({
+        username: formData.username,
+        password: formData.password
+      });
+      setIsLoading(false);
       navigate("/");
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        let errorDescription = error.response?.statusText;
-
-        toast({
-          title: "Login failed",
-          description: errorDescription,
-          status: "error",
-          duration: 5000,
-          isClosable: true
-        });
-      } else {
-        console.log("Other Error");
-      }
+    } catch (error: any) {
+      console.error("Error logging in", error);
+      toast.error("Invalid username or password");
     }
-    setIsSubmitting(false);
   };
 
-  /* --------------------------------- RENDER --------------------------------- */
-  if (isLoading) {
-    return <Box>Loading...</Box>;
-  }
-
   return (
-    <CenteredLayout>
-      <VStack spacing={6}>
-        {/* <Image maxH={"50px"} src={logoUrl} alt="Logo" /> */}
-        <WayfinderLogo h={"100px"} w={"300px"} />
-
-        <Box
-          minW={{ base: "", md: "sm" }}
-          rounded={"lg"}
-          boxShadow={"lg"}
-          px={12}
-          py={12}
-          bg={"white"}
-        >
-          <LoginForm
-            handleFormSubmit={handleLogin}
-            isSubmitting={isSubmitting}
-          />
-        </Box>
-      </VStack>
-    </CenteredLayout>
+    <RedirectIfAuthenticatedLayout>
+      <div className="bg-background flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
+        <div className="w-full max-w-sm">
+          <div className={"flex flex-col gap-6"}>
+            {/* Header */}
+            <div className="flex flex-col items-center gap-2">
+              <a
+                href="#"
+                className="flex flex-col items-center gap-2 font-medium"
+              >
+                <span className="sr-only">Wayfinder</span>
+              </a>
+              <Icon className="h-[50px]" />
+              <h1 className="text-xl font-bold">Welcome to Wayfinder</h1>
+            </div>
+            <LoginForm onSubmit={handleLogin} isSubmitting={isLoading} />
+          </div>
+        </div>
+      </div>
+    </RedirectIfAuthenticatedLayout>
   );
 };
 

@@ -17,27 +17,27 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
 from drf_spectacular.views import (
     SpectacularAPIView,
-    SpectacularRedocView,
     SpectacularSwaggerView,
 )
-from rest_framework.authtoken import views
 
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("wayfinder/", include("wayfinder.urls")),
-    path("schema/", SpectacularAPIView.as_view(), name="schema"),
-    path(
-        "schema/swagger-ui/",
-        SpectacularSwaggerView.as_view(url_name="schema"),
-        name="swagger-ui",
-    ),
-    path(
-        "schema/redoc/",
-        SpectacularRedocView.as_view(url_name="schema"),
-        name="redoc",
-    ),
     path("auth/", include("dj_rest_auth.urls")),
+    path("wayfinder/", include("wayfinder.urls")),
 ]
+
+
+# Show the drf-spectacular UI in debug mode
+if settings.DEBUG:
+    urlpatterns += [
+        path("admin/", admin.site.urls),
+        path("schema/", SpectacularAPIView.as_view(), name="schema"),
+        path(
+            "schema/swagger-ui/",
+            SpectacularSwaggerView.as_view(url_name="schema"),
+            name="swagger-ui",
+        ),
+    ]

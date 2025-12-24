@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-django = "*"
 python-dotenv = "*"
 django-timescaledb = "*"
 django-cors-headers = "*"
@@ -16,8 +15,8 @@ psycopg2 = "*"
 gunicorn = "*"
 whitenoise = "*"
 dj-rest-auth = "*"
-plotly = "*"
 pandas = "*"
+django = "*"
 
 [dev-packages]
 

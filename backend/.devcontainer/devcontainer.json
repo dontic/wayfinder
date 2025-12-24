@@ -1,6 +1,6 @@
 // devcontainer.json
 {
-    "name": "Django Devcontainer", // Name of the development container
+    "name": "Wayfinder Backend", // Name of the development container
     "shutdownAction": "stopCompose", // Container behavior on VSCode close: none, stopContainer (default for image or Dockerfile), and stopCompose (default for Docker Compose)
     "dockerComposeFile": "docker-compose.yml",
     "service": "django",
@@ -11,7 +11,6 @@
             "extensions": [
                 "ms-python.python",
                 "mhutchie.git-graph",
-                "GitHub.copilot",
                 "ms-python.black-formatter",
                 "stuart.unique-window-colors",
                 "stackbreak.comment-divider"

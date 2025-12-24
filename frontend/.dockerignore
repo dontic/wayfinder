@@ -1,4 +1,47 @@
-.devcontainer
-.env
-.env.template
+# Dependencies
 node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Version control
+.git
+.gitignore
+
+# Development
+.env
+.env.*
+*.local
+.vscode
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Build output
+dist
+build
+coverage
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Testing
+coverage
+*.lcov
+.nyc_output
+
+# Logs
+logs
+*.log
+
+# Cache directories
+.npm
+.eslintcache
+.stylelintcache

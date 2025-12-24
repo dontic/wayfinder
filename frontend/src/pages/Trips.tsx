@@ -1,378 +1,295 @@
-import {
-  Box,
-  Button,
-  Divider,
-  Flex,
-  Icon,
-  Input,
-  Select,
-  Spacer,
-  Text,
-  VStack
-} from "@chakra-ui/react";
-import { DatePicker } from "~/components/ChakraDatePicker";
-import "react-datepicker/dist/react-datepicker.css";
+import { useState, useEffect, useRef, useCallback } from "react";
+import SideBarLayout from "@/layouts/SideBarLayout";
+import TripsFilterCard from "@/components/trips/TripsFilterCard";
+import TripsMap from "@/components/trips/TripsMap";
+import { wayfinderTripsRetrieve } from "@/api/django/wayfinder/wayfinder";
+import type {
+  TripPlotResponse,
+  GeoJSONFeature
+} from "@/api/django/api.schemas";
+import { toast } from "sonner";
 
-import { useEffect, useState } from "react";
+// Helper function to format date for datetime-local input
+const formatDateTimeLocal = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
 
-import { ChevronUpIcon, ChevronDownIcon } from "@chakra-ui/icons";
+// Helper function to convert datetime-local string to timezone-aware ISO string
+const toTimezoneAwareISO = (datetimeLocal: string): string => {
+  // Create a date object from the datetime-local value
+  const date = new Date(datetimeLocal);
 
-import Plot from "react-plotly.js";
+  // Get timezone offset in minutes and convert to hours and minutes
+  const offset = -date.getTimezoneOffset();
+  const offsetHours = Math.floor(Math.abs(offset) / 60);
+  const offsetMinutes = Math.abs(offset) % 60;
+  const offsetSign = offset >= 0 ? "+" : "-";
 
-import { wayfinderTripsPlotRetrieve } from "~/api/endpoints/wayfinder/wayfinder";
-import {
-  VisitPlotlyData,
-  VisitPlotlyLayout
-} from "~/api/endpoints/api.schemas";
+  // Format: YYYY-MM-DDTHH:mm:ss±HH:MM
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${offsetSign}${String(offsetHours).padStart(2, "0")}:${String(offsetMinutes).padStart(2, "0")}`;
+};
+
+// Helper to merge line features by appending coordinates for same IDs
+const mergeLineFeatures = (
+  existing: GeoJSONFeature[],
+  incoming: GeoJSONFeature[]
+): GeoJSONFeature[] => {
+  if (existing.length === 0) return incoming;
+  if (incoming.length === 0) return existing;
+
+  // Create a map of existing features by their trip_id
+  const featureMap = new Map<string, GeoJSONFeature>();
+
+  // Add existing features to map
+  for (const feature of existing) {
+    const tripId = feature.properties?.trip_id as string | undefined;
+    if (tripId) {
+      featureMap.set(tripId, feature);
+    } else {
+      // Features without trip_id - use a unique key
+      featureMap.set(`_no_id_${featureMap.size}`, feature);
+    }
+  }
+
+  // Merge incoming features
+  for (const feature of incoming) {
+    const tripId = feature.properties?.trip_id as string | undefined;
+
+    if (tripId && featureMap.has(tripId)) {
+      // Merge coordinates with existing feature
+      const existingFeature = featureMap.get(tripId)!;
+      if (
+        existingFeature.geometry.type === "LineString" &&
+        feature.geometry.type === "LineString"
+      ) {
+        // Append coordinates from incoming feature
+        existingFeature.geometry.coordinates = [
+          ...(existingFeature.geometry.coordinates as number[][]),
+          ...(feature.geometry.coordinates as number[][])
+        ];
+      }
+    } else if (tripId) {
+      // New trip_id, add to map
+      featureMap.set(tripId, feature);
+    } else {
+      // No trip_id, add as new feature
+      featureMap.set(`_no_id_${featureMap.size}`, feature);
+    }
+  }
+
+  return Array.from(featureMap.values());
+};
+
+interface LoadingProgress {
+  loaded: number;
+  total: number;
+}
 
 const Trips = () => {
-  /* ---------------------------------- HOOKS --------------------------------- */
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [tripData, setTripData] = useState<TripPlotResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] =
+    useState<LoadingProgress | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  // State to manage the visibility of the date select
-  const [isDateSelectVisible, setIsDateSelectVisible] = useState<boolean>(true);
-  const [selectedQuickDateRange, setSelectedQuickDateRange] =
-    useState<string>("last_24h");
-
-  // Set initial date range to last 24h
-  const [startDate, setStartDate] = useState<Date>(
-    new Date(new Date().setDate(new Date().getDate() - 1))
-  );
-  const [endDate, setEndDate] = useState<Date>(new Date());
-  const [minDate, setMinDate] = useState<Date>(
-    new Date(new Date().setDate(new Date().getDate() - 1))
-  );
-  const [maxDate, setMaxDate] = useState<Date>(new Date());
-
-  // Set other parameters
-  const [showVisits, setShowVisits] = useState<boolean>(false);
-  const [showStationary, setShowStationary] = useState<boolean>(false);
-  const [colorTrips, setColorTrips] = useState<boolean>(false);
-  const [locationsDuringVisits, setLocationsDuringVisits] =
-    useState<boolean>(false);
-  const [desiredAccuracy, setDesiredAccuracy] = useState<number>(0);
-
-  // Plot states
-  const [plotData, setPlotData] = useState<VisitPlotlyData[]>([]);
-  const [plotLayout, setPlotLayout] = useState<VisitPlotlyLayout | {}>({});
-
-  // Plot revision state to force plotly to update
-  const [plotRevision, setPlotRevision] = useState<number>(0);
-
-  const getTripsPlot = async () => {
-    setIsLoading(true);
-
-    // Fetch the data
-    try {
-      // Fetch the trips plot endpoint
-      let newTripPlotlyData = await wayfinderTripsPlotRetrieve({
-        start_datetime: startDate.toISOString(),
-        end_datetime: endDate.toISOString(),
-        show_visits: showVisits,
-        show_stationary: showStationary,
-        color_trips: colorTrips,
-        locations_during_visits: locationsDuringVisits,
-        desired_accuracy: desiredAccuracy
-      });
-
-      // If no trips, set data to null
-      if (!newTripPlotlyData) {
-        setPlotData([]);
-        setPlotLayout({});
-        setIsLoading(false);
-        return;
-      }
-
-      const newLayout = {
-        ...newTripPlotlyData.layout,
-        datarevision: plotRevision + 1
-      };
-
-      setPlotData(newTripPlotlyData.data);
-      setPlotLayout(newLayout);
-      setPlotRevision(plotRevision + 1);
-      setIsLoading(false);
-      return newTripPlotlyData;
-    } catch (err) {
-      setIsLoading(false);
-      console.log(err);
+  // Cancel any ongoing fetch when component unmounts or new fetch starts
+  const cancelOngoingFetch = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
     }
-  };
-
-  // Function to handle quick date range changes
-  const onQuickDateRangeChange = (e: any) => {
-    const value = e.target.value;
-
-    if (!value) {
-      return;
-    }
-
-    setSelectedQuickDateRange(value);
-
-    let start_date = "";
-    let end_date = "";
-
-    switch (value) {
-      case "last_24h":
-        start_date = new Date(
-          new Date().setDate(new Date().getDate() - 1)
-        ).toISOString();
-        end_date = new Date().toISOString();
-        break;
-      case "today":
-        start_date = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
-        end_date = new Date().toISOString();
-        break;
-      case "yesterday":
-        start_date = new Date(
-          new Date(new Date().setDate(new Date().getDate() - 1)).setHours(
-            0,
-            0,
-            0,
-            0
-          )
-        ).toISOString();
-        end_date = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
-        break;
-      case "last_week":
-        start_date = new Date(
-          new Date().setDate(new Date().getDate() - 7)
-        ).toISOString();
-        end_date = new Date().toISOString();
-        break;
-      case "last_month":
-        start_date = new Date(
-          new Date().setDate(new Date().getDate() - 30)
-        ).toISOString();
-        end_date = new Date().toISOString();
-        break;
-      case "last_year":
-        start_date = new Date(
-          new Date().setDate(new Date().getDate() - 365)
-        ).toISOString();
-        end_date = new Date().toISOString();
-        break;
-      case "ytd":
-        start_date = new Date(new Date().getFullYear(), 0, 1).toISOString();
-        end_date = new Date().toISOString();
-        break;
-    }
-
-    // Set date states
-    setStartDate(new Date(start_date));
-    setEndDate(new Date(end_date));
-  };
-
-  // Function to handle datepicker changes
-  const onStartDatePickerChange = (date: Date) => {
-    // Set the start date
-    setStartDate(date);
-
-    // Clear the quick date range
-    setSelectedQuickDateRange("");
-  };
-
-  const onEndDatePickerChange = (date: Date) => {
-    // Set the end date
-    setEndDate(date);
-
-    // Clear the quick date range
-    setSelectedQuickDateRange("");
-  };
-
-  // On submit, fetch the data
-  const onSubmit = () => {
-    if (!startDate || !endDate) {
-      return;
-    }
-    getTripsPlot();
-  };
-
-  // Use effect for initial plot
-  useEffect(() => {
-    getTripsPlot();
   }, []);
 
-  // Use effect for date change
   useEffect(() => {
-    // Set the min date to the start date
-    setMinDate(startDate);
+    return () => cancelOngoingFetch();
+  }, [cancelOngoingFetch]);
 
-    // Set the max date to the end date
-    setMaxDate(endDate);
-  }, [startDate, endDate]);
+  const handleFilterSubmit = async (
+    startDateTime: string,
+    endDateTime: string,
+    showVisits: boolean,
+    separateTrips: boolean,
+    desiredAccuracy: number
+  ) => {
+    // Cancel any ongoing fetch
+    cancelOngoingFetch();
+
+    setIsLoading(true);
+    setLoadingProgress(null);
+    setTripData(null);
+
+    // Create new abort controller for this fetch
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    try {
+      // Convert datetime-local format to timezone-aware ISO string
+      const startDate = toTimezoneAwareISO(startDateTime);
+      const endDate = toTimezoneAwareISO(endDateTime);
+
+      let cursor: string | undefined = undefined;
+      let tripIdOffset: number | undefined = undefined;
+      let accumulatedTrips: GeoJSONFeature[] = [];
+      let accumulatedVisits: GeoJSONFeature[] = [];
+      let latestResponse: TripPlotResponse | null = null;
+      let totalPoints = 0;
+      let loadedPoints = 0;
+
+      // Fetch pages until no more data
+      do {
+        // Check if aborted
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        const response = await wayfinderTripsRetrieve({
+          start_datetime: startDate,
+          end_datetime: endDate,
+          show_visits: showVisits,
+          separate_trips: separateTrips,
+          desired_accuracy: desiredAccuracy,
+          no_bucket: true, // Get raw points for pagination
+          cursor,
+          ...(separateTrips &&
+            tripIdOffset !== undefined && { trip_id_offset: tripIdOffset })
+        });
+
+        // Check if aborted after fetch
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        latestResponse = response;
+
+        // On first page, get total from meta
+        if (!cursor) {
+          totalPoints = response.meta.trip_locations_raw;
+        }
+
+        // Accumulate trip features
+        if (response.trips?.features) {
+          accumulatedTrips = mergeLineFeatures(
+            accumulatedTrips,
+            response.trips.features
+          );
+        }
+
+        // Accumulate visit features (only on first page typically)
+        if (response.visits?.features && cursor === undefined) {
+          accumulatedVisits = response.visits.features;
+        }
+
+        // Update loaded points count
+        loadedPoints += response.meta.trip_locations;
+
+        // Update progress
+        setLoadingProgress({
+          loaded: loadedPoints,
+          total: totalPoints
+        });
+
+        // Update trip data progressively so the map shows data as it loads
+        setTripData({
+          ...response,
+          trips: {
+            type: "FeatureCollection",
+            features: accumulatedTrips
+          },
+          visits: {
+            type: "FeatureCollection",
+            features: accumulatedVisits
+          }
+        });
+
+        // Get next cursor and trip offset for pagination
+        cursor = response.pagination.has_more
+          ? (response.pagination.next_cursor ?? undefined)
+          : undefined;
+        tripIdOffset =
+          separateTrips && response.pagination.has_more
+            ? (response.pagination.next_trip_offset ?? undefined)
+            : undefined;
+      } while (cursor);
+
+      // Final update
+      if (latestResponse) {
+        const finalData: TripPlotResponse = {
+          ...latestResponse,
+          trips: {
+            type: "FeatureCollection",
+            features: accumulatedTrips
+          },
+          visits: {
+            type: "FeatureCollection",
+            features: accumulatedVisits
+          }
+        };
+
+        setTripData(finalData);
+
+        const totalFeatures =
+          accumulatedTrips.length + accumulatedVisits.length;
+
+        if (totalFeatures === 0) {
+          toast.info("No trips found for the selected date range");
+        } else {
+          toast.success(
+            `Loaded ${accumulatedTrips.length} trip${accumulatedTrips.length !== 1 ? "s" : ""} (${loadedPoints.toLocaleString()} points)`
+          );
+        }
+      }
+    } catch (error) {
+      // Ignore abort errors
+      if (error instanceof Error && error.name === "AbortError") {
+        return;
+      }
+      console.error("Error fetching trips:", error);
+      toast.error("Failed to load trips. Please try again.");
+      setTripData(null);
+    } finally {
+      setIsLoading(false);
+      setLoadingProgress(null);
+      abortControllerRef.current = null;
+    }
+  };
+
+  // Automatically query with default filters on component mount
+  useEffect(() => {
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    handleFilterSubmit(
+      formatDateTimeLocal(twentyFourHoursAgo),
+      formatDateTimeLocal(now),
+      false, // showVisits
+      false, // separateTrips
+      0 // desiredAccuracy
+    );
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
-    <Box w={"100%"} h={"100vh"} justifyContent="center" alignItems="center">
-      {/* Plot */}
-
-      <Plot
-        // @ts-ignore
-        data={plotData}
-        layout={plotLayout}
-        config={{ responsive: true, displayModeBar: false, scrollZoom: true }}
-        style={{ width: "100%", height: "100%" }}
-        revision={plotRevision}
-      />
-
-      {/* Date selector */}
-      <Box
-        position="fixed"
-        bottom="0"
-        left={{ md: "60", base: "0" }}
-        padding="4"
-        rounded={"md"}
-        boxShadow={"lg"}
-        bg="white"
-      >
-        {isDateSelectVisible ? (
-          <VStack>
-            <Text>Select Datetime Range</Text>
-            {/* Start datetime */}
-            <DatePicker
-              selected={startDate}
-              onChange={onStartDatePickerChange}
-              timeInputLabel="Time:"
-              dateFormat="MM/dd/yyyy h:mm aa"
-              showTimeInput
-              maxDate={maxDate}
-            />
-            <Text>to</Text>
-
-            {/* End datetime */}
-            <DatePicker
-              selected={endDate}
-              onChange={onEndDatePickerChange}
-              timeInputLabel="Time:"
-              dateFormat="MM/dd/yyyy h:mm aa"
-              showTimeInput
-              minDate={minDate}
-            />
-            <Divider />
-            <Text>OR</Text>
-
-            {/* Quick range selector */}
-            <Select
-              placeholder="Quick Date Range"
-              onChange={(e) => {
-                onQuickDateRangeChange(e);
-              }}
-              value={selectedQuickDateRange}
-            >
-              <option value="last_24h">Last 24h</option>
-              <option value="today">Today</option>
-              <option value="yesterday">Yesterday</option>
-              <option value="last_week">Last Week</option>
-              <option value="last_month">Last Month</option>
-              <option value="last_year">Last Year</option>
-              <option value="ytd">YTD</option>
-            </Select>
-            <Divider />
-            <Flex w={"100%"} alignItems={"center"}>
-              <Text>Show Visits</Text>
-              <Spacer />
-              <input
-                type="checkbox"
-                checked={showVisits}
-                onChange={(e) => {
-                  setShowVisits(e.target.checked);
-                }}
-              />
-            </Flex>
-            <Flex w={"100%"} alignItems={"center"}>
-              <Text>Show Stationary</Text>
-              <Spacer />
-              <input
-                type="checkbox"
-                checked={showStationary}
-                onChange={(e) => {
-                  setShowStationary(e.target.checked);
-                }}
-              />
-            </Flex>
-            <Flex w={"100%"} alignItems={"center"}>
-              <Text>Color Trips</Text>
-              <Spacer />
-              <input
-                type="checkbox"
-                checked={colorTrips}
-                onChange={(e) => {
-                  setColorTrips(e.target.checked);
-                }}
-              />
-            </Flex>
-            <Flex w={"100%"} alignItems={"center"}>
-              <Text>Locations during visits</Text>
-              <Spacer />
-              <input
-                type="checkbox"
-                checked={locationsDuringVisits}
-                onChange={(e) => {
-                  setLocationsDuringVisits(e.target.checked);
-                }}
-              />
-            </Flex>
-            <Flex w={"100%"} alignItems={"center"}>
-              <Text>Desired accuracy</Text>
-              <Spacer />
-              <Input
-                maxW={"75px"}
-                type="number"
-                value={desiredAccuracy}
-                onChange={(e) => {
-                  setDesiredAccuracy(parseInt(e.target.value));
-                }}
-              />
-            </Flex>
-            <Flex w={"100%"} alignItems={"center"}>
-              <Icon
-                border={"1px"}
-                borderColor={"gray.300"}
-                rounded={"md"}
-                boxSize={6}
-                as={ChevronUpIcon}
-                _hover={{
-                  cursor: "pointer",
-                  color: "blue",
-                  transform: "rotate(180deg)"
-                }}
-                onClick={() => {
-                  setIsDateSelectVisible(false);
-                }}
-              />
-
-              <Spacer />
-
-              <Button
-                colorScheme="blue"
-                onClick={() => {
-                  onSubmit();
-                }}
-                isLoading={isLoading}
-              >
-                Submit
-              </Button>
-
-              <Spacer />
-            </Flex>
-          </VStack>
-        ) : (
-          <Icon
-            rounded={"md"}
-            boxSize={6}
-            as={ChevronDownIcon}
-            _hover={{
-              cursor: "pointer",
-              color: "blue",
-              transform: "rotate(180deg)"
-            }}
-            onClick={() => {
-              setIsDateSelectVisible(true);
-            }}
-          />
-        )}
-      </Box>
-    </Box>
+    <SideBarLayout title="Trips" defaultOpen={false}>
+      <div className="relative flex flex-col h-full w-full">
+        <TripsMap
+          data={tripData}
+          isLoading={isLoading}
+          loadingProgress={loadingProgress}
+        />
+        <TripsFilterCard onSubmit={handleFilterSubmit} />
+      </div>
+    </SideBarLayout>
   );
 };
 

@@ -2,13 +2,17 @@ services:
   timescaledb:
     restart: unless-stopped
     image: timescale/timescaledb-ha:pg16
-    ports:
-      - "5432:5432"
+    # Uncomment this to expose the database to the host so it can be accessed externally
+    # ports:
+    #   - "5432:5432"
     environment:
       POSTGRES_USER: django
       POSTGRES_PASSWORD: django
+      POSTGRES_DB: django
+    # Map the volume to the host so it persists after the container is stopped
+    # This also allows for an easier migration to another host
     volumes:
-      - timescaledb_data:/home/postgres/pgdata/data
+      - ./postgresdata:/home/postgres/pgdata/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U django -d django"]
       interval: 10s
@@ -21,8 +25,28 @@ services:
     image: dontic/wayfinder-backend:latest
     ports:
       - "8000:8000"
-    env_file:
-      - config.env
+    environment:
+      # Base URL of the application
+      - BASE_URL="https://wayfinder.mydomain.com"
+
+      # The secret key for the Django application.
+      # This is used to sign the session cookies.
+      # Generate yours at https://djecrety.ir/
+      - SECRET_KEY="super_secret_key"
+
+      # Location points in the trips map are queried in chuncks of this size.
+      # Depending on your server's resources, you may want to increase or decrease this number.
+      # For reference, 10,000 is a good value for a 2 cpu, 4gb ram server.
+      - MAX_TRIP_POINTS=10000
+
+      # Django environment variables
+      # Postgres environment variables
+      # Uncomment these to use your own timescaledb instance:
+      # - POSTGRES_USER=django
+      # - POSTGRES_PASSWORD=django
+      # - POSTGRES_DB=django
+      # - POSTGRES_HOST=timescaledb
+      # - POSTGRES_PORT=5432
     depends_on:
       timescaledb:
         condition: service_healthy
@@ -34,6 +58,3 @@ services:
       - "8080:80"
     depends_on:
       - backend
-
-volumes:
-  timescaledb_data:

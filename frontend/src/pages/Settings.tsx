@@ -1,38 +1,37 @@
-import { Box, Text, VStack } from "@chakra-ui/react";
-import OverlandToken from "~/components/OverlandToken";
-import PasswordChange from "~/components/PasswordChange";
-import UsernameChange from "~/components/UsernameChange";
+import SideBarLayout from "@/layouts/SideBarLayout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUserStore } from "@/stores/UserStore";
+import ProfileInfo from "@/components/settings/ProfileInfo";
+import PasswordChange from "@/components/settings/PasswordChange";
+import UsernameChange from "@/components/settings/UsernameChange";
+import OverlandToken from "@/components/settings/OverlandToken";
 
 const Settings = () => {
-  /* --------------------------------- RENDER --------------------------------- */
+  const { user } = useUserStore();
+
   return (
-    <Box w="100%" h={"100vh"} overflowY={"scroll"}>
-      <VStack spacing={10} py={{ base: 20, md: 10 }}>
-        {/* Overland Token */}
-        <Box bg={"white"} rounded={"md"} boxShadow={"md"} p={4}>
-          <Text mb={3} fontSize="xl" fontWeight="bold" textAlign={"center"}>
-            Overland Token
-          </Text>
-          <OverlandToken />
-        </Box>
-
-        {/* Change Password */}
-        <Box bg={"white"} rounded={"md"} boxShadow={"md"} p={4}>
-          <Text mb={3} fontSize="xl" fontWeight="bold" textAlign={"center"}>
-            Change Password
-          </Text>
-          <PasswordChange />
-        </Box>
-
-        {/* Change Username */}
-        <Box bg={"white"} rounded={"md"} boxShadow={"md"} p={4}>
-          <Text mb={3} fontSize="xl" fontWeight="bold" textAlign={"center"}>
-            Change Username
-          </Text>
-          <UsernameChange />
-        </Box>
-      </VStack>
-    </Box>
+    <SideBarLayout title="Settings">
+      <div className="flex w-full justify-center overflow-y-auto">
+        <div id="settings-container" className="flex flex-col gap-6 py-6">
+          <Tabs defaultValue="user" className="w-full">
+            <TabsList className="grid w-full md:min-w-md max-w-md grid-cols-2 gap-4">
+              <TabsTrigger value="user">User</TabsTrigger>
+              {user?.first_name !== "user" && (
+                <TabsTrigger value="team">Overland</TabsTrigger>
+              )}
+            </TabsList>
+            <TabsContent value="user" className="mt-6 space-y-6">
+              <ProfileInfo />
+              <UsernameChange />
+              <PasswordChange />
+            </TabsContent>
+            <TabsContent value="team" className="mt-6 space-y-6">
+              <OverlandToken />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </SideBarLayout>
   );
 };
 

@@ -13,9 +13,9 @@ Wayfinder is a self-hosted web app for [Overland-iOS](https://github.com/aaronpk
 
 Wayfinder has 3 main components:
 
-1. A TimescaleDB database to store the location data received by Overland and other relevant data to make the App work
-2. A django REST backend to process incoming and outgoing datta.
-3. A desktop and mobile friendly React client to visualize the location data.
+1. A **TimescaleDB** database to store the location data received by Overland and other relevant data to make the App work
+2. A **django REST backend** to process incoming and outgoing datta.
+3. A desktop and mobile friendly **React client** to visualize the location data.
 
 ## Get Started
 
@@ -25,11 +25,11 @@ You will need:
 
 - Basic Docker knowledge
 - A custom domain or dyndns service
-- A reverse proxy (nginx, Traefic...)
+- A reverse proxy or tunnel (nginx, cloudflared...)
 
 ### Docker compose and config file
 
-#### 1. Just copy the `docker-compose.yml` and the `config.env` files in the root of this repository to a directory (you can also copy these files manually):
+#### 1. Just copy the `docker-compose.yml` file in the root of this repository to a directory:
 
 ```bash
 mkdir wayfinder && cd wayfinder
@@ -39,17 +39,14 @@ mkdir wayfinder && cd wayfinder
 curl -O https://raw.githubusercontent.com/dontic/wayfinder/main/docker-compose.yml
 ```
 
-```bash
-curl -O https://raw.githubusercontent.com/dontic/wayfinder/main/config.env
-```
 
-#### 2. Modify the config file as needed:
+#### 2. Modify the environment variables of the backend service as needed:
 
 ```bash
-nano config.env
+nano docker-compose.yml
 ```
 
-##### 3. Spin the containers!
+##### 3. Run it!
 
 ```bash
 docker compose up -d
@@ -57,15 +54,15 @@ docker compose up -d
 
 The web app should be accessible from `localhost:8080`
 
-You can modify this port in the docker compose file under the `fronted` service.
+You can modify this port in `docker-compose.yml` under the `fronted` service.
 
 ### Configuration
 
-By default you will log in with user and password `admin:admin`, unless you uave modified it in `config.env`.
+By default you will log in with user and password `admin:admin`.
 
-Then go to settings:
+Then go to your user (bottom left) -> **settings**:
 
-1. Copy the Overland token (you can regenerate it once in a while to increase security)
+1. Copy the Overland token (you can regenerate it when needed)
 
 2. Paste the Token 'as is' into the Overland App token field
 
@@ -88,3 +85,15 @@ These are the settings that work best with Wayfinder:
 ## Contributing
 
 Feel free to open issues, feature requests or pull requests to enhance Wayfinder!
+
+### How to develop locally
+
+With either VSCode or Cursor:
+
+1. Open the `/backend` and `/frontend` directories in separate windows
+
+2. Make sure you have the dev containers extension installed
+
+3. In each window: `F1` -> `Dev Containers: Reopen in container`
+
+4. Read the `README.md` on both the frontend and the backend to see how to configure and start them.

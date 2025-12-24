@@ -1,19 +1,64 @@
 # views.py
 
 import logging
-import json
+import os
 import pandas as pd
+from datetime import datetime, timedelta
+from dateutil import parser as date_parser
 
 # Django
 from django.db import transaction
-from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Count
+from django.db.models.functions import TruncDate
+
+
+# ---------------------------------------------------------------------------- #
+#                              PERFORMANCE SETTINGS                            #
+# ---------------------------------------------------------------------------- #
+
+# Maximum number of points to return in a single request
+MAX_POINTS = int(os.getenv("MAX_TRIP_POINTS", "10000"))
+
+
+def get_optimal_bucket_size(start_date, end_date, max_points=MAX_POINTS):
+    """
+    Calculate optimal time bucket size to return approximately max_points.
+    Returns a TimescaleDB-compatible interval string.
+    """
+    date_range_seconds = (end_date - start_date).total_seconds()
+
+    # Calculate bucket size in seconds to get approximately max_points
+    bucket_seconds = date_range_seconds / max_points
+
+    # Round to sensible intervals
+    if bucket_seconds <= 1:
+        return "1 second"  # No aggregation needed
+    elif bucket_seconds < 60:
+        return f"{max(1, int(bucket_seconds))} seconds"
+    elif bucket_seconds < 300:
+        return "1 minute"
+    elif bucket_seconds < 900:
+        return "5 minutes"
+    elif bucket_seconds < 1800:
+        return "15 minutes"
+    elif bucket_seconds < 3600:
+        return "30 minutes"
+    elif bucket_seconds < 7200:
+        return "1 hour"
+    elif bucket_seconds < 21600:
+        return "3 hours"
+    elif bucket_seconds < 43200:
+        return "6 hours"
+    elif bucket_seconds < 86400:
+        return "12 hours"
+    else:
+        return "1 day"
 
 
 # REST Framework
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import viewsets, mixins
 from rest_framework.authentication import (
     SessionAuthentication,
     TokenAuthentication,
@@ -26,26 +71,26 @@ from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParamete
 from drf_spectacular.types import OpenApiTypes
 
 # Utils
-from wayfinder.utils import color_trips, remove_locations_during_visit
+from wayfinder.utils import (
+    build_trips_feature_collection,
+    build_visits_feature_collection,
+    find_last_complete_trip_boundary,
+    get_sorted_visit_midtimes,
+)
 
 # Local App
 from .models import Location, Visit
 from .serializers import (
+    ActivityHistoryResponseSerializer,
     ErrorResponseSerializer,
     LocationSerializer,
-    VisitPlotlyResponseSerializer,
+    TripPlotResponseSerializer,
+    VisitPlotResponseSerializer,
     VisitSerializer,
 )
-from .filters import LocationFilterSet, VisitFilterSet
-
-# Plotly
-# Plotly imports
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.utils import PlotlyJSONEncoder
 
 
-log = logging.getLogger("app_logger")
+log = logging.getLogger(__name__)
 
 
 # Subclassing TokenAuthentication to accept Bearer instead of Token as the keyword
@@ -226,32 +271,6 @@ class OverlandView(APIView):
         return Response({"result": "ok"}, status=status.HTTP_200_OK)
 
 
-# This viewset is not necessary
-class LocationViewSet(
-    viewsets.GenericViewSet,
-    mixins.ListModelMixin,
-):
-    authentication_classes = [BearerTokenAuthentication]
-
-    queryset = Location.objects.all()
-    serializer_class = LocationSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = LocationFilterSet
-
-
-# This viewset is not necessary
-class VisitViewSet(
-    viewsets.GenericViewSet,
-    mixins.ListModelMixin,
-):
-    authentication_classes = [SessionAuthentication]
-
-    queryset = Visit.objects.all()
-    serializer_class = VisitSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = VisitFilterSet
-
-
 class TokenView(APIView):
     authentication_classes = [SessionAuthentication]
 
@@ -302,7 +321,7 @@ class TokenView(APIView):
         return Response({"token": token.key})
 
 
-class VisitPlotView(APIView):
+class VisitsView(APIView):
     authentication_classes = [SessionAuthentication]
 
     @extend_schema(
@@ -322,11 +341,15 @@ class VisitPlotView(APIView):
                 required=True,
             ),
         ],
-        responses={200: VisitPlotlyResponseSerializer, 400: ErrorResponseSerializer},
-        description="Endpoint for generating a density map of visits within a specified date range.",
+        responses={
+            200: VisitPlotResponseSerializer,
+            400: ErrorResponseSerializer,
+            404: ErrorResponseSerializer,
+        },
+        description="Endpoint for retrieving visit data as GeoJSON within a specified date range.",
     )
     def get(self, request):
-        log.debug("Received request to plot visits")
+        log.debug("Received request to get visits")
 
         # The request should always receive a date range
         # Otherwise, return an error
@@ -340,46 +363,52 @@ class VisitPlotView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Get the visits in the date range
-        visits = Visit.objects.filter(time__range=[start_date, end_date]).time_bucket(
-            "time", "1 day"
+        # Get the visits in the date range - only fetch required fields
+        # No time_bucket needed for visits (they're already sparse, unlike locations)
+        visits_list = list(
+            Visit.objects.filter(time__range=[start_date, end_date])
+            .values(
+                "time",
+                "longitude",
+                "latitude",
+                "arrival_date",
+                "departure_date",
+                "horizontal_accuracy",
+            )
+            .order_by("time")
         )
 
-        visits_count = visits.count()
-
+        visits_count = len(visits_list)
         log.debug(f"Found {visits_count} visits in the date range")
 
-        # If visists is empty, return an empty response
+        # If visits is empty, return 404
         if visits_count == 0:
             log.debug("No visits found in the date range")
-            return Response({}, status=status.HTTP_200_OK)
+            return Response(
+                {"message": "No visits found in the selected date range"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        # Convert the visits to a pandas dataframe
-        visits = pd.DataFrame(list(visits.values()))
+        # Convert to DataFrame for GeoJSON building
+        visits_df = pd.DataFrame(visits_list)
 
-        # Plot the visits
-        fig = px.density_mapbox(
-            visits,
-            lat="latitude",
-            lon="longitude",
-            z="duration",
-            hover_data=["arrival_date", "departure_date"],
-            zoom=1,
-        )
-        fig.update_layout(mapbox_style="open-street-map")
-        fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-        fig.update_layout(coloraxis_showscale=False)
+        # Build GeoJSON feature collection
+        visits_collection = build_visits_feature_collection(visits_df)
 
-        graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
+        # Build response
+        response_data = {
+            "visits": visits_collection,
+            "meta": {
+                "start_datetime": start_date,
+                "end_datetime": end_date,
+                "visits_count": visits_count,
+            },
+        }
 
-        # GraphJSON is a json string, so you have to parse it into a json object
-        # in order to return it
-        parsed_graphJSON = json.loads(graphJSON)
-
-        return Response(parsed_graphJSON, status=status.HTTP_200_OK)
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
-class TripPlotView(APIView):
+class TripsView(APIView):
     authentication_classes = [SessionAuthentication]
 
     @extend_schema(
@@ -402,28 +431,14 @@ class TripPlotView(APIView):
                 name="show_visits",
                 type=OpenApiTypes.BOOL,
                 location=OpenApiParameter.QUERY,
-                description="Flag to indicate if visits should be shown on the plot",
+                description="Flag to indicate if visits should be included in the response",
                 required=False,
             ),
             OpenApiParameter(
-                name="show_stationary",
+                name="separate_trips",
                 type=OpenApiTypes.BOOL,
                 location=OpenApiParameter.QUERY,
-                description="Flag to indicate if stationary locations should be shown on the plot",
-                required=False,
-            ),
-            OpenApiParameter(
-                name="color_trips",
-                type=OpenApiTypes.BOOL,
-                location=OpenApiParameter.QUERY,
-                description="Flag to indicate if trips should be colored",
-                required=False,
-            ),
-            OpenApiParameter(
-                name="locations_during_visits",
-                type=OpenApiTypes.BOOL,
-                location=OpenApiParameter.QUERY,
-                description="Flag to indicate if locations during visits should be removed",
+                description="Flag to indicate if trips should be segmented by visit midtimes",
                 required=False,
             ),
             OpenApiParameter(
@@ -433,26 +448,56 @@ class TripPlotView(APIView):
                 description="Desired accuracy in meters. 0 means no filtering",
                 required=False,
             ),
+            OpenApiParameter(
+                name="cursor",
+                type=OpenApiTypes.DATETIME,
+                location=OpenApiParameter.QUERY,
+                description="Pagination cursor (ISO datetime). Use the 'next_cursor' from previous response to get next page.",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="page_size",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description=f"Number of points per page (default and max: {MAX_POINTS})",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="no_bucket",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description="Disable time bucketing to get raw points (use with pagination for full data)",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="trip_id_offset",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Starting number for trip IDs (default: 1). Use 'next_trip_offset' from previous response for sequential IDs across pages.",
+                required=False,
+            ),
         ],
-        responses={200: VisitPlotlyResponseSerializer, 400: ErrorResponseSerializer},
-        description="Endpoint for generating a path plot of trips within a specified date range.",
+        responses={
+            200: TripPlotResponseSerializer,
+            400: ErrorResponseSerializer,
+            404: ErrorResponseSerializer,
+        },
+        description="Endpoint for retrieving trip data as GeoJSON within a specified date range. Supports pagination for large datasets.",
     )
     def get(self, request):
 
-        SHOW_STATIONARY = False
         SHOW_VISITS = False
-        COLOR_TRIPS = False
-        LOCATIONS_DURING_VISITS = False
+        SEPARATE_TRIPS = False
         DESIRED_ACCURACY = 0
 
-        log.debug("Received request to plot trips")
+        log.debug("Received request to get trips")
 
         # The request should always receive a date range
         # Otherwise, return an error
-        start_date = request.query_params.get("start_datetime")
-        end_date = request.query_params.get("end_datetime")
+        start_date_str = request.query_params.get("start_datetime")
+        end_date_str = request.query_params.get("end_datetime")
 
-        if start_date is None or end_date is None:
+        if start_date_str is None or end_date_str is None:
             log.error("No date range provided")
 
             return Response(
@@ -460,18 +505,16 @@ class TripPlotView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Parse dates for bucket size calculation
+        start_date_parsed = date_parser.parse(start_date_str)
+        end_date_parsed = date_parser.parse(end_date_str)
+
         # Get the optional parameters
         if "show_visits" in request.query_params:
             SHOW_VISITS = request.query_params.get("show_visits").lower() == "true"
-        if "show_stationary" in request.query_params:
-            SHOW_STATIONARY = (
-                request.query_params.get("show_stationary").lower() == "true"
-            )
-        if "color_trips" in request.query_params:
-            COLOR_TRIPS = request.query_params.get("color_trips").lower() == "true"
-        if "locations_during_visits" in request.query_params:
-            LOCATIONS_DURING_VISITS = (
-                request.query_params.get("locations_during_visits").lower() == "true"
+        if "separate_trips" in request.query_params:
+            SEPARATE_TRIPS = (
+                request.query_params.get("separate_trips").lower() == "true"
             )
         if "desired_accuracy" in request.query_params:
             DESIRED_ACCURACY = request.query_params.get("desired_accuracy")
@@ -485,119 +528,321 @@ class TripPlotView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        # Get the locations in the date range
-        locations = Location.objects.filter(
-            time__range=[start_date, end_date]
-        ).time_bucket("time", "1 day")
+        # Pagination parameters
+        cursor_str = request.query_params.get("cursor")
+        cursor_datetime = None
+        if cursor_str:
+            try:
+                cursor_datetime = date_parser.parse(cursor_str)
+            except (ValueError, TypeError):
+                return Response(
+                    {"message": "Invalid cursor format. Use ISO datetime."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        if not SHOW_STATIONARY:
-            # Exclude the locations where motion = ["stationary"]
-            # Note that motion can be ["driving", "stationary"]
-            # We only want to exclude the fully stationary locations
-            locations = locations.exclude(motion__contains="stationary").exclude(
-                motion=[]
+        page_size = MAX_POINTS
+        if "page_size" in request.query_params:
+            try:
+                page_size = min(int(request.query_params.get("page_size")), MAX_POINTS)
+                page_size = max(page_size, 1)  # At least 1
+            except ValueError:
+                page_size = MAX_POINTS
+
+        # Whether to disable time bucketing (for pagination with raw data)
+        NO_BUCKET = request.query_params.get("no_bucket", "").lower() == "true"
+
+        # Trip ID offset for sequential trip numbering across paginated requests
+        trip_id_offset = 1
+        if "trip_id_offset" in request.query_params:
+            try:
+                trip_id_offset = max(1, int(request.query_params.get("trip_id_offset")))
+            except ValueError:
+                trip_id_offset = 1
+
+        # Build full range query for counting (always use full date range for counts)
+        full_range_query = Location.objects.filter(
+            time__range=[start_date_str, end_date_str]
+        )
+
+        # Apply accuracy filter at database level (more efficient)
+        if DESIRED_ACCURACY > 0:
+            full_range_query = full_range_query.filter(
+                horizontal_accuracy__lte=DESIRED_ACCURACY
             )
 
-        locations_count = locations.count()
+        # Get total count for metadata (quick count query) - always for full range
+        all_locations_count = full_range_query.count()
+        log.debug(f"Found {all_locations_count} total locations in the date range")
 
-        log.debug(f"Found {locations_count} locations in the date range")
-
-        # If locations is empty, return an empty response
-        if locations_count == 0:
+        # If no locations at all, return empty response
+        if all_locations_count == 0:
             log.debug("No locations found in the selected date range")
             return Response({}, status=status.HTTP_404_NOT_FOUND)
 
-        # Convert the locations to a pandas dataframe
-        locations_df = pd.DataFrame(list(locations.values()))
+        # Get non-stationary locations count for trip data (full range)
+        full_trip_query = full_range_query.exclude(
+            motion__contains="stationary"
+        ).exclude(motion=[])
+        trip_locations_count = full_trip_query.count()
+        log.debug(f"Found {trip_locations_count} trip locations")
+
+        # Build paginated query - if cursor is provided, start from after the cursor time
+        if cursor_datetime:
+            trip_query = full_trip_query.filter(time__gt=cursor_datetime)
+        else:
+            trip_query = full_trip_query
+
+        # Calculate optimal bucket size based on data volume (skip if pagination with raw data)
+        if NO_BUCKET:
+            bucket_size = None
+            log.info(
+                f"Time bucketing disabled, returning raw points (page_size={page_size})"
+            )
+        else:
+            bucket_size = get_optimal_bucket_size(
+                start_date_parsed, end_date_parsed, page_size
+            )
+            log.info(
+                f"Using time bucket: {bucket_size} for {trip_locations_count} points"
+            )
+
+        # Apply time_bucket aggregation for efficient data retrieval (if enabled)
+        # Only fetch required fields: time, longitude, latitude
+        if bucket_size:
+            trip_locations = (
+                trip_query.time_bucket("time", bucket_size)
+                .values("time", "longitude", "latitude")
+                .order_by("time")[: page_size + 1]
+            )  # Fetch one extra to check for more
+        else:
+            # No bucketing - return raw points with pagination
+            trip_locations = trip_query.values(
+                "time", "longitude", "latitude"
+            ).order_by("time")[
+                : page_size + 1
+            ]  # Fetch one extra to check for more
+
+        # Convert to list efficiently (avoid pandas overhead for simple case)
+        trip_locations_list = list(trip_locations)
+
+        # Check if there are more results beyond this page
+        has_more = len(trip_locations_list) > page_size
+        if has_more:
+            trip_locations_list = trip_locations_list[
+                :page_size
+            ]  # Remove the extra item
 
         def get_visits_df():
             log.debug("Getting visits dataframe")
 
-            visits = Visit.objects.filter(
-                time__range=[start_date, end_date]
-            ).time_bucket("time", "1 day")
-            visits_df = pd.DataFrame(list(visits.values()))
+            # Only fetch required fields for visits
+            visits = (
+                Visit.objects.filter(time__range=[start_date_str, end_date_str])
+                .time_bucket("time", "1 day")
+                .values(
+                    "time",
+                    "longitude",
+                    "latitude",
+                    "arrival_date",
+                    "departure_date",
+                    "horizontal_accuracy",
+                )
+            )
+            visits_list = list(visits)
+            visits_df = pd.DataFrame(visits_list) if visits_list else pd.DataFrame()
 
-            visits_count = visits_df.shape[0]
-
+            visits_count = len(visits_list)
             log.debug(f"Found {visits_count} visits in the date range")
 
             return visits_df
 
-        # Initialize visits_df and generated variable
+        # Initialize visits_df
         visits_df = pd.DataFrame()
-        visits_df_generated = False
 
-        # Get the visits if the SHOW_VISITS flag is set
-        if SHOW_VISITS:
-            log.debug("Showing visits")
+        # Get visits if needed (for SHOW_VISITS or SEPARATE_TRIPS)
+        if SHOW_VISITS or SEPARATE_TRIPS:
             visits_df = get_visits_df()
-            visits_df_generated = True
 
-        if COLOR_TRIPS:
-            log.debug("Coloring trips")
-
-            # Get the visits_df if it is empty
-            if visits_df.empty and not visits_df_generated:
-                visits_df = get_visits_df()
-                visits_df_generated = True
-
-            # Generate a "color" column in the locations_df
-            locations_df = color_trips(locations_df, visits_df)
-        else:
-            # Generate a "color" column with NaN values
-            locations_df["color"] = None
-
-        if not LOCATIONS_DURING_VISITS:
-            log.debug("Removing locations during visits")
-
-            # Get the visits_df if it is empty
-            if visits_df.empty and not visits_df_generated:
-                visits_df = get_visits_df()
-                visits_df_generated = True
-
-            # Remove locations during visits
-            locations_df = remove_locations_during_visit(locations_df, visits_df)
-
-        if DESIRED_ACCURACY > 0:
-            log.debug(f"Filtering locations with accuracy < {DESIRED_ACCURACY}")
-            locations_df = locations_df[
-                locations_df["horizontal_accuracy"] <= DESIRED_ACCURACY
-            ]
-
-        # Plot the trips
-        fig = px.line_mapbox(
-            locations_df,
-            lat="latitude",
-            lon="longitude",
-            hover_data=["speed", "time", "motion"],
-            zoom=8,
-            color="color",
-        )
-
-        # Add visits waypoints
-        if SHOW_VISITS and not visits_df.empty:
-            fig.add_trace(
-                go.Scattermapbox(
-                    lat=visits_df["latitude"],
-                    lon=visits_df["longitude"],
-                    mode="markers",
-                    marker=go.scattermapbox.Marker(
-                        size=25, color="RoyalBlue", opacity=0.7
-                    ),
-                    hoverinfo="none",
+        # Visit-aware pagination: when separating trips and there are more pages,
+        # truncate at trip boundaries to avoid splitting a single trip across pages
+        truncation_applied = False
+        if SEPARATE_TRIPS and has_more and not visits_df.empty and trip_locations_list:
+            midtimes = get_sorted_visit_midtimes(visits_df)
+            if midtimes:
+                original_count = len(trip_locations_list)
+                trip_locations_list, truncation_midtime = (
+                    find_last_complete_trip_boundary(trip_locations_list, midtimes)
                 )
+                if truncation_midtime is not None:
+                    truncation_applied = True
+                    log.debug(
+                        f"Visit-aware pagination: truncated from {original_count} to "
+                        f"{len(trip_locations_list)} points at midtime {truncation_midtime}"
+                    )
+
+        # Get the next cursor (timestamp of the last point)
+        next_cursor = None
+        if has_more and trip_locations_list:
+            last_point = trip_locations_list[-1]
+            next_cursor = (
+                last_point["time"].isoformat()
+                if hasattr(last_point["time"], "isoformat")
+                else str(last_point["time"])
             )
 
-        fig.update_layout(mapbox_style="carto-positron")
-        fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-        fig.update_layout(coloraxis_showscale=False)
-        fig.update_layout(showlegend=False)
+        # Convert to DataFrame only if needed for SEPARATE_TRIPS
+        trip_locations_df = (
+            pd.DataFrame(trip_locations_list) if trip_locations_list else pd.DataFrame()
+        )
 
-        graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
+        # Build GeoJSON feature collections
+        trips_collection = build_trips_feature_collection(
+            trip_locations_df,
+            visits_df if SEPARATE_TRIPS else pd.DataFrame(),
+            separate_trips=SEPARATE_TRIPS,
+            trip_id_offset=trip_id_offset,
+        )
+        visits_collection = (
+            build_visits_feature_collection(visits_df)
+            if SHOW_VISITS
+            else {"type": "FeatureCollection", "features": []}
+        )
 
-        # GraphJSON is a json string, so you have to parse it into a json object
-        # in order to return it
-        parsed_graphJSON = json.loads(graphJSON)
+        # Build response
+        response_data = {
+            "trips": trips_collection,
+            "visits": visits_collection,
+            "meta": {
+                "start_datetime": start_date_str,
+                "end_datetime": end_date_str,
+                "total_locations": all_locations_count,
+                "trip_locations": len(trip_locations_list),
+                "trip_locations_raw": trip_locations_count,
+                "visits_count": len(visits_df) if not visits_df.empty else 0,
+                "trips_count": len(trips_collection["features"]),
+                "separate_trips": SEPARATE_TRIPS,
+                "show_visits": SHOW_VISITS,
+                "bucket_size": bucket_size,
+                "downsampled": bucket_size is not None
+                and trip_locations_count > page_size,
+            },
+            "pagination": {
+                "page_size": page_size,
+                "has_more": has_more,
+                "next_cursor": next_cursor,
+                "is_first_page": cursor_datetime is None,
+                "trip_boundary_aligned": truncation_applied,
+                "next_trip_offset": (
+                    trip_id_offset + len(trips_collection["features"])
+                    if has_more
+                    else None
+                ),
+            },
+        }
 
-        return Response(parsed_graphJSON, status=status.HTTP_200_OK)
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+class ActivityHistoryView(APIView):
+    authentication_classes = [SessionAuthentication]
+
+    @extend_schema(
+        responses={
+            200: ActivityHistoryResponseSerializer,
+            404: ErrorResponseSerializer,
+        },
+        description="Endpoint for retrieving the count of locations and visits per day for the past 365 days.",
+    )
+    def get(self, request):
+        log.debug("Received request to get activity history")
+
+        # Calculate date range: past 365 days from today
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=365)
+
+        log.debug(f"Querying data from {start_date} to {end_date}")
+
+        # Query locations grouped by date
+        # Optimized: only select 'id' and 'time' fields before aggregation
+        locations_by_date = (
+            Location.objects.filter(
+                time__date__gte=start_date, time__date__lte=end_date
+            )
+            .values("time")  # Only fetch time field for aggregation
+            .annotate(date=TruncDate("time"))
+            .values("date")
+            .annotate(count=Count("id"))
+            .order_by("date")
+        )
+
+        # Query visits grouped by date
+        # Optimized: only select 'id' and 'time' fields before aggregation
+        visits_by_date = (
+            Visit.objects.filter(time__date__gte=start_date, time__date__lte=end_date)
+            .values("time")  # Only fetch time field for aggregation
+            .annotate(date=TruncDate("time"))
+            .values("date")
+            .annotate(count=Count("id"))
+            .order_by("date")
+        )
+
+        # Convert to lists first (more efficient than iterating querysets multiple times)
+        locations_list = list(locations_by_date)
+        visits_list = list(visits_by_date)
+
+        log.debug(f"Found data for {len(locations_list)} days with locations")
+        log.debug(f"Found data for {len(visits_list)} days with visits")
+
+        # Convert to dictionaries for easy lookup
+        locations_dict = {item["date"]: item["count"] for item in locations_list}
+        visits_dict = {item["date"]: item["count"] for item in visits_list}
+
+        # Build the data array with all dates in the range
+        data = []
+        current_date = start_date
+        total_locations = 0
+        total_visits = 0
+
+        while current_date <= end_date:
+            location_count = locations_dict.get(current_date, 0)
+            visit_count = visits_dict.get(current_date, 0)
+
+            total_locations += location_count
+            total_visits += visit_count
+
+            data.append(
+                {
+                    "date": current_date.isoformat(),
+                    "location_count": location_count,
+                    "visit_count": visit_count,
+                }
+            )
+
+            current_date += timedelta(days=1)
+
+        # Check if there's any data at all
+        if total_locations == 0 and total_visits == 0:
+            log.debug("No activity data found in the past 365 days")
+            return Response(
+                {"message": "No activity data found in the past 365 days"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Build response
+        response_data = {
+            "data": data,
+            "meta": {
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+                "days": len(data),
+                "total_locations": total_locations,
+                "total_visits": total_visits,
+            },
+        }
+
+        log.info(
+            f"Returning activity history: {len(data)} days, "
+            f"{total_locations} locations, {total_visits} visits"
+        )
+
+        return Response(response_data, status=status.HTTP_200_OK)

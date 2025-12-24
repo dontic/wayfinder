@@ -1,50 +1,86 @@
-import { StrictMode } from "react";
+import { StrictMode, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { ChakraProvider } from "@chakra-ui/react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
-import ProtectedLayout from "./layouts/ProtectedLayout";
-import Home from "./pages/Home";
-import Visits from "./pages/Visits";
-import Trips from "./pages/Trips";
-import Settings from "./pages/Settings";
+
+// Styles
+import "./index.css";
+import "maplibre-gl/dist/maplibre-gl.css";
+
+// Layouts
+import ProtectedLayout from "@/layouts/ProtectedLayout";
+
+// Components
+import { Toaster } from "sonner";
+import LoadingFallback from "@/components/LoadingFallback";
+
+// Pages - Lazy loaded for code splitting
+const Home = lazy(() => import("@/pages/Home"));
+const Login = lazy(() => import("@/pages/Login"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const Settings = lazy(() => import("@/pages/Settings"));
+const Trips = lazy(() => import("@/pages/Trips"));
+const Visits = lazy(() => import("@/pages/Visits"));
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <ProtectedLayout />,
-    errorElement: <NotFound />,
     children: [
       {
         path: "/",
-        element: <Home />
-      },
-      {
-        path: "/visits",
-        element: <Visits />
-      },
-      {
-        path: "/trips",
-        element: <Trips />
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <Home />
+          </Suspense>
+        )
       },
       {
         path: "/settings",
-        element: <Settings />
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <Settings />
+          </Suspense>
+        )
+      },
+      {
+        path: "/trips",
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <Trips />
+          </Suspense>
+        )
+      },
+      {
+        path: "/visits",
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <Visits />
+          </Suspense>
+        )
       }
     ]
   },
   {
     path: "/login",
-    element: <Login />,
-    errorElement: <NotFound />
+    element: (
+      <Suspense fallback={<LoadingFallback />}>
+        <Login />
+      </Suspense>
+    )
+  },
+  {
+    path: "*",
+    element: (
+      <Suspense fallback={<LoadingFallback />}>
+        <NotFound />
+      </Suspense>
+    )
   }
 ]);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ChakraProvider>
-      <RouterProvider router={router} />
-    </ChakraProvider>
+    <RouterProvider router={router} />
+    <Toaster richColors />
   </StrictMode>
 );
