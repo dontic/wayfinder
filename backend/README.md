@@ -14,4 +14,6 @@
 
 6. Migrate -> `python manage.py migrate`
 
-7. Run the backend -> `python manage.py runserver 0.0.0.0:8000` 
+7. Create a superuser -> `python manage.py createsuperuser`
+
+8. Run the backend -> `python manage.py runserver 0.0.0.0:8000` 
