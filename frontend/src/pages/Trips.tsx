@@ -41,7 +41,7 @@ const toTimezoneAwareISO = (datetimeLocal: string): string => {
   return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${offsetSign}${String(offsetHours).padStart(2, "0")}:${String(offsetMinutes).padStart(2, "0")}`;
 };
 
-// Helper to merge line features by appending coordinates
+// Helper to merge line features by appending coordinates for same IDs
 const mergeLineFeatures = (
   existing: GeoJSONFeature[],
   incoming: GeoJSONFeature[]
@@ -49,10 +49,47 @@ const mergeLineFeatures = (
   if (existing.length === 0) return incoming;
   if (incoming.length === 0) return existing;
 
-  // For now, just concatenate features
-  // If separate_trips is false, we get a single LineString that grows
-  // If separate_trips is true, we get multiple LineStrings
-  return [...existing, ...incoming];
+  // Create a map of existing features by their trip_id
+  const featureMap = new Map<string, GeoJSONFeature>();
+
+  // Add existing features to map
+  for (const feature of existing) {
+    const tripId = feature.properties?.trip_id as string | undefined;
+    if (tripId) {
+      featureMap.set(tripId, feature);
+    } else {
+      // Features without trip_id - use a unique key
+      featureMap.set(`_no_id_${featureMap.size}`, feature);
+    }
+  }
+
+  // Merge incoming features
+  for (const feature of incoming) {
+    const tripId = feature.properties?.trip_id as string | undefined;
+
+    if (tripId && featureMap.has(tripId)) {
+      // Merge coordinates with existing feature
+      const existingFeature = featureMap.get(tripId)!;
+      if (
+        existingFeature.geometry.type === "LineString" &&
+        feature.geometry.type === "LineString"
+      ) {
+        // Append coordinates from incoming feature
+        existingFeature.geometry.coordinates = [
+          ...(existingFeature.geometry.coordinates as number[][]),
+          ...(feature.geometry.coordinates as number[][])
+        ];
+      }
+    } else if (tripId) {
+      // New trip_id, add to map
+      featureMap.set(tripId, feature);
+    } else {
+      // No trip_id, add as new feature
+      featureMap.set(`_no_id_${featureMap.size}`, feature);
+    }
+  }
+
+  return Array.from(featureMap.values());
 };
 
 interface LoadingProgress {
