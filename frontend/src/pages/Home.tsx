@@ -12,6 +12,7 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import CalendarHeatmapSkeleton from "@/components/home/CalendarHeatmapSkeleton";
 import { wayfinderActivityHistoryRetrieve } from "@/api/django/wayfinder/wayfinder";
 import type { DailyActivity } from "@/api/django/api.schemas";
 import { toast } from "sonner";
@@ -80,7 +81,9 @@ const Home = () => {
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <Skeleton className="h-[140px] w-full" />
+                <div className="flex items-center justify-center h-[140px] w-full overflow-x-auto">
+                  <CalendarHeatmapSkeleton />
+                </div>
               ) : (
                 <CalendarHeatmap data={locationsData} label="location" />
               )}
@@ -104,7 +107,9 @@ const Home = () => {
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <Skeleton className="h-[140px] w-full" />
+                <div className="flex items-center justify-center h-[140px] w-full overflow-x-auto">
+                  <CalendarHeatmapSkeleton />
+                </div>
               ) : (
                 <CalendarHeatmap data={visitsData} label="visit" />
               )}
