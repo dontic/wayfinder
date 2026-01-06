@@ -38,7 +38,7 @@ class LocationSerializer(serializers.ModelSerializer):
         # Validate that data is a dictionary
         if not isinstance(data, dict):
             raise serializers.ValidationError(
-                "Invalid data format: expected a dictionary"
+                {"non_field_errors": ["Invalid data format: expected a dictionary"]}
             )
 
         # Extract data from the GeoJSON structure
@@ -49,18 +49,30 @@ class LocationSerializer(serializers.ModelSerializer):
         # Validate GeoJSON structure
         if not isinstance(properties, dict):
             raise serializers.ValidationError(
-                "Invalid GeoJSON: 'properties' must be a dictionary"
+                {
+                    "non_field_errors": [
+                        "Invalid GeoJSON: 'properties' must be a dictionary"
+                    ]
+                }
             )
 
         if not isinstance(geometry, dict):
             raise serializers.ValidationError(
-                "Invalid GeoJSON: 'geometry' must be a dictionary"
+                {
+                    "non_field_errors": [
+                        "Invalid GeoJSON: 'geometry' must be a dictionary"
+                    ]
+                }
             )
 
         # Validate coordinates
         if not isinstance(coordinates, list) or len(coordinates) < 2:
             raise serializers.ValidationError(
-                "Invalid GeoJSON: 'coordinates' must be a list with at least 2 elements [longitude, latitude]"
+                {
+                    "non_field_errors": [
+                        "Invalid GeoJSON: 'coordinates' must be a list with at least 2 elements [longitude, latitude]"
+                    ]
+                }
             )
 
         # Prepare the data for the serializer
@@ -179,7 +191,7 @@ class VisitSerializer(serializers.ModelSerializer):
         # Validate that data is a dictionary
         if not isinstance(data, dict):
             raise serializers.ValidationError(
-                "Invalid data format: expected a dictionary"
+                {"non_field_errors": ["Invalid data format: expected a dictionary"]}
             )
 
         # Extract data from the GeoJSON structure
@@ -190,18 +202,30 @@ class VisitSerializer(serializers.ModelSerializer):
         # Validate GeoJSON structure
         if not isinstance(properties, dict):
             raise serializers.ValidationError(
-                "Invalid GeoJSON: 'properties' must be a dictionary"
+                {
+                    "non_field_errors": [
+                        "Invalid GeoJSON: 'properties' must be a dictionary"
+                    ]
+                }
             )
 
         if not isinstance(geometry, dict):
             raise serializers.ValidationError(
-                "Invalid GeoJSON: 'geometry' must be a dictionary"
+                {
+                    "non_field_errors": [
+                        "Invalid GeoJSON: 'geometry' must be a dictionary"
+                    ]
+                }
             )
 
         # Validate coordinates
         if not isinstance(coordinates, list) or len(coordinates) < 2:
             raise serializers.ValidationError(
-                "Invalid GeoJSON: 'coordinates' must be a list with at least 2 elements [longitude, latitude]"
+                {
+                    "non_field_errors": [
+                        "Invalid GeoJSON: 'coordinates' must be a list with at least 2 elements [longitude, latitude]"
+                    ]
+                }
             )
 
         # Calculate the duration of the visit
@@ -210,9 +234,13 @@ class VisitSerializer(serializers.ModelSerializer):
 
         # Validate that both dates are present
         if not arrival_date:
-            raise serializers.ValidationError("arrival_date is required for visits")
+            raise serializers.ValidationError(
+                {"arrival_date": ["This field is required for visits"]}
+            )
         if not departure_date:
-            raise serializers.ValidationError("departure_date is required for visits")
+            raise serializers.ValidationError(
+                {"departure_date": ["This field is required for visits"]}
+            )
 
         if arrival_date and departure_date:
             try:
@@ -223,13 +251,17 @@ class VisitSerializer(serializers.ModelSerializer):
                 )
             except ValueError as e:
                 raise serializers.ValidationError(
-                    f"Invalid date format. Expected format: YYYY-MM-DDTHH:MM:SSZ. Error: {str(e)}"
+                    {
+                        "non_field_errors": [
+                            f"Invalid date format. Expected format: YYYY-MM-DDTHH:MM:SSZ. Error: {str(e)}"
+                        ]
+                    }
                 )
 
             # Validate that departure is after arrival
             if departure_datetime <= arrival_datetime:
                 raise serializers.ValidationError(
-                    "departure_date must be after arrival_date"
+                    {"non_field_errors": ["departure_date must be after arrival_date"]}
                 )
 
             # Calculate the duration in seconds
@@ -243,7 +275,9 @@ class VisitSerializer(serializers.ModelSerializer):
 
             # Validate duration is positive
             if properties["duration"] <= 0:
-                raise serializers.ValidationError("Visit duration must be positive")
+                raise serializers.ValidationError(
+                    {"duration": ["Visit duration must be positive"]}
+                )
 
         # Prepare the data for the serializer
         prepared_data = {
@@ -334,7 +368,9 @@ class ErrorResponseSerializer(serializers.Serializer):
 
 # ------------------------- Trip Plot serializers ---------------------------- #
 class GeoJSONGeometrySerializer(serializers.Serializer):
-    type = serializers.CharField(help_text="GeoJSON geometry type (e.g., 'Point', 'LineString')")
+    type = serializers.CharField(
+        help_text="GeoJSON geometry type (e.g., 'Point', 'LineString')"
+    )
     coordinates = serializers.ListField(
         help_text="Coordinates array - format depends on geometry type"
     )
@@ -359,7 +395,9 @@ class GeoJSONFeatureCollectionSerializer(serializers.Serializer):
 
 
 class VisitPlotMetaSerializer(serializers.Serializer):
-    start_datetime = serializers.CharField(help_text="Start datetime of the query range")
+    start_datetime = serializers.CharField(
+        help_text="Start datetime of the query range"
+    )
     end_datetime = serializers.CharField(help_text="End datetime of the query range")
     visits_count = serializers.IntegerField(help_text="Number of visits in range")
 
@@ -372,28 +410,40 @@ class VisitPlotResponseSerializer(serializers.Serializer):
 
 
 class TripPlotMetaSerializer(serializers.Serializer):
-    start_datetime = serializers.CharField(help_text="Start datetime of the query range")
+    start_datetime = serializers.CharField(
+        help_text="Start datetime of the query range"
+    )
     end_datetime = serializers.CharField(help_text="End datetime of the query range")
-    total_locations = serializers.IntegerField(help_text="Total number of locations in range")
-    trip_locations = serializers.IntegerField(help_text="Number of non-stationary locations in current page")
-    trip_locations_raw = serializers.IntegerField(help_text="Total number of trip locations without pagination")
+    total_locations = serializers.IntegerField(
+        help_text="Total number of locations in range"
+    )
+    trip_locations = serializers.IntegerField(
+        help_text="Number of non-stationary locations in current page"
+    )
+    trip_locations_raw = serializers.IntegerField(
+        help_text="Total number of trip locations without pagination"
+    )
     visits_count = serializers.IntegerField(help_text="Number of visits in range")
     trips_count = serializers.IntegerField(help_text="Number of trip segments")
-    separate_trips = serializers.BooleanField(help_text="Whether trips were separated by visits")
+    separate_trips = serializers.BooleanField(
+        help_text="Whether trips were separated by visits"
+    )
     show_visits = serializers.BooleanField(help_text="Whether visits are included")
     bucket_size = serializers.CharField(
-        allow_null=True, 
-        help_text="Time bucket size used for downsampling (e.g., '1 hour', '15 minutes')"
+        allow_null=True,
+        help_text="Time bucket size used for downsampling (e.g., '1 hour', '15 minutes')",
     )
     downsampled = serializers.BooleanField(help_text="Whether the data was downsampled")
 
 
 class PaginationSerializer(serializers.Serializer):
     page_size = serializers.IntegerField(help_text="Number of points per page")
-    has_more = serializers.BooleanField(help_text="Whether there are more pages available")
+    has_more = serializers.BooleanField(
+        help_text="Whether there are more pages available"
+    )
     next_cursor = serializers.CharField(
         allow_null=True,
-        help_text="Cursor for the next page (ISO datetime). Use this in the 'cursor' query parameter."
+        help_text="Cursor for the next page (ISO datetime). Use this in the 'cursor' query parameter.",
     )
     is_first_page = serializers.BooleanField(help_text="Whether this is the first page")
     trip_boundary_aligned = serializers.BooleanField(
@@ -401,7 +451,7 @@ class PaginationSerializer(serializers.Serializer):
     )
     next_trip_offset = serializers.IntegerField(
         allow_null=True,
-        help_text="Starting trip ID number for the next page. Use this in the 'trip_id_offset' query parameter to maintain sequential trip IDs across pages."
+        help_text="Starting trip ID number for the next page. Use this in the 'trip_id_offset' query parameter to maintain sequential trip IDs across pages.",
     )
 
 
@@ -413,27 +463,38 @@ class TripPlotResponseSerializer(serializers.Serializer):
         help_text="GeoJSON FeatureCollection containing visit Point features"
     )
     meta = TripPlotMetaSerializer(help_text="Metadata about the query and results")
-    pagination = PaginationSerializer(help_text="Pagination information for navigating through large datasets")
+    pagination = PaginationSerializer(
+        help_text="Pagination information for navigating through large datasets"
+    )
 
 
 # ------------------------- Activity History serializers --------------------- #
 class DailyActivitySerializer(serializers.Serializer):
     date = serializers.DateField(help_text="Date in YYYY-MM-DD format")
-    location_count = serializers.IntegerField(help_text="Number of locations recorded on this date")
-    visit_count = serializers.IntegerField(help_text="Number of visits recorded on this date")
+    location_count = serializers.IntegerField(
+        help_text="Number of locations recorded on this date"
+    )
+    visit_count = serializers.IntegerField(
+        help_text="Number of visits recorded on this date"
+    )
 
 
 class ActivityHistoryMetaSerializer(serializers.Serializer):
     start_date = serializers.DateField(help_text="Start date of the data range")
     end_date = serializers.DateField(help_text="End date of the data range")
     days = serializers.IntegerField(help_text="Number of days in the range")
-    total_locations = serializers.IntegerField(help_text="Total number of locations in the range")
-    total_visits = serializers.IntegerField(help_text="Total number of visits in the range")
+    total_locations = serializers.IntegerField(
+        help_text="Total number of locations in the range"
+    )
+    total_visits = serializers.IntegerField(
+        help_text="Total number of visits in the range"
+    )
 
 
 class ActivityHistoryResponseSerializer(serializers.Serializer):
     data = serializers.ListField(
-        child=DailyActivitySerializer(),
-        help_text="Array of daily activity data"
+        child=DailyActivitySerializer(), help_text="Array of daily activity data"
     )
-    meta = ActivityHistoryMetaSerializer(help_text="Metadata about the activity history")
+    meta = ActivityHistoryMetaSerializer(
+        help_text="Metadata about the activity history"
+    )
