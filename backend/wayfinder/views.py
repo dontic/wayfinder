@@ -213,16 +213,23 @@ class OverlandView(APIView):
                         )
                 else:
                     # Check if the error is due to a duplicate visit
-                    if "time" in visit_serializer.errors and any(
-                        error.code == "unique"
-                        for error in visit_serializer.errors["time"]
-                    ):
-                        log.debug(
-                            f"Skipping duplicate visit: {item.get('time', 'unknown time')}"
-                        )
-                    else:
-                        log.error(f"Visit validation error: {visit_serializer.errors}")
-                        log.info(f"Visit data: {item}")
+                    try:
+                        if "time" in visit_serializer.errors and any(
+                            error.code == "unique"
+                            for error in visit_serializer.errors["time"]
+                        ):
+                            log.debug(
+                                f"Skipping duplicate visit: {item.get('time', 'unknown time')}"
+                            )
+                        else:
+                            log.error(
+                                f"Skipping invalid visit - validation failed: {visit_serializer.errors}"
+                            )
+                            log.info(f"Visit data not saved: {item}")
+                    except (ValueError, TypeError, AttributeError) as e:
+                        # Handle cases where errors are not in the expected format
+                        log.error(f"Skipping invalid visit - malformed error data: {e}")
+                        log.info(f"Visit data not saved: {item}")
             else:
                 location_serializer = LocationSerializer(data=item)
                 if location_serializer.is_valid():
@@ -238,18 +245,25 @@ class OverlandView(APIView):
                         )
                 else:
                     # Check if the error is due to a duplicate location
-                    if "time" in location_serializer.errors and any(
-                        error.code == "unique"
-                        for error in location_serializer.errors["time"]
-                    ):
-                        log.debug(
-                            f"Skipping duplicate location: {item.get('time', 'unknown time')}"
-                        )
-                    else:
+                    try:
+                        if "time" in location_serializer.errors and any(
+                            error.code == "unique"
+                            for error in location_serializer.errors["time"]
+                        ):
+                            log.debug(
+                                f"Skipping duplicate location: {item.get('time', 'unknown time')}"
+                            )
+                        else:
+                            log.error(
+                                f"Skipping invalid location - validation failed: {location_serializer.errors}"
+                            )
+                            log.info(f"Location data not saved: {item}")
+                    except (ValueError, TypeError, AttributeError) as e:
+                        # Handle cases where errors are not in the expected format
                         log.error(
-                            f"Location validation error: {location_serializer.errors}"
+                            f"Skipping invalid location - malformed error data: {e}"
                         )
-                        log.info(f"Location data: {item}")
+                        log.info(f"Location data not saved: {item}")
 
         log.info(f"Parsed {len(locations_to_create)} locations")
         log.info(f"Parsed {len(visits_to_create)} visits")
