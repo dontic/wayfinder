@@ -17,6 +17,8 @@ whitenoise = "*"
 dj-rest-auth = "*"
 pandas = "*"
 django = "*"
+celery = {extras = ["redis"], version = "*"}
+django-celery-beat = "*"
 
 [dev-packages]
 
