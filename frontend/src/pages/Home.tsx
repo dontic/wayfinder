@@ -27,9 +27,18 @@ const Home = () => {
       try {
         const response = await wayfinderActivityHistoryRetrieve();
         setActivityData(response.data);
-      } catch (error) {
-        console.error("Error fetching activity history:", error);
-        toast.error("Failed to load activity history");
+      } catch (error: unknown) {
+        const status = (error as { response?: { status?: number } })?.response
+          ?.status;
+        if (status === 404) {
+          toast.info(
+            "No activity data found. Data is being computed in the background; please try again tomorrow.",
+            { id: "activity-history-404" }
+          );
+        } else {
+          console.error("Error fetching activity history:", error);
+          toast.error("Failed to load activity history");
+        }
       } finally {
         setIsLoading(false);
       }
