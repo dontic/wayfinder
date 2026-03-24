@@ -13,7 +13,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./postgresdata:/home/postgres/pgdata/data
+      - postgresdata:/home/postgres/pgdata/data
 
   django:
     build:
@@ -27,3 +27,10 @@ services:
     command: /bin/sh -c "while sleep 1000; do :; done"
     depends_on:
       - timescaledb
+
+volumes:
+  postgresdata:
+
+networks:
+  devnet:
+    name: django-dev
