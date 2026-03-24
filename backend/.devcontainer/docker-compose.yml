@@ -14,6 +14,8 @@ services:
       - "5432:5432"
     volumes:
       - postgresdata:/home/postgres/pgdata/data
+    networks:
+      - devnet
 
   django:
     build:
@@ -27,6 +29,8 @@ services:
     command: /bin/sh -c "while sleep 1000; do :; done"
     depends_on:
       - timescaledb
+    networks:
+      - devnet
 
 volumes:
   postgresdata:
