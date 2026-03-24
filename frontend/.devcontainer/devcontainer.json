@@ -6,6 +6,7 @@
     "dockerfile": "Dockerfile",
     "context": ".."
   },
+  "runArgs": ["--network=django-dev"],
   // "appPort": ["5173:5173"], // Port forwarding
   // Extensions and settings
   "customizations": {
