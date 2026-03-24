@@ -1,6 +1,7 @@
 # models.py
 
 from django.db import models
+from django.contrib.auth.models import User
 from timescale.db.models.fields import TimescaleDateTimeField
 from timescale.db.models.managers import TimescaleManager
 
@@ -134,3 +135,41 @@ class Visit(TimescaleModel):
 
     def __str__(self):
         return f"{self.arrival_date} - {self.departure_date} - {self.device_id}"
+
+
+class UserSettings(models.Model):
+    """
+    Stores per-user settings, such as home timezone.
+    """
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="wayfinder_settings"
+    )
+    home_timezone = models.CharField(max_length=63, default="UTC")
+
+    class Meta:
+        verbose_name_plural = "user settings"
+
+    def __str__(self):
+        return f"{self.user.username} settings"
+
+
+class DailyActivitySummary(models.Model):
+    """
+    Pre-computed daily counts of locations and visits, grouped by date in a
+    specific timezone.  Populated by the celery task
+    ``wayfinder.tasks.compute_daily_activity_summary``.
+    """
+
+    date = models.DateField()
+    timezone = models.CharField(max_length=63)
+    location_count = models.IntegerField(default=0)
+    visit_count = models.IntegerField(default=0)
+    computed_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("date", "timezone")
+        ordering = ["date"]
+
+    def __str__(self):
+        return f"{self.date} ({self.timezone}): {self.location_count} locs, {self.visit_count} visits"

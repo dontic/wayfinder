@@ -5,6 +5,7 @@ import os
 import pandas as pd
 from datetime import datetime, timedelta
 from dateutil import parser as date_parser
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 # Django
 from django.db import transaction
@@ -79,12 +80,13 @@ from wayfinder.utils import (
 )
 
 # Local App
-from .models import Location, Visit
+from .models import DailyActivitySummary, Location, UserSettings, Visit
 from .serializers import (
     ActivityHistoryResponseSerializer,
     ErrorResponseSerializer,
     LocationSerializer,
     TripPlotResponseSerializer,
+    UserSettingsSerializer,
     VisitPlotResponseSerializer,
     VisitSerializer,
 )
@@ -757,6 +759,31 @@ class TripsView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
+class UserSettingsView(APIView):
+    authentication_classes = [SessionAuthentication]
+
+    @extend_schema(
+        responses={200: UserSettingsSerializer},
+        description="Retrieve the current user's settings.",
+    )
+    def get(self, request):
+        settings_obj, _ = UserSettings.objects.get_or_create(user=request.user)
+        return Response(UserSettingsSerializer(settings_obj).data)
+
+    @extend_schema(
+        request=UserSettingsSerializer,
+        responses={200: UserSettingsSerializer, 400: ErrorResponseSerializer},
+        description="Update the current user's settings (e.g. home timezone).",
+    )
+    def patch(self, request):
+        settings_obj, _ = UserSettings.objects.get_or_create(user=request.user)
+        serializer = UserSettingsSerializer(settings_obj, data=request.data, partial=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return Response(serializer.data)
+
+
 class ActivityHistoryView(APIView):
     authentication_classes = [SessionAuthentication]
 
@@ -765,61 +792,58 @@ class ActivityHistoryView(APIView):
             200: ActivityHistoryResponseSerializer,
             404: ErrorResponseSerializer,
         },
-        description="Endpoint for retrieving the count of locations and visits per day for the past 365 days.",
+        description=(
+            "Returns pre-computed daily location and visit counts for the past 365 days, "
+            "grouped by the authenticated user's home timezone.  Data is refreshed nightly "
+            "at 04:00 UTC by a background task."
+        ),
     )
     def get(self, request):
         log.debug("Received request to get activity history")
 
-        # Calculate date range: past 365 days from today
-        end_date = datetime.now().date()
-        start_date = end_date - timedelta(days=365)
+        # Determine the user's home timezone
+        try:
+            user_settings = UserSettings.objects.get(user=request.user)
+            timezone_str = user_settings.home_timezone
+        except UserSettings.DoesNotExist:
+            timezone_str = "UTC"
 
-        log.debug(f"Querying data from {start_date} to {end_date}")
+        try:
+            user_tz = ZoneInfo(timezone_str)
+        except ZoneInfoNotFoundError:
+            timezone_str = "UTC"
+            user_tz = ZoneInfo("UTC")
 
-        # Query locations grouped by date
-        # Optimized: only select 'id' and 'time' fields before aggregation
-        locations_by_date = (
-            Location.objects.filter(
-                time__date__gte=start_date, time__date__lte=end_date
-            )
-            .values("time")  # Only fetch time field for aggregation
-            .annotate(date=TruncDate("time"))
-            .values("date")
-            .annotate(count=Count("id"))
-            .order_by("date")
+        # Date range: past 365 days in the user's timezone
+        today_in_tz = datetime.now(tz=user_tz).date()
+        start_date = today_in_tz - timedelta(days=365)
+
+        log.debug(
+            "Querying pre-computed summaries from %s to %s (tz=%s)",
+            start_date,
+            today_in_tz,
+            timezone_str,
         )
 
-        # Query visits grouped by date
-        # Optimized: only select 'id' and 'time' fields before aggregation
-        visits_by_date = (
-            Visit.objects.filter(time__date__gte=start_date, time__date__lte=end_date)
-            .values("time")  # Only fetch time field for aggregation
-            .annotate(date=TruncDate("time"))
-            .values("date")
-            .annotate(count=Count("id"))
-            .order_by("date")
-        )
+        # Fetch pre-computed summaries
+        summaries = DailyActivitySummary.objects.filter(
+            timezone=timezone_str,
+            date__gte=start_date,
+            date__lte=today_in_tz,
+        ).order_by("date")
 
-        # Convert to lists first (more efficient than iterating querysets multiple times)
-        locations_list = list(locations_by_date)
-        visits_list = list(visits_by_date)
+        summaries_dict = {s.date: s for s in summaries}
 
-        log.debug(f"Found data for {len(locations_list)} days with locations")
-        log.debug(f"Found data for {len(visits_list)} days with visits")
-
-        # Convert to dictionaries for easy lookup
-        locations_dict = {item["date"]: item["count"] for item in locations_list}
-        visits_dict = {item["date"]: item["count"] for item in visits_list}
-
-        # Build the data array with all dates in the range
+        # Build the response, filling gaps with zero
         data = []
-        current_date = start_date
         total_locations = 0
         total_visits = 0
+        current_date = start_date
 
-        while current_date <= end_date:
-            location_count = locations_dict.get(current_date, 0)
-            visit_count = visits_dict.get(current_date, 0)
+        while current_date <= today_in_tz:
+            summary = summaries_dict.get(current_date)
+            location_count = summary.location_count if summary else 0
+            visit_count = summary.visit_count if summary else 0
 
             total_locations += location_count
             total_visits += visit_count
@@ -831,23 +855,28 @@ class ActivityHistoryView(APIView):
                     "visit_count": visit_count,
                 }
             )
-
             current_date += timedelta(days=1)
 
-        # Check if there's any data at all
         if total_locations == 0 and total_visits == 0:
-            log.debug("No activity data found in the past 365 days")
+            log.debug("No pre-computed activity data found; triggering background task")
+            from wayfinder.tasks import compute_daily_activity_summary
+
+            compute_daily_activity_summary.delay()
             return Response(
-                {"message": "No activity data found in the past 365 days"},
+                {
+                    "message": (
+                        "No activity data found. "
+                        "Data is being computed in the background; please try again shortly."
+                    )
+                },
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Build response
         response_data = {
             "data": data,
             "meta": {
                 "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat(),
+                "end_date": today_in_tz.isoformat(),
                 "days": len(data),
                 "total_locations": total_locations,
                 "total_visits": total_visits,
@@ -855,8 +884,10 @@ class ActivityHistoryView(APIView):
         }
 
         log.info(
-            f"Returning activity history: {len(data)} days, "
-            f"{total_locations} locations, {total_visits} visits"
+            "Returning activity history: %d days, %d locations, %d visits",
+            len(data),
+            total_locations,
+            total_visits,
         )
 
         return Response(response_data, status=status.HTTP_200_OK)

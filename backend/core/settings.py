@@ -163,6 +163,8 @@ INSTALLED_APPS = [
     # ----------------------------------- REST ----------------------------------- #
     "rest_framework",  # Django REST Framework
     "drf_spectacular",  # Django Spectacular
+    # --------------------------------- CELERY ---------------------------------- #
+    "django_celery_beat",
     # ----------------------------------- Apps ----------------------------------- #
     "wayfinder",
 ]
@@ -317,6 +319,26 @@ SPECTACULAR_SETTINGS = {
 # ------------------------------- DJ-REST-AUTH ------------------------------- #
 
 # See defaults in https://dj-rest-auth.readthedocs.io/en/latest/configuration.html
+# ---------------------------------------------------------------------------- #
+#                                   CELERY                                     #
+# ---------------------------------------------------------------------------- #
+
+from celery.schedules import crontab
+
+CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
+CELERY_RESULT_BACKEND = os.getenv("REDIS_URL", "redis://redis:6379/0")
+CELERY_TIMEZONE = "UTC"
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+CELERY_BEAT_SCHEDULE = {
+    "compute-daily-activity-summary": {
+        "task": "wayfinder.tasks.compute_daily_activity_summary",
+        "schedule": crontab(hour=4, minute=0),
+    },
+}
+
+
+# ------------------------------- DJ-REST-AUTH ------------------------------- #
+
 REST_AUTH = {
     # Use sessions instead of tokens
     "TOKEN_MODEL": None,
