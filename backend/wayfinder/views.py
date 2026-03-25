@@ -810,6 +810,9 @@ class UserSettingsView(APIView):
         new_timezone = serializer.instance.home_timezone
         if "home_timezone" in request.data and new_timezone != old_timezone:
             _update_activity_schedule(new_timezone)
+            from wayfinder.tasks import compute_daily_activity_summary
+
+            compute_daily_activity_summary.delay()
         return Response(serializer.data)
 
 
