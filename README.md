@@ -10,7 +10,7 @@
 <p align="center">Wayfinder is a self-hosted web app for <a href="https://github.com/aaronpk/Overland-iOS">Overland-iOS</a>.</p>
 
 <p align="center">
-  <img width="500px" src="assets/mockup.png">
+  <img width="600px" src="assets/mockup.png">
 </p>
 
 ---
