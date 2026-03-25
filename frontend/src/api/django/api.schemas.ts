@@ -130,6 +130,11 @@ export interface PatchedUserDetails {
   last_name?: string;
 }
 
+export interface PatchedUserSettings {
+  /** @maxLength 63 */
+  home_timezone?: string;
+}
+
 export interface RestAuthDetail {
   readonly detail: string;
 }
@@ -189,6 +194,11 @@ export interface UserDetails {
   first_name?: string;
   /** @maxLength 150 */
   last_name?: string;
+}
+
+export interface UserSettings {
+  /** @maxLength 63 */
+  home_timezone?: string;
 }
 
 export interface VisitPlotMeta {

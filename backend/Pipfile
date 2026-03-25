@@ -17,6 +17,9 @@ whitenoise = "*"
 dj-rest-auth = "*"
 pandas = "*"
 django = "*"
+celery = {extras = ["redis"], version = "*"}
+django-celery-beat = "*"
+django-health-check = {extras = ["redis", "celery"], version = "*"}
 
 [dev-packages]
 

@@ -27,9 +27,20 @@ const Home = () => {
       try {
         const response = await wayfinderActivityHistoryRetrieve();
         setActivityData(response.data);
-      } catch (error) {
-        console.error("Error fetching activity history:", error);
-        toast.error("Failed to load activity history");
+      } catch (error: unknown) {
+        const status = (error as { response?: { status?: number } })?.response
+          ?.status;
+        if (status === 404) {
+          const message = (
+            error as { response?: { data?: { message?: string } } }
+          )?.response?.data?.message;
+          toast.info(message ?? "No activity data found.", {
+            id: "activity-history-404"
+          });
+        } else {
+          console.error("Error fetching activity history:", error);
+          toast.error("Failed to load activity history");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -63,7 +74,7 @@ const Home = () => {
   return (
     <SideBarLayout title="Dashboard">
       <div className="flex flex-col gap-6 p-6 w-full items-center">
-        <div className="grid gap-6">
+        <div className="grid gap-6 w-full md:w-fit mx-auto">
           {/* Locations Heatmap */}
           <Card>
             <CardHeader>
@@ -79,7 +90,7 @@ const Home = () => {
                 )}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="min-w-0">
               {isLoading ? (
                 <div className="flex items-center justify-center h-[140px] w-full overflow-x-auto">
                   <CalendarHeatmapSkeleton />
@@ -105,7 +116,7 @@ const Home = () => {
                 )}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="min-w-0">
               {isLoading ? (
                 <div className="flex items-center justify-center h-[140px] w-full overflow-x-auto">
                   <CalendarHeatmapSkeleton />

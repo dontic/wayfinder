@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Location, Visit
+from .models import DailyActivitySummary, Location, UserSettings, Visit
 
 # Register your models here.
 
@@ -22,3 +22,15 @@ class VisitAdmin(admin.ModelAdmin):
         "latitude",
         "longitude",
     )
+
+
+@admin.register(UserSettings)
+class UserSettingsAdmin(admin.ModelAdmin):
+    list_display = ("user", "home_timezone")
+
+
+@admin.register(DailyActivitySummary)
+class DailyActivitySummaryAdmin(admin.ModelAdmin):
+    list_display = ("date", "timezone", "location_count", "visit_count", "computed_at")
+    list_filter = ("timezone",)
+    ordering = ("-date",)

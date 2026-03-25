@@ -173,3 +173,5 @@ media/
 
 # Devcontainer
 .devcontainer/postgresdata/
+
+.claude/

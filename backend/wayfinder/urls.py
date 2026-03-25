@@ -10,6 +10,7 @@ from .views import (
     OverlandView,
     TripsView,
     TokenView,
+    UserSettingsView,
     VisitsView,
 )
 
@@ -20,4 +21,5 @@ urlpatterns = [
     path("visits/", VisitsView.as_view(), name="visits"),
     path("trips/", TripsView.as_view(), name="trips"),
     path("activity/history/", ActivityHistoryView.as_view(), name="activity-history"),
+    path("settings/", UserSettingsView.as_view(), name="user-settings"),
 ]

@@ -1,7 +1,9 @@
 // @ts-nocheck
 import type {
   ActivityHistoryResponse,
+  PatchedUserSettings,
   TripPlotResponse,
+  UserSettings,
   VisitPlotResponse,
   WayfinderOverlandCreate200,
   WayfinderOverlandCreateBodyOne,
@@ -18,7 +20,7 @@ import { customAxiosInstance } from "../../axios";
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * Endpoint for retrieving the count of locations and visits per day for the past 365 days.
+ * Returns pre-computed daily location and visit counts for the past 365 days, grouped by the authenticated user's home timezone.  Data is refreshed nightly at 04:00 UTC by a background task.
  */
 export const wayfinderActivityHistoryRetrieve = (
   options?: SecondParameter<
@@ -47,6 +49,34 @@ export const wayfinderOverlandCreate = (
       url: `/wayfinder/overland/`,
       method: "POST",
       data: wayfinderOverlandCreateBody,
+    },
+    options,
+  );
+};
+/**
+ * Retrieve the current user's settings.
+ */
+export const wayfinderSettingsRetrieve = (
+  options?: SecondParameter<typeof customAxiosInstance<UserSettings>>,
+) => {
+  return customAxiosInstance<UserSettings>(
+    { url: `/wayfinder/settings/`, method: "GET" },
+    options,
+  );
+};
+/**
+ * Update the current user's settings (e.g. home timezone).
+ */
+export const wayfinderSettingsPartialUpdate = (
+  patchedUserSettings: PatchedUserSettings,
+  options?: SecondParameter<typeof customAxiosInstance<UserSettings>>,
+) => {
+  return customAxiosInstance<UserSettings>(
+    {
+      url: `/wayfinder/settings/`,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      data: patchedUserSettings,
     },
     options,
   );
@@ -95,6 +125,12 @@ export type WayfinderActivityHistoryRetrieveResult = NonNullable<
 >;
 export type WayfinderOverlandCreateResult = NonNullable<
   Awaited<ReturnType<typeof wayfinderOverlandCreate>>
+>;
+export type WayfinderSettingsRetrieveResult = NonNullable<
+  Awaited<ReturnType<typeof wayfinderSettingsRetrieve>>
+>;
+export type WayfinderSettingsPartialUpdateResult = NonNullable<
+  Awaited<ReturnType<typeof wayfinderSettingsPartialUpdate>>
 >;
 export type WayfinderTokenRetrieveResult = NonNullable<
   Awaited<ReturnType<typeof wayfinderTokenRetrieve>>

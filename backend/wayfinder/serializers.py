@@ -3,7 +3,9 @@
 from datetime import datetime
 from rest_framework import serializers
 
-from .models import Location, Visit
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+from .models import DailyActivitySummary, Location, UserSettings, Visit
 
 
 class LocationSerializer(serializers.ModelSerializer):
@@ -360,6 +362,21 @@ class VisitSerializer(serializers.ModelSerializer):
             )
 
         return data
+
+
+class UserSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserSettings
+        fields = ["home_timezone"]
+
+    def validate_home_timezone(self, value):
+        try:
+            ZoneInfo(value)
+        except (ZoneInfoNotFoundError, KeyError):
+            raise serializers.ValidationError(
+                f"'{value}' is not a valid IANA timezone name."
+            )
+        return value
 
 
 class ErrorResponseSerializer(serializers.Serializer):

@@ -11,3 +11,6 @@ RUN npm install -g vite
 
 # Instal typescript globally
 RUN npm install -g typescript
+
+# Set the path for the local bin
+ENV PATH="/root/.local/bin:$PATH"

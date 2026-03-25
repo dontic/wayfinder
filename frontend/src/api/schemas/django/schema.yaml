@@ -253,8 +253,9 @@ paths:
   /wayfinder/activity/history/:
     get:
       operationId: wayfinder_activity_history_retrieve
-      description: Endpoint for retrieving the count of locations and visits per day
-        for the past 365 days.
+      description: Returns pre-computed daily location and visit counts for the past
+        365 days, grouped by the authenticated user's home timezone.  Data is refreshed
+        nightly at 04:00 UTC by a background task.
       tags:
       - wayfinder
       security:
@@ -362,6 +363,52 @@ paths:
                   value:
                     result: not_ok
                   summary: Error Response
+          description: ''
+  /wayfinder/settings/:
+    get:
+      operationId: wayfinder_settings_retrieve
+      description: Retrieve the current user's settings.
+      tags:
+      - wayfinder
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSettings'
+          description: ''
+    patch:
+      operationId: wayfinder_settings_partial_update
+      description: Update the current user's settings (e.g. home timezone).
+      tags:
+      - wayfinder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserSettings'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserSettings'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserSettings'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSettings'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           description: ''
   /wayfinder/token/:
     get:
@@ -738,6 +785,12 @@ components:
         last_name:
           type: string
           maxLength: 150
+    PatchedUserSettings:
+      type: object
+      properties:
+        home_timezone:
+          type: string
+          maxLength: 63
     RestAuthDetail:
       type: object
       properties:
@@ -849,6 +902,12 @@ components:
       - email
       - pk
       - username
+    UserSettings:
+      type: object
+      properties:
+        home_timezone:
+          type: string
+          maxLength: 63
     VisitPlotMeta:
       type: object
       properties:

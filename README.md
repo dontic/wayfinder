@@ -1,31 +1,40 @@
-<img src="assets/wayfinder_logo.svg" height="60">
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Latest version](https://img.shields.io/github/v/release/dontic/wayfinder)](https://img.shields.io/github/v/release/dontic/wayfinder)
-
-Wayfinder is a self-hosted web app for [Overland-iOS](https://github.com/aaronpk/Overland-iOS).
+<p align="center">
+  <img src="assets/wayfinder_logo.svg" height="150">
+</p>
 
 <p align="center">
-  <img width="500px" src="assets/mockup.png">
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
+  <a href="https://img.shields.io/github/v/release/dontic/wayfinder"><img src="https://img.shields.io/github/v/release/dontic/wayfinder" alt="Latest version"></a>
+</p>
+
+<p align="center">Wayfinder is a self-hosted web app for <a href="https://github.com/aaronpk/Overland-iOS">Overland-iOS</a>.</p>
+
+<p align="center">
+  <img width="600px" src="assets/mockup.png">
 </p>
 
 ---
 
-Wayfinder has 3 main components:
+Wayfinder is made up of the following services:
 
-1. A **TimescaleDB** database to store the location data received by Overland and other relevant data to make the App work
-2. A **django REST backend** to process incoming and outgoing datta.
-3. A desktop and mobile friendly **React client** to visualize the location data.
+| Service | Description |
+|---|---|
+| **TimescaleDB** | Primary database for storing location data |
+| **Redis** | Cache backend and Celery message broker |
+| **Django** | REST API server |
+| **Celery Worker** | Processes background tasks |
+| **Celery Beat** | Schedules periodic tasks |
+| **Frontend** | Desktop and mobile friendly React client |
+| **Nginx** | Reverse proxy — routes `/` to the frontend and `/api/` to Django |
 
 ## Getting Started
 
 > ℹ️ Pre-requisites:
-> - Basic Docker knowledge
-> - A custom domain or dyndns service
-> - A reverse proxy or tunnel (nginx, cloudflared...)
+> - Docker and Docker Compose installed
+> - A domain or dynamic DNS service (for external access)
+> - A tunnel or external reverse proxy pointing to port `8080` (e.g. Cloudflare Tunnel, nginx, Caddy)
 
-
-1. Copy the `docker-compose.yml` file in the root of this repository to a directory:
+1. Create a directory and download the `docker-compose.yml`:
 
     ```bash
     mkdir wayfinder && cd wayfinder
@@ -35,12 +44,18 @@ Wayfinder has 3 main components:
     curl -O https://raw.githubusercontent.com/dontic/wayfinder/main/docker-compose.yml
     ```
 
-
-2. Modify the environment variables of the backend service as needed:
+2. Edit the environment variables at the top of `docker-compose.yml`:
 
     ```bash
     nano docker-compose.yml
     ```
+
+    At minimum, set these two values in the `x-environment` block:
+
+    | Variable | Description |
+    |---|---|
+    | `SECRET_KEY` | A long, random secret string for Django.  |
+    | `BASE_URL` | The public URL where Wayfinder will be accessible (e.g. `https://wayfinder.mydomain.com`) |
 
 3. Run it!
 
@@ -48,62 +63,52 @@ Wayfinder has 3 main components:
     docker compose up -d
     ```
 
-4. Access the app at `localhost:8080`
+4. Access the app at `http://localhost:8080`
 
-    You can modify this port in `docker-compose.yml` under the `fronted` service.
+    > To change the port, update the `nginx` service ports in `docker-compose.yml`.
 
 ### Configuration
 
-By default you will log in with user and password `admin:admin`.
+By default you will log in with username and password `admin` / `admin`.
 
-Then go to your user (bottom left) -> **settings**:
+Then go to your user (bottom left) → **Settings**:
 
-1. Copy the **Overland token** (you can regenerate it when needed)
+1. Copy the **Overland token** (you can regenerate it at any time)
+2. Paste the token into the Overland app's token field
+3. Set the Overland server URL to `<BASE_URL>/api/wayfinder/overland/`
+4. Update your username and password if needed
 
-2. Paste the Token 'as is' into the Overland App token field
-
-3. Modify the Overland server url to `<BASE_URL>/api/wayfinder/overland/`
-
-4. Back in Wayfinder settings modify your username and password if needed
-
-### Overland settings for Wayfinder
+### Overland Settings for Wayfinder
 
 These are the settings that work best with Wayfinder:
 
-> Note that only Wayfinder relevant settings are included. The rest are left to your choosing.
+> Note: only Wayfinder-relevant settings are listed. All others are up to you.
 
 - **Tracking Enabled**: `On`
 - **Continuous Tracking Mode**: `Both`
-- **Visit Tracking**: `On` -> Necessary to log visits in Wayfinder
-- **Loggin Mode**: `All Data`
-- **Locations per Batch**: Depends on where you host Wayfinder. Bigger servers will handle bigger batches easier. _I.e.: If you host on a raspberri pi keep it low to 50 or 100 per batch._
+- **Visit Tracking**: `On` — required to log visits in Wayfinder
+- **Logging Mode**: `All Data`
+- **Locations per Batch**: Depends on your server. Larger servers can handle bigger batches. _For low-powered hardware like a Raspberry Pi, keep this at 50–100._
 
 ## Updating Wayfinder
 
+> ⚠️ **Always read the release notes before updating!**
+>
+> Breaking changes are occasionally introduced that require manual steps, which will be documented in the release notes.
 
 ```bash
 docker compose pull && docker compose up -d
 ```
 
-> ℹ️ **ALWAYS read the release notes!**
-> 
-> There are sometimes where breaking changes are introduced
-> 
-> In these cases, usually there is some kind of actions needed that will be specified in the release notes.
-
-
 ## Contributing
 
-Feel free to open issues, feature requests or pull requests to enhance Wayfinder!
+Feel free to open issues, feature requests, or pull requests to improve Wayfinder!
 
-### How to develop Wayfinder locally
+### Local Development
 
 With either VSCode or Cursor:
 
 1. Open the `/backend` and `/frontend` directories in separate windows
-
-2. Make sure you have the dev containers extension installed
-
-3. In each window: `F1` -> `Dev Containers: Reopen in container`
-
-4. Read the `README.md` on both the frontend and the backend to see how to configure and start them.
+2. Make sure you have the **Dev Containers** extension installed
+3. In each window: `F1` → `Dev Containers: Reopen in Container`
+4. See the `README.md` in each directory for setup and startup instructions

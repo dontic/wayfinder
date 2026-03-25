@@ -17,3 +17,6 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
+
+# Set the path for the local bin
+ENV PATH="/root/.local/bin:$PATH"

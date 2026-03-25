@@ -97,7 +97,9 @@ if not DEBUG:
     BASE_URL_PROTOCOL = BASE_URL.split("://")[0]
     BASE_URL_HOST = BASE_URL.split("://")[1].split(":")[0]
     BASE_URL_PORT = (
-        BASE_URL.split("://")[1].split(":")[1] if ":" in BASE_URL.split("://")[1] else ""
+        BASE_URL.split("://")[1].split(":")[1]
+        if ":" in BASE_URL.split("://")[1]
+        else ""
     )
 
 # Serve the api in the /api path in production
@@ -108,7 +110,10 @@ FORCE_SCRIPT_NAME = "/api" if not DEBUG else None
 SECRET_KEY = os.getenv("SECRET_KEY", "super_secret_key")
 
 # Hosts
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"] if DEBUG else [BASE_URL_HOST]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "django"]
+
+if not DEBUG:
+    ALLOWED_HOSTS.append(BASE_URL_HOST)
 
 # CSRF
 CSRF_TRUSTED_ORIGINS = ["http://localhost:5173"] if DEBUG else [BASE_URL]
@@ -163,6 +168,10 @@ INSTALLED_APPS = [
     # ----------------------------------- REST ----------------------------------- #
     "rest_framework",  # Django REST Framework
     "drf_spectacular",  # Django Spectacular
+    # ---------------------------------- CELERY ---------------------------------- #
+    "django_celery_beat",
+    # ------------------------------- HEALTH CHECK ------------------------------- #
+    "health_check",
     # ----------------------------------- Apps ----------------------------------- #
     "wayfinder",
 ]
@@ -317,6 +326,32 @@ SPECTACULAR_SETTINGS = {
 # ------------------------------- DJ-REST-AUTH ------------------------------- #
 
 # See defaults in https://dj-rest-auth.readthedocs.io/en/latest/configuration.html
+# ---------------------------------------------------------------------------- #
+#                                   CELERY                                     #
+# ---------------------------------------------------------------------------- #
+
+from celery.schedules import crontab
+
+REDIS_URL = "redis://{}:{}/{}".format(
+    os.getenv("REDIS_HOST", "redis"),
+    os.getenv("REDIS_PORT", "6379"),
+    os.getenv("REDIS_DB", "0"),
+)
+
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_TIMEZONE = "UTC"
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+CELERY_BEAT_SCHEDULE = {
+    "compute-daily-activity-summary": {
+        "task": "wayfinder.tasks.compute_daily_activity_summary",
+        "schedule": crontab(hour=4, minute=0),
+    },
+}
+
+
+# ------------------------------- DJ-REST-AUTH ------------------------------- #
+
 REST_AUTH = {
     # Use sessions instead of tokens
     "TOKEN_MODEL": None,
