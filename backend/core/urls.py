@@ -27,6 +27,7 @@ from redis.asyncio import Redis as RedisClient
 
 
 urlpatterns = [
+    path("admin/", admin.site.urls),
     path("auth/", include("dj_rest_auth.urls")),
     path("wayfinder/", include("wayfinder.urls")),
     path(
@@ -56,7 +57,6 @@ urlpatterns = [
 # Show the drf-spectacular UI in debug mode
 if settings.DEBUG:
     urlpatterns += [
-        path("admin/", admin.site.urls),
         path("schema/", SpectacularAPIView.as_view(), name="schema"),
         path(
             "schema/swagger-ui/",
