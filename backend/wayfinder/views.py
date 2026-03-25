@@ -777,7 +777,9 @@ class UserSettingsView(APIView):
     )
     def patch(self, request):
         settings_obj, _ = UserSettings.objects.get_or_create(user=request.user)
-        serializer = UserSettingsSerializer(settings_obj, data=request.data, partial=True)
+        serializer = UserSettingsSerializer(
+            settings_obj, data=request.data, partial=True
+        )
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
@@ -858,19 +860,33 @@ class ActivityHistoryView(APIView):
             current_date += timedelta(days=1)
 
         if total_locations == 0 and total_visits == 0:
-            log.debug("No pre-computed activity data found; triggering background task")
-            from wayfinder.tasks import compute_daily_activity_summary
+            has_raw_data = Location.objects.exists() or Visit.objects.exists()
+            if has_raw_data:
+                log.debug(
+                    "No pre-computed activity data found; triggering background task"
+                )
+                from wayfinder.tasks import compute_daily_activity_summary
 
-            compute_daily_activity_summary.delay()
-            return Response(
-                {
-                    "message": (
-                        "No activity data found. "
-                        "Data is being computed in the background; please try again shortly."
-                    )
-                },
-                status=status.HTTP_404_NOT_FOUND,
-            )
+                compute_daily_activity_summary.delay()
+                return Response(
+                    {
+                        "message": (
+                            "Activity data is being computed in the background; "
+                            "please refresh the page in a few minutes."
+                        )
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            else:
+                log.debug("No location or visit data exists yet")
+                return Response(
+                    {
+                        "message": (
+                            "Location counts will appear here once you have some location data."
+                        )
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
 
         response_data = {
             "data": data,
