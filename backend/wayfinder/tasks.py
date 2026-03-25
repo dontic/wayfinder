@@ -58,8 +58,10 @@ def compute_daily_activity_summary():
         ).values_list("date", flat=True)
     )
 
-    # Always recompute today so intraday data is reflected on the next run
-    dates_to_compute = (all_dates - existing_dates) | {today_in_tz}
+    # Always recompute today and yesterday: today captures intraday updates, yesterday
+    # corrects any partial summary that was computed mid-day (e.g. by the bootstrap trigger).
+    yesterday_in_tz = today_in_tz - timedelta(days=1)
+    dates_to_compute = (all_dates - existing_dates) | {today_in_tz, yesterday_in_tz}
 
     log.info("Dates to compute: %d", len(dates_to_compute))
 
