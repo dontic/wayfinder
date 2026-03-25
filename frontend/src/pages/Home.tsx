@@ -72,7 +72,7 @@ const Home = () => {
   return (
     <SideBarLayout title="Dashboard">
       <div className="flex flex-col gap-6 p-6 w-full items-center">
-        <div className="grid gap-6">
+        <div className="grid gap-6 w-full">
           {/* Locations Heatmap */}
           <Card>
             <CardHeader>
@@ -88,7 +88,7 @@ const Home = () => {
                 )}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="min-w-0">
               {isLoading ? (
                 <div className="flex items-center justify-center h-[140px] w-full overflow-x-auto">
                   <CalendarHeatmapSkeleton />
@@ -114,7 +114,7 @@ const Home = () => {
                 )}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="min-w-0">
               {isLoading ? (
                 <div className="flex items-center justify-center h-[140px] w-full overflow-x-auto">
                   <CalendarHeatmapSkeleton />

@@ -124,7 +124,7 @@ export function CalendarHeatmap({
   const maxCount = Math.max(...data.map((d) => d.count), 1);
 
   return (
-    <div className={cn("w-full overflow-x-auto", className)}>
+    <div className={cn("w-full min-w-0 overflow-x-auto", className)}>
       <div className="inline-block min-w-max p-4">
         {/* Grid container */}
         <div className="relative pt-6">
