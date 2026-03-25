@@ -329,8 +329,14 @@ SPECTACULAR_SETTINGS = {
 
 from celery.schedules import crontab
 
-CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
-CELERY_RESULT_BACKEND = os.getenv("REDIS_URL", "redis://redis:6379/0")
+REDIS_URL = "redis://{}:{}/{}".format(
+    os.getenv("REDIS_HOST", "redis"),
+    os.getenv("REDIS_PORT", "6379"),
+    os.getenv("REDIS_DB", "0"),
+)
+
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_TIMEZONE = "UTC"
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 CELERY_BEAT_SCHEDULE = {
