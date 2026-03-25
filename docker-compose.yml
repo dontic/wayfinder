@@ -1,4 +1,42 @@
+name: wayfinder
+
+# ---------------------------------------------------------------------------
+# Configuration. Edit these values.
+# ---------------------------------------------------------------------------
+x-environment: &django-env
+  SECRET_KEY: change-me
+  BASE_URL: https://wayfinder.mydomain.com
+  # Override these if connecting to an external TimescaleDB server.
+  # Then remove the 'timescaledb' service below.
+  # POSTGRES_DB_NAME: django
+  # POSTGRES_USER: django
+  # POSTGRES_PASSWORD: django
+  # POSTGRES_HOST: timescaledb
+  # POSTGRES_PORT: "5432"
+  # Override these if connecting to an external Redis server.
+  # Then remove the 'redis' service below.
+  # REDIS_HOST: redis
+  # REDIS_PORT: "6379"
+  # REDIS_DB: 0
+
+# ---------------------------------------------------------------------------
+# No need to edit anything below this line
+# ---------------------------------------------------------------------------
+
+# Shared configuration for Django-based services (web, worker, beat).
+x-django-app: &django-app
+  restart: unless-stopped
+  image: dontic/wayfinder-backend:latest
+  environment: *django-env
+  volumes:
+    - media:/app/backend/media
+    - django_static:/app/backend/django_static
+
 services:
+  # ---------------------------------------------------------------------------
+  # TimescaleDB. Primary relational database.
+  # Comment out if using an external TimescaleDB server.
+  # ---------------------------------------------------------------------------
   timescaledb:
     restart: unless-stopped
     image: timescale/timescaledb-ha:pg16
@@ -20,44 +58,137 @@ services:
       retries: 5
       start_period: 20s
 
-  backend:
+  # ---------------------------------------------------------------------------
+  # Redis. Cache backend and Celery message broker.
+  # Comment out if using an external Redis server.
+  # ---------------------------------------------------------------------------
+  redis:
     restart: unless-stopped
-    image: dontic/wayfinder-backend:latest
-    ports:
-      - "8000:8000"
-    environment:
-      # Base URL of the application
-      - BASE_URL=https://wayfinder.mydomain.com
+    image: redis:7.2.0-alpine
+    # Uncomment to expose the port for external access.
+    # ports:
+    #   - "6379:6379"
 
-      # The secret key for the Django application.
-      # This is used to sign the session cookies.
-      # Generate yours at https://djecrety.ir/
-      - SECRET_KEY=super_secret_key
-
-      # Location points in the trips map are queried in chuncks of this size.
-      # Depending on your server's resources, you may want to increase or decrease this number.
-      # For reference, 10,000 is a good value for a 2 cpu, 4gb ram server.
-      - MAX_TRIP_POINTS=10000
-
-      # Django environment variables
-      # Postgres environment variables
-      # Uncomment these to use your own timescaledb instance:
-      # - POSTGRES_USER=django
-      # - POSTGRES_PASSWORD=django
-      # - POSTGRES_DB=django
-      # - POSTGRES_HOST=timescaledb
-      # - POSTGRES_PORT=5432
+  # ---------------------------------------------------------------------------
+  # Celery Worker. Processes background tasks.
+  # ---------------------------------------------------------------------------
+  worker:
+    <<: *django-app
+    entrypoint: /app/backend/docker/entrypoint-worker.sh
     depends_on:
       timescaledb:
         condition: service_healthy
+      redis:
+        condition: service_started
 
+  # ---------------------------------------------------------------------------
+  # Django. Main application server (Gunicorn).
+  # Runs migrations and collectstatic on startup.
+  # ---------------------------------------------------------------------------
+  django:
+    <<: *django-app
+    entrypoint: /app/backend/docker/entrypoint-django.sh
+    ports:
+      - "8000:8000"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      worker:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Celery Beat. Schedules periodic tasks.
+  # ---------------------------------------------------------------------------
+  beat:
+    <<: *django-app
+    entrypoint: /app/backend/docker/entrypoint-beat.sh
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      django:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # ---------------------------------------------------------------------------
+  # Frontend. React app served via 'serve'.
+  # ---------------------------------------------------------------------------
   frontend:
     restart: unless-stopped
     image: dontic/wayfinder-frontend:latest
+    depends_on:
+      - django
+
+  # ---------------------------------------------------------------------------
+  # Nginx. Reverse proxy. Routes / to the frontend and /api/ to Django.
+  # Config defined inline in the 'configs' section below.
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:1.28
+    restart: unless-stopped
     ports:
       - "8080:80"
+    volumes:
+      - media:/app/backend/media:ro
+      - django_static:/app/backend/django_static:ro
+    configs:
+      - source: nginx_conf
+        target: /etc/nginx/nginx.conf
     depends_on:
-      - backend
+      - django
+      - frontend
+
+# ---------------------------------------------------------------------------
+# Nginx configuration
+# ---------------------------------------------------------------------------
+configs:
+  nginx_conf:
+    content: |
+      events {}
+
+      http {
+          include /etc/nginx/mime.types;
+
+          server {
+              listen 80;
+
+              location / {
+                  proxy_pass http://frontend:3000;
+                  proxy_set_header Host $$host;
+                  proxy_set_header X-Real-IP $$remote_addr;
+                  proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $$scheme;
+              }
+
+              location /api/ {
+                  proxy_pass http://django:8000/;
+                  proxy_set_header Host $$host;
+                  proxy_set_header X-Real-IP $$remote_addr;
+                  proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $$scheme;
+              }
+
+              location /static/ {
+                  alias /app/backend/django_static/;
+                  autoindex off;
+              }
+
+              location /media/ {
+                  alias /app/backend/media/;
+                  autoindex off;
+              }
+          }
+      }
 
 volumes:
   timescaledb_data:
+  media:
+  django_static:
