@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "1a1248baa5687bed459f5b2fd912188d9717ae080892178a0f893dc699d5c079"
+            "sha256": "6a9306480abb7e6a432bb64c0aa9234f2eff46d5a3d1b3f5844fea9568bcf8b7"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -141,6 +141,18 @@
             "markers": "python_version >= '3.10'",
             "version": "==25.2"
         },
+        "django-health-check": {
+            "extras": [
+                "celery",
+                "redis"
+            ],
+            "hashes": [
+                "sha256:7216ba208f82f7587dc0ac0fe4c8f8a1c4d0cebbbae46cff6bd89779b378daf3",
+                "sha256:aa05f57d6b01fe502842273aaa944e988b85d1f58e3ea67b6f98c5f9808a530a"
+            ],
+            "markers": "python_version >= '3.10'",
+            "version": "==4.2.1"
+        },
         "django-timescaledb": {
             "hashes": [
                 "sha256:3a2dcdf224af318c6c813c7fbf323fa73ae9bd12d33cdf7540e34344ae62f739"
@@ -164,6 +176,14 @@
             "index": "pypi",
             "markers": "python_version >= '3.10'",
             "version": "==3.17.1"
+        },
+        "dnspython": {
+            "hashes": [
+                "sha256:01d9bbc4a2d76bf0db7c1f729812ded6d912bd318d3b1cf81d30c0f845dbf3af",
+                "sha256:181d3c6996452cb1189c4046c61599b84a5a86e099562ffde77d26984ff26d0f"
+            ],
+            "markers": "python_version >= '3.10'",
+            "version": "==2.8.0"
         },
         "drf-spectacular": {
             "hashes": [

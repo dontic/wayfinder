@@ -22,11 +22,34 @@ from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
 )
+from health_check.views import HealthCheckView
+from redis.asyncio import Redis as RedisClient
 
 
 urlpatterns = [
     path("auth/", include("dj_rest_auth.urls")),
     path("wayfinder/", include("wayfinder.urls")),
+    path(
+        "health/",
+        HealthCheckView.as_view(
+            checks=[  # optional, default is all but 3rd party checks
+                "health_check.Cache",
+                "health_check.DNS",
+                "health_check.Database",
+                "health_check.Storage",
+                # 3rd party checks
+                "health_check.contrib.celery.Ping",
+                (
+                    "health_check.contrib.redis.Redis",
+                    {
+                        "client_factory": lambda: RedisClient.from_url(
+                            settings.CELERY_BROKER_URL
+                        )
+                    },
+                ),
+            ],
+        ),
+    ),
 ]
 
 

@@ -97,7 +97,9 @@ if not DEBUG:
     BASE_URL_PROTOCOL = BASE_URL.split("://")[0]
     BASE_URL_HOST = BASE_URL.split("://")[1].split(":")[0]
     BASE_URL_PORT = (
-        BASE_URL.split("://")[1].split(":")[1] if ":" in BASE_URL.split("://")[1] else ""
+        BASE_URL.split("://")[1].split(":")[1]
+        if ":" in BASE_URL.split("://")[1]
+        else ""
     )
 
 # Serve the api in the /api path in production
@@ -163,8 +165,10 @@ INSTALLED_APPS = [
     # ----------------------------------- REST ----------------------------------- #
     "rest_framework",  # Django REST Framework
     "drf_spectacular",  # Django Spectacular
-    # --------------------------------- CELERY ---------------------------------- #
+    # ---------------------------------- CELERY ---------------------------------- #
     "django_celery_beat",
+    # ------------------------------- HEALTH CHECK ------------------------------- #
+    "health_check",
     # ----------------------------------- Apps ----------------------------------- #
     "wayfinder",
 ]
