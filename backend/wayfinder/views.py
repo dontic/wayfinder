@@ -3,7 +3,7 @@
 import logging
 import os
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time as dt_time
 from dateutil import parser as date_parser
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -759,6 +759,29 @@ class TripsView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
+def _update_activity_schedule(timezone_str: str) -> None:
+    """Update the Celery beat periodic task to run at 00:00 in the given timezone."""
+    from django_celery_beat.models import CrontabSchedule, PeriodicTask
+
+    schedule, _ = CrontabSchedule.objects.get_or_create(
+        minute="0",
+        hour="0",
+        day_of_week="*",
+        day_of_month="*",
+        month_of_year="*",
+        timezone=timezone_str,
+    )
+    updated = PeriodicTask.objects.filter(name="compute-daily-activity-summary").update(
+        crontab=schedule
+    )
+    if updated:
+        log.info("Updated activity summary schedule to run at 00:00 %s", timezone_str)
+    else:
+        log.warning(
+            "Could not find periodic task 'compute-daily-activity-summary' to update"
+        )
+
+
 class UserSettingsView(APIView):
     authentication_classes = [SessionAuthentication]
 
@@ -777,12 +800,16 @@ class UserSettingsView(APIView):
     )
     def patch(self, request):
         settings_obj, _ = UserSettings.objects.get_or_create(user=request.user)
+        old_timezone = settings_obj.home_timezone
         serializer = UserSettingsSerializer(
             settings_obj, data=request.data, partial=True
         )
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
+        new_timezone = serializer.instance.home_timezone
+        if "home_timezone" in request.data and new_timezone != old_timezone:
+            _update_activity_schedule(new_timezone)
         return Response(serializer.data)
 
 
@@ -795,9 +822,10 @@ class ActivityHistoryView(APIView):
             404: ErrorResponseSerializer,
         },
         description=(
-            "Returns pre-computed daily location and visit counts for the past 365 days, "
-            "grouped by the authenticated user's home timezone.  Data is refreshed nightly "
-            "at 04:00 UTC by a background task."
+            "Returns daily location and visit counts for the past 365 days, grouped by the "
+            "authenticated user's home timezone.  Past days use pre-computed summaries; "
+            "today's counts are always computed live.  Pre-computed data is refreshed nightly "
+            "at 00:00 in the user's home timezone by a background task."
         ),
     )
     def get(self, request):
@@ -827,14 +855,24 @@ class ActivityHistoryView(APIView):
             timezone_str,
         )
 
-        # Fetch pre-computed summaries
+        # Fetch pre-computed summaries (today is always computed live below)
         summaries = DailyActivitySummary.objects.filter(
             timezone=timezone_str,
             date__gte=start_date,
-            date__lte=today_in_tz,
+            date__lt=today_in_tz,
         ).order_by("date")
 
         summaries_dict = {s.date: s for s in summaries}
+
+        # Compute today's counts live so the graph reflects the current state
+        today_start = datetime.combine(today_in_tz, dt_time.min, tzinfo=user_tz)
+        today_end = datetime.combine(today_in_tz, dt_time.max, tzinfo=user_tz)
+        live_location_count = Location.objects.filter(
+            time__gte=today_start, time__lte=today_end
+        ).count()
+        live_visit_count = Visit.objects.filter(
+            time__gte=today_start, time__lte=today_end
+        ).count()
 
         # Build the response, filling gaps with zero
         data = []
@@ -843,9 +881,13 @@ class ActivityHistoryView(APIView):
         current_date = start_date
 
         while current_date <= today_in_tz:
-            summary = summaries_dict.get(current_date)
-            location_count = summary.location_count if summary else 0
-            visit_count = summary.visit_count if summary else 0
+            if current_date == today_in_tz:
+                location_count = live_location_count
+                visit_count = live_visit_count
+            else:
+                summary = summaries_dict.get(current_date)
+                location_count = summary.location_count if summary else 0
+                visit_count = summary.visit_count if summary else 0
 
             total_locations += location_count
             total_visits += visit_count
