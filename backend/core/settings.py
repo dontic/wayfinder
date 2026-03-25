@@ -110,7 +110,7 @@ FORCE_SCRIPT_NAME = "/api" if not DEBUG else None
 SECRET_KEY = os.getenv("SECRET_KEY", "super_secret_key")
 
 # Hosts
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", " django"] if DEBUG else [BASE_URL_HOST]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "django", BASE_URL_HOST]
 
 # CSRF
 CSRF_TRUSTED_ORIGINS = ["http://localhost:5173"] if DEBUG else [BASE_URL]
