@@ -21,7 +21,7 @@ const Settings = () => {
                 <TabsTrigger value="team">Overland</TabsTrigger>
               )}
             </TabsList>
-            <TabsContent value="user" className="mt-6 space-y-6">
+            <TabsContent value="user" className="my-6 space-y-6">
               <ProfileInfo />
               <UsernameChange />
               <PasswordChange />
