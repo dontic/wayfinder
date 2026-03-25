@@ -881,6 +881,8 @@ class ActivityHistoryView(APIView):
         data = []
         total_locations = 0
         total_visits = 0
+        precomputed_locations = 0
+        precomputed_visits = 0
         current_date = start_date
 
         while current_date <= today_in_tz:
@@ -891,6 +893,8 @@ class ActivityHistoryView(APIView):
                 summary = summaries_dict.get(current_date)
                 location_count = summary.location_count if summary else 0
                 visit_count = summary.visit_count if summary else 0
+                precomputed_locations += location_count
+                precomputed_visits += visit_count
 
             total_locations += location_count
             total_visits += visit_count
@@ -904,7 +908,7 @@ class ActivityHistoryView(APIView):
             )
             current_date += timedelta(days=1)
 
-        if total_locations == 0 and total_visits == 0:
+        if precomputed_locations == 0 and precomputed_visits == 0:
             has_raw_data = Location.objects.exists() or Visit.objects.exists()
             if has_raw_data:
                 log.debug(
