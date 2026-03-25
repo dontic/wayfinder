@@ -31,10 +31,12 @@ const Home = () => {
         const status = (error as { response?: { status?: number } })?.response
           ?.status;
         if (status === 404) {
-          toast.info(
-            "No activity data found. Data is being computed in the background; please try again tomorrow.",
-            { id: "activity-history-404" }
-          );
+          const message = (
+            error as { response?: { data?: { message?: string } } }
+          )?.response?.data?.message;
+          toast.info(message ?? "No activity data found.", {
+            id: "activity-history-404"
+          });
         } else {
           console.error("Error fetching activity history:", error);
           toast.error("Failed to load activity history");
