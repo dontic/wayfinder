@@ -18,5 +18,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
+# Install claude code
+RUN curl -fsSL https://claude.ai/install.sh | bash
+
 # Set the path for the local bin
 ENV PATH="/root/.local/bin:$PATH"

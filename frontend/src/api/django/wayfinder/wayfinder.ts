@@ -5,6 +5,7 @@ import type {
   TripPlotResponse,
   UserSettings,
   VisitPlotResponse,
+  WayfinderActivityHistoryRetrieveParams,
   WayfinderOverlandCreate200,
   WayfinderOverlandCreateBodyOne,
   WayfinderOverlandCreateBodyThree,
@@ -15,22 +16,22 @@ import type {
   WayfinderVisitsRetrieveParams,
 } from "../api.schemas";
 
-import { customAxiosInstance } from "../../axios";
+import { customAxios, customAxiosInstance } from "../../axios";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * Returns pre-computed daily location and visit counts for the past 365 days, grouped by the authenticated user's home timezone.  Data is refreshed nightly at 04:00 UTC by a background task.
+ * Returns pre-computed daily location and visit counts for a date range, grouped by the authenticated user's home timezone.
+ * Defaults to the past 365 days if no params are provided. Returns 206 if some dates are still being computed.
  */
-export const wayfinderActivityHistoryRetrieve = (
-  options?: SecondParameter<
-    typeof customAxiosInstance<ActivityHistoryResponse>
-  >,
+export const wayfinderActivityHistoryRetrieve = async (
+  params?: WayfinderActivityHistoryRetrieveParams,
 ) => {
-  return customAxiosInstance<ActivityHistoryResponse>(
-    { url: `/wayfinder/activity/history/`, method: "GET" },
-    options,
+  const response = await customAxios.get<ActivityHistoryResponse>(
+    `/wayfinder/activity/history/`,
+    { params },
   );
+  return { data: response.data, status: response.status };
 };
 /**
  * Endpoint for receiving and storing location and visit data from Overland app.

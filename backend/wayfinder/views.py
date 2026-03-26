@@ -3,7 +3,7 @@
 import logging
 import os
 import pandas as pd
-from datetime import datetime, timedelta, time as dt_time
+from datetime import date as date_type, datetime, timedelta, time as dt_time
 from dateutil import parser as date_parser
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -820,15 +820,34 @@ class ActivityHistoryView(APIView):
     authentication_classes = [SessionAuthentication]
 
     @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="start_date",
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description="Start date in YYYY-MM-DD format (inclusive). Defaults to 365 days ago.",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="end_date",
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description="End date in YYYY-MM-DD format (inclusive). Defaults to today.",
+                required=False,
+            ),
+        ],
         responses={
             200: ActivityHistoryResponseSerializer,
+            206: ActivityHistoryResponseSerializer,
             404: ErrorResponseSerializer,
         },
         description=(
-            "Returns daily location and visit counts for the past 365 days, grouped by the "
+            "Returns daily location and visit counts for a date range, grouped by the "
             "authenticated user's home timezone.  Past days use pre-computed summaries; "
             "today's counts are always computed live.  Pre-computed data is refreshed nightly "
-            "at 00:00 in the user's home timezone by a background task."
+            "at 00:00 in the user's home timezone by a background task.  Returns 206 when "
+            "some dates are missing or only partially computed, and triggers a background "
+            "recalculation for those dates."
         ),
     )
     def get(self, request):
@@ -847,14 +866,39 @@ class ActivityHistoryView(APIView):
             timezone_str = "UTC"
             user_tz = ZoneInfo("UTC")
 
-        # Date range: past 365 days in the user's timezone
         today_in_tz = datetime.now(tz=user_tz).date()
-        start_date = today_in_tz - timedelta(days=365)
+
+        # Parse optional query params; fall back to past 365 days
+        start_date_str = request.query_params.get("start_date")
+        end_date_str = request.query_params.get("end_date")
+
+        try:
+            start_date = (
+                date_type.fromisoformat(start_date_str)
+                if start_date_str
+                else today_in_tz - timedelta(days=365)
+            )
+            end_date = (
+                date_type.fromisoformat(end_date_str)
+                if end_date_str
+                else today_in_tz
+            )
+        except ValueError:
+            return Response(
+                {"message": "Invalid date format. Use YYYY-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if start_date > end_date:
+            return Response(
+                {"message": "start_date must be before or equal to end_date."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         log.debug(
             "Querying pre-computed summaries from %s to %s (tz=%s)",
             start_date,
-            today_in_tz,
+            end_date,
             timezone_str,
         )
 
@@ -862,10 +906,26 @@ class ActivityHistoryView(APIView):
         summaries = DailyActivitySummary.objects.filter(
             timezone=timezone_str,
             date__gte=start_date,
+            date__lte=end_date,
             date__lt=today_in_tz,
         ).order_by("date")
 
         summaries_dict = {s.date: s for s in summaries}
+
+        # Track missing and partial dates (today excluded — always computed live)
+        missing_dates: set = set()
+        partial_dates: set = set()
+        current_date = start_date
+        while current_date <= end_date:
+            if current_date != today_in_tz:
+                summary = summaries_dict.get(current_date)
+                if summary is None:
+                    missing_dates.add(current_date)
+                elif summary.partial:
+                    partial_dates.add(current_date)
+            current_date += timedelta(days=1)
+
+        incomplete_dates = missing_dates | partial_dates
 
         # Compute today's counts live so the graph reflects the current state
         today_start = datetime.combine(today_in_tz, dt_time.min, tzinfo=user_tz)
@@ -885,7 +945,7 @@ class ActivityHistoryView(APIView):
         precomputed_visits = 0
         current_date = start_date
 
-        while current_date <= today_in_tz:
+        while current_date <= end_date:
             if current_date == today_in_tz:
                 location_count = live_location_count
                 visit_count = live_visit_count
@@ -908,15 +968,45 @@ class ActivityHistoryView(APIView):
             )
             current_date += timedelta(days=1)
 
-        if precomputed_locations == 0 and precomputed_visits == 0:
-            has_raw_data = Location.objects.exists() or Visit.objects.exists()
+        response_data = {
+            "data": data,
+            "meta": {
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+                "days": len(data),
+                "total_locations": total_locations,
+                "total_visits": total_visits,
+            },
+        }
+
+        # Determine response status
+        from wayfinder.tasks import compute_daily_activity_summary
+
+        # Cap task end date at yesterday (today is always live, never recalculated)
+        task_end = min(end_date, today_in_tz - timedelta(days=1))
+
+        if precomputed_locations == 0 and precomputed_visits == 0 and missing_dates:
+            # Check for raw data specifically within the queried range (not globally),
+            # so a year with no data doesn't trigger "computing" just because other
+            # years have data.
+            if task_end >= start_date:
+                range_start_dt = datetime.combine(start_date, dt_time.min, tzinfo=user_tz)
+                range_end_dt = datetime.combine(task_end, dt_time.max, tzinfo=user_tz)
+                has_raw_data = Location.objects.filter(
+                    time__gte=range_start_dt, time__lte=range_end_dt
+                ).exists() or Visit.objects.filter(
+                    time__gte=range_start_dt, time__lte=range_end_dt
+                ).exists()
+            else:
+                has_raw_data = False
             if has_raw_data:
                 log.debug(
                     "No pre-computed activity data found; triggering background task"
                 )
-                from wayfinder.tasks import compute_daily_activity_summary
-
-                compute_daily_activity_summary.delay()
+                compute_daily_activity_summary.delay(
+                    start_date=start_date.isoformat(),
+                    end_date=task_end.isoformat(),
+                )
                 return Response(
                     {
                         "message": (
@@ -926,7 +1016,7 @@ class ActivityHistoryView(APIView):
                     },
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            else:
+            elif not Location.objects.exists() and not Visit.objects.exists():
                 log.debug("No location or visit data exists yet")
                 return Response(
                     {
@@ -936,17 +1026,22 @@ class ActivityHistoryView(APIView):
                     },
                     status=status.HTTP_404_NOT_FOUND,
                 )
+            else:
+                # Data exists in other date ranges but not this one — return zeros
+                # directly as 200 rather than falling through to the 206 path, since
+                # there is nothing to compute.
+                return Response(response_data, status=status.HTTP_200_OK)
 
-        response_data = {
-            "data": data,
-            "meta": {
-                "start_date": start_date.isoformat(),
-                "end_date": today_in_tz.isoformat(),
-                "days": len(data),
-                "total_locations": total_locations,
-                "total_visits": total_visits,
-            },
-        }
+        if incomplete_dates:
+            log.info(
+                "Returning partial activity history (%d incomplete dates); triggering background task",
+                len(incomplete_dates),
+            )
+            compute_daily_activity_summary.delay(
+                start_date=start_date.isoformat(),
+                end_date=task_end.isoformat(),
+            )
+            return Response(response_data, status=status.HTTP_206_PARTIAL_CONTENT)
 
         log.info(
             "Returning activity history: %d days, %d locations, %d visits",

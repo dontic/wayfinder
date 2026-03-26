@@ -166,6 +166,7 @@ class DailyActivitySummary(models.Model):
     location_count = models.IntegerField(default=0)
     visit_count = models.IntegerField(default=0)
     computed_at = models.DateTimeField(auto_now=True)
+    partial = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ("date", "timezone")

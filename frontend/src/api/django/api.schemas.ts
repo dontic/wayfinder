@@ -227,6 +227,13 @@ export type WayfinderOverlandCreate200 = { [key: string]: unknown };
 
 export type WayfinderOverlandCreate500 = { [key: string]: unknown };
 
+export type WayfinderActivityHistoryRetrieveParams = {
+  /** Start date for the data range (YYYY-MM-DD) */
+  start_date?: string;
+  /** End date for the data range (YYYY-MM-DD) */
+  end_date?: string;
+};
+
 export type WayfinderTokenRetrieveParams = {
   /**
    * Boolean flag to indicate if the token should be regenerated
