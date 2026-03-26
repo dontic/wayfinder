@@ -1,6 +1,6 @@
 "use client";
 
-import { differenceInDays, format, getDay, subDays } from "date-fns";
+import { format, getDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -15,14 +15,17 @@ export interface CalendarHeatmapData {
 
 interface CalendarHeatmapProps {
   data: CalendarHeatmapData[];
+  startDate: Date;
+  endDate: Date;
   className?: string;
   /** Label for what each count represents (e.g., "step", "kilometer", "contribution"). Defaults to "contribution". */
   label?: string;
+  /** When true, dates after today are rendered as dimmed gray cells. */
+  showFutureGray?: boolean;
 }
 
 const CELL_SIZE = 12;
 const CELL_GAP = 3;
-const DAYS_IN_YEAR = 365;
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function getColorIntensity(count: number, maxCount: number): string {
@@ -39,10 +42,16 @@ function getColorIntensity(count: number, maxCount: number): string {
   return "bg-emerald-700 dark:bg-emerald-400 hover:bg-emerald-800 dark:hover:bg-emerald-300";
 }
 
-function generateDateRange(endDate: Date, days: number): Date[] {
+function generateDateRange(startDate: Date, endDate: Date): Date[] {
   const dates: Date[] = [];
-  for (let i = days - 1; i >= 0; i--) {
-    dates.push(subDays(endDate, i));
+  const current = new Date(startDate);
+  current.setHours(0, 0, 0, 0);
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
+
+  while (current <= end) {
+    dates.push(new Date(current));
+    current.setDate(current.getDate() + 1);
   }
   return dates;
 }
@@ -51,11 +60,9 @@ function groupByWeeks(dates: Date[]): Date[][] {
   const weeks: Date[][] = [];
   let currentWeek: Date[] = [];
 
-  // Start from the first date and check what day of the week it is
   const firstDate = dates[0];
-  const firstDayOfWeek = getDay(firstDate); // 0 = Sunday, 6 = Saturday
+  const firstDayOfWeek = getDay(firstDate);
 
-  // Add empty slots for days before the first date in the first week
   for (let i = 0; i < firstDayOfWeek; i++) {
     currentWeek.push(null as unknown as Date);
   }
@@ -85,12 +92,10 @@ function getMonthLabels(
   let currentMonth = -1;
 
   weeks.forEach((week, weekIndex) => {
-    // Find first valid date in the week
     const validDate = week.find((d) => d !== null);
     if (validDate) {
       const month = validDate.getMonth();
       if (month !== currentMonth) {
-        // Only add label if we're at least 2 weeks into data or it's a new month
         currentMonth = month;
         labels.push({
           label: format(validDate, "MMM"),
@@ -105,22 +110,25 @@ function getMonthLabels(
 
 export function CalendarHeatmap({
   data,
+  startDate,
+  endDate,
   className,
-  label = "contribution"
+  label = "contribution",
+  showFutureGray = false
 }: CalendarHeatmapProps) {
   const today = new Date();
-  const dates = generateDateRange(today, DAYS_IN_YEAR);
+  today.setHours(0, 0, 0, 0);
+
+  const dates = generateDateRange(startDate, endDate);
   const weeks = groupByWeeks(dates);
   const monthLabels = getMonthLabels(weeks);
 
-  // Create a map for quick lookup
   const dataMap = new Map<string, number>();
   data.forEach((item) => {
     const key = format(item.date, "yyyy-MM-dd");
     dataMap.set(key, item.count);
   });
 
-  // Find max count for color scaling
   const maxCount = Math.max(...data.map((d) => d.count), 1);
 
   return (
@@ -185,9 +193,23 @@ export function CalendarHeatmap({
                     }
 
                     const dateKey = format(date, "yyyy-MM-dd");
+                    const isFuture = showFutureGray && date > today;
+                    const isToday =
+                      format(date, "yyyy-MM-dd") ===
+                      format(today, "yyyy-MM-dd");
+
+                    if (isFuture) {
+                      return (
+                        <div
+                          key={dateKey}
+                          className="rounded-[3px] bg-muted/30"
+                          style={{ width: CELL_SIZE, height: CELL_SIZE }}
+                        />
+                      );
+                    }
+
                     const count = dataMap.get(dateKey) ?? 0;
                     const colorClass = getColorIntensity(count, maxCount);
-                    const isToday = differenceInDays(today, date) === 0;
 
                     return (
                       <Tooltip key={dateKey}>
