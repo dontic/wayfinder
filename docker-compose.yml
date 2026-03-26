@@ -39,7 +39,7 @@ services:
   # ---------------------------------------------------------------------------
   timescaledb:
     restart: unless-stopped
-    image: timescale/timescaledb-ha:pg16
+    image: timescale/timescaledb:latest-pg16
     # Uncomment this to expose the database to the host so it can be accessed externally
     # ports:
     #   - "5432:5432"
@@ -50,7 +50,7 @@ services:
     # Map the volume to the host so it persists after the container is stopped
     # This also allows for an easier migration to another host
     volumes:
-      - timescaledb_data:/home/postgres/pgdata/data
+      - timescaledb_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U django -d django"]
       interval: 10s
