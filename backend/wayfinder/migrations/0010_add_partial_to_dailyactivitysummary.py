@@ -3,16 +3,29 @@
 from django.db import migrations, models
 
 
+def mark_existing_summaries_partial(apps, schema_editor):
+    """
+    Mark all existing daily activity summaries as partial.
+    This ensures that all existing summaries are recomputed.
+    """
+    DailyActivitySummary = apps.get_model("wayfinder", "DailyActivitySummary")
+    DailyActivitySummary.objects.all().update(partial=True)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('wayfinder', '0009_usersettings_dailyactivitysummary'),
+        ("wayfinder", "0009_usersettings_dailyactivitysummary"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dailyactivitysummary',
-            name='partial',
+            model_name="dailyactivitysummary",
+            name="partial",
             field=models.BooleanField(default=False),
+        ),
+        migrations.RunPython(
+            mark_existing_summaries_partial,
+            reverse_code=migrations.RunPython.noop,
         ),
     ]
