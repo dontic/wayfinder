@@ -968,14 +968,37 @@ class ActivityHistoryView(APIView):
             )
             current_date += timedelta(days=1)
 
+        response_data = {
+            "data": data,
+            "meta": {
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+                "days": len(data),
+                "total_locations": total_locations,
+                "total_visits": total_visits,
+            },
+        }
+
         # Determine response status
         from wayfinder.tasks import compute_daily_activity_summary
 
         # Cap task end date at yesterday (today is always live, never recalculated)
         task_end = min(end_date, today_in_tz - timedelta(days=1))
 
-        if precomputed_locations == 0 and precomputed_visits == 0:
-            has_raw_data = Location.objects.exists() or Visit.objects.exists()
+        if precomputed_locations == 0 and precomputed_visits == 0 and missing_dates:
+            # Check for raw data specifically within the queried range (not globally),
+            # so a year with no data doesn't trigger "computing" just because other
+            # years have data.
+            if task_end >= start_date:
+                range_start_dt = datetime.combine(start_date, dt_time.min, tzinfo=user_tz)
+                range_end_dt = datetime.combine(task_end, dt_time.max, tzinfo=user_tz)
+                has_raw_data = Location.objects.filter(
+                    time__gte=range_start_dt, time__lte=range_end_dt
+                ).exists() or Visit.objects.filter(
+                    time__gte=range_start_dt, time__lte=range_end_dt
+                ).exists()
+            else:
+                has_raw_data = False
             if has_raw_data:
                 log.debug(
                     "No pre-computed activity data found; triggering background task"
@@ -993,7 +1016,7 @@ class ActivityHistoryView(APIView):
                     },
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            else:
+            elif not Location.objects.exists() and not Visit.objects.exists():
                 log.debug("No location or visit data exists yet")
                 return Response(
                     {
@@ -1003,17 +1026,11 @@ class ActivityHistoryView(APIView):
                     },
                     status=status.HTTP_404_NOT_FOUND,
                 )
-
-        response_data = {
-            "data": data,
-            "meta": {
-                "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat(),
-                "days": len(data),
-                "total_locations": total_locations,
-                "total_visits": total_visits,
-            },
-        }
+            else:
+                # Data exists in other date ranges but not this one — return zeros
+                # directly as 200 rather than falling through to the 206 path, since
+                # there is nothing to compute.
+                return Response(response_data, status=status.HTTP_200_OK)
 
         if incomplete_dates:
             log.info(
