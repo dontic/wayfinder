@@ -1,7 +1,7 @@
 # tasks.py
 
 import logging
-from datetime import datetime, timedelta, time as dt_time
+from datetime import date as date_type, datetime, timedelta, time as dt_time
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from celery import shared_task
@@ -14,12 +14,20 @@ log = logging.getLogger(__name__)
 
 
 @shared_task
-def compute_daily_activity_summary():
+def compute_daily_activity_summary(start_date=None, end_date=None):
     """
     Pre-compute daily location and visit counts grouped by the user's home
-    timezone.  Only dates that are not yet in DailyActivitySummary are
-    computed; today (in the user's timezone) is always recomputed so that
-    data arriving throughout the day is captured on the next beat run.
+    timezone.
+
+    If ``start_date`` / ``end_date`` are provided (ISO-format strings or
+    ``datetime.date`` objects) only that range is processed.  Otherwise the
+    past 365 days are used.
+
+    Dates that are missing from DailyActivitySummary OR that have
+    ``partial=True`` are (re-)computed.  Yesterday is always recomputed to
+    correct any summary that was written mid-day.  The record for today is
+    always written with ``partial=True``; all other records are written with
+    ``partial=False``.
     """
 
     # Determine the timezone to use
@@ -38,30 +46,51 @@ def compute_daily_activity_summary():
 
     log.info("Computing daily activity summary for timezone: %s", timezone_str)
 
-    # Date range: past 365 days in the user's timezone
     today_in_tz = datetime.now(tz=user_tz).date()
-    start_date = today_in_tz - timedelta(days=365)
+
+    # Resolve date range
+    if start_date is None:
+        resolved_start = today_in_tz - timedelta(days=365)
+    elif isinstance(start_date, str):
+        resolved_start = date_type.fromisoformat(start_date)
+    else:
+        resolved_start = start_date
+
+    if end_date is None:
+        resolved_end = today_in_tz
+    elif isinstance(end_date, str):
+        resolved_end = date_type.fromisoformat(end_date)
+    else:
+        resolved_end = end_date
 
     # Collect every date in the window
     all_dates: set = set()
-    current = start_date
-    while current <= today_in_tz:
+    current = resolved_start
+    while current <= resolved_end:
         all_dates.add(current)
         current += timedelta(days=1)
 
-    # Find which dates already have a summary
-    existing_dates = set(
-        DailyActivitySummary.objects.filter(
-            timezone=timezone_str,
-            date__gte=start_date,
-            date__lte=today_in_tz,
-        ).values_list("date", flat=True)
-    )
+    # Find which dates already have a non-partial summary
+    existing_summaries = DailyActivitySummary.objects.filter(
+        timezone=timezone_str,
+        date__gte=resolved_start,
+        date__lte=resolved_end,
+    ).values("date", "partial")
 
-    # Always recompute today and yesterday: today captures intraday updates, yesterday
-    # corrects any partial summary that was computed mid-day (e.g. by the bootstrap trigger).
+    existing_dates = set()
+    partial_dates = set()
+    for s in existing_summaries:
+        existing_dates.add(s["date"])
+        if s["partial"]:
+            partial_dates.add(s["date"])
+
+    missing_dates = all_dates - existing_dates
+
+    # Always recompute yesterday to fix any mid-day partial that wasn't flagged
     yesterday_in_tz = today_in_tz - timedelta(days=1)
-    dates_to_compute = (all_dates - existing_dates) | {today_in_tz, yesterday_in_tz}
+    dates_to_compute = missing_dates | partial_dates
+    if yesterday_in_tz in all_dates:
+        dates_to_compute.add(yesterday_in_tz)
 
     log.info("Dates to compute: %d", len(dates_to_compute))
 
@@ -101,6 +130,7 @@ def compute_daily_activity_summary():
             defaults={
                 "location_count": location_dict.get(target_date, 0),
                 "visit_count": visit_dict.get(target_date, 0),
+                "partial": target_date == today_in_tz,
             },
         )
         if created:
