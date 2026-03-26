@@ -21,6 +21,8 @@ interface TripsFilterCardProps {
     separateTrips: boolean,
     desiredAccuracy: number
   ) => void;
+  initialStartDateTime?: string;
+  initialEndDateTime?: string;
 }
 
 // Helper function to format date for datetime-local input
@@ -33,20 +35,28 @@ const formatDateTimeLocal = (date: Date): string => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-const TripsFilterCard = ({ onSubmit }: TripsFilterCardProps) => {
+const TripsFilterCard = ({
+  onSubmit,
+  initialStartDateTime,
+  initialEndDateTime
+}: TripsFilterCardProps) => {
   // Default to last 24 hours
   const now = new Date();
   const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
   const [isOpen, setIsOpen] = useState(true);
   const [startDateTime, setStartDateTime] = useState(
-    formatDateTimeLocal(twentyFourHoursAgo)
+    initialStartDateTime ?? formatDateTimeLocal(twentyFourHoursAgo)
   );
-  const [endDateTime, setEndDateTime] = useState(formatDateTimeLocal(now));
+  const [endDateTime, setEndDateTime] = useState(
+    initialEndDateTime ?? formatDateTimeLocal(now)
+  );
   const [showVisits, setShowVisits] = useState(false);
   const [separateTrips, setSeparateTrips] = useState(false);
   const [desiredAccuracy, setDesiredAccuracy] = useState(0);
-  const [quickSelect, setQuickSelect] = useState<string>("last24h");
+  const [quickSelect, setQuickSelect] = useState<string>(
+    initialStartDateTime ? "" : "last24h"
+  );
 
   // Quick select time frame handlers
   const handleQuickSelect = (type: string) => {

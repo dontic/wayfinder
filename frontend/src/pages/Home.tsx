@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { format, subDays } from "date-fns";
+import { useNavigate } from "react-router-dom";
 import SideBarLayout from "@/layouts/SideBarLayout";
 import {
   CalendarHeatmap,
@@ -83,6 +84,7 @@ function getPeriodLabel(period: Period): string {
 }
 
 const Home = () => {
+  const navigate = useNavigate();
   const { selectedPeriod, setSelectedPeriod } = useHomeStore();
   const [activityData, setActivityData] = useState<DailyActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -209,6 +211,9 @@ const Home = () => {
                   endDate={endDate}
                   showFutureGray={showFutureGray}
                   label="location"
+                  onDateClick={(date) =>
+                    navigate(`/trips?date=${format(date, "yyyy-MM-dd")}`)
+                  }
                 />
               )}
             </CardContent>
@@ -241,6 +246,9 @@ const Home = () => {
                   endDate={endDate}
                   showFutureGray={showFutureGray}
                   label="visit"
+                  onDateClick={(date) =>
+                    navigate(`/visits?date=${format(date, "yyyy-MM-dd")}`)
+                  }
                 />
               )}
             </CardContent>

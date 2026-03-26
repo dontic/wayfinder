@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import SideBarLayout from "@/layouts/SideBarLayout";
 import VisitsFilterCard from "@/components/visits/VisitsFilterCard";
 import VisitsHeatmap from "@/components/visits/VisitsHeatmap";
@@ -39,6 +40,9 @@ const toTimezoneAwareISO = (datetimeLocal: string): string => {
 };
 
 const Visits = () => {
+  const [searchParams] = useSearchParams();
+  const dateParam = searchParams.get("date"); // YYYY-MM-DD
+
   const [visitData, setVisitData] = useState<VisitPlotResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -78,13 +82,23 @@ const Visits = () => {
 
   // Automatically query with default filters on component mount
   useEffect(() => {
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-    handleFilterSubmit(
-      formatDateTimeLocal(thirtyDaysAgo),
-      formatDateTimeLocal(now)
-    );
+    if (dateParam) {
+      const start = new Date(`${dateParam}T00:00:00`);
+      const end = new Date(`${dateParam}T23:59:59`);
+      handleFilterSubmit(
+        formatDateTimeLocal(start),
+        formatDateTimeLocal(end)
+      );
+    } else {
+      const now = new Date();
+      const thirtyDaysAgo = new Date(
+        now.getTime() - 30 * 24 * 60 * 60 * 1000
+      );
+      handleFilterSubmit(
+        formatDateTimeLocal(thirtyDaysAgo),
+        formatDateTimeLocal(now)
+      );
+    }
   }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
@@ -93,7 +107,15 @@ const Visits = () => {
         <div className="flex-1">
           <VisitsHeatmap data={visitData} isLoading={isLoading} />
         </div>
-        <VisitsFilterCard onSubmit={handleFilterSubmit} />
+        <VisitsFilterCard
+          onSubmit={handleFilterSubmit}
+          initialStartDateTime={
+            dateParam ? `${dateParam}T00:00` : undefined
+          }
+          initialEndDateTime={
+            dateParam ? `${dateParam}T23:59` : undefined
+          }
+        />
       </div>
     </SideBarLayout>
   );
