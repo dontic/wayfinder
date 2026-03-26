@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { wayfinderActivityHistoryRetrieve } from "@/api/django/wayfinder/wayfinder";
 import type { DailyActivity } from "@/api/django/api.schemas";
-import { useHomeStore } from "@/stores/HomeStore";
+import { useHomeStore, type Period } from "@/stores/HomeStore";
 import { toast } from "sonner";
 import { MapPin, Navigation } from "lucide-react";
 

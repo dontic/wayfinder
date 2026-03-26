@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-type Period = "past-year" | "ytd" | string;
+export type Period = "past-year" | "ytd" | string;
 
 interface HomeStore {
   selectedPeriod: Period;
