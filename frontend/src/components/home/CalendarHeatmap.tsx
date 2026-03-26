@@ -22,6 +22,8 @@ interface CalendarHeatmapProps {
   label?: string;
   /** When true, dates after today are rendered as dimmed gray cells. */
   showFutureGray?: boolean;
+  /** Called when a date cell is clicked. */
+  onDateClick?: (date: Date) => void;
 }
 
 const CELL_SIZE = 12;
@@ -114,7 +116,8 @@ export function CalendarHeatmap({
   endDate,
   className,
   label = "contribution",
-  showFutureGray = false
+  showFutureGray = false,
+  onDateClick
 }: CalendarHeatmapProps) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -222,6 +225,7 @@ export function CalendarHeatmap({
                                 "ring-1 ring-foreground ring-offset-1 ring-offset-background"
                             )}
                             style={{ width: CELL_SIZE, height: CELL_SIZE }}
+                            onClick={() => onDateClick?.(date)}
                           />
                         </TooltipTrigger>
                         <TooltipContent side="top" sideOffset={5}>

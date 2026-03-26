@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import SideBarLayout from "@/layouts/SideBarLayout";
 import TripsFilterCard from "@/components/trips/TripsFilterCard";
 import TripsMap from "@/components/trips/TripsMap";
@@ -98,6 +99,9 @@ interface LoadingProgress {
 }
 
 const Trips = () => {
+  const [searchParams] = useSearchParams();
+  const dateParam = searchParams.get("date"); // YYYY-MM-DD
+
   const [tripData, setTripData] = useState<TripPlotResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] =
@@ -267,16 +271,27 @@ const Trips = () => {
 
   // Automatically query with default filters on component mount
   useEffect(() => {
-    const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-    handleFilterSubmit(
-      formatDateTimeLocal(twentyFourHoursAgo),
-      formatDateTimeLocal(now),
-      false, // showVisits
-      false, // separateTrips
-      0 // desiredAccuracy
-    );
+    if (dateParam) {
+      const start = new Date(`${dateParam}T00:00:00`);
+      const end = new Date(`${dateParam}T23:59:59`);
+      handleFilterSubmit(
+        formatDateTimeLocal(start),
+        formatDateTimeLocal(end),
+        false,
+        false,
+        0
+      );
+    } else {
+      const now = new Date();
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      handleFilterSubmit(
+        formatDateTimeLocal(twentyFourHoursAgo),
+        formatDateTimeLocal(now),
+        false,
+        false,
+        0
+      );
+    }
   }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
@@ -287,7 +302,15 @@ const Trips = () => {
           isLoading={isLoading}
           loadingProgress={loadingProgress}
         />
-        <TripsFilterCard onSubmit={handleFilterSubmit} />
+        <TripsFilterCard
+          onSubmit={handleFilterSubmit}
+          initialStartDateTime={
+            dateParam ? `${dateParam}T00:00` : undefined
+          }
+          initialEndDateTime={
+            dateParam ? `${dateParam}T23:59` : undefined
+          }
+        />
       </div>
     </SideBarLayout>
   );

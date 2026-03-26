@@ -14,6 +14,8 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface VisitsFilterCardProps {
   onSubmit?: (startDateTime: string, endDateTime: string) => void;
+  initialStartDateTime?: string;
+  initialEndDateTime?: string;
 }
 
 // Helper function to format date for datetime-local input
@@ -26,17 +28,25 @@ const formatDateTimeLocal = (date: Date): string => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-const VisitsFilterCard = ({ onSubmit }: VisitsFilterCardProps) => {
+const VisitsFilterCard = ({
+  onSubmit,
+  initialStartDateTime,
+  initialEndDateTime
+}: VisitsFilterCardProps) => {
   // Default to last 30 days
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   const [isOpen, setIsOpen] = useState(true);
   const [startDateTime, setStartDateTime] = useState(
-    formatDateTimeLocal(thirtyDaysAgo)
+    initialStartDateTime ?? formatDateTimeLocal(thirtyDaysAgo)
   );
-  const [endDateTime, setEndDateTime] = useState(formatDateTimeLocal(now));
-  const [quickSelect, setQuickSelect] = useState<string>("past30d");
+  const [endDateTime, setEndDateTime] = useState(
+    initialEndDateTime ?? formatDateTimeLocal(now)
+  );
+  const [quickSelect, setQuickSelect] = useState<string>(
+    initialStartDateTime ? "" : "past30d"
+  );
 
   // Quick select time frame handlers
   const handleQuickSelect = (type: string) => {
